@@ -1396,13 +1396,17 @@ namespace SeeDocs_App::Ui
     {
         button.text() = Text{ k_openInEditorCaption };
         button.onGetState([this, &fact](GetStateEvent& event) {
-            event.state.enabled = hasEditorCommand(appContext(), fact.source->language);
+            event.state.enabled = !editorCommand(appContext(), fact.source->language).empty();
         });
         button.onAdjustTooltip([this, &fact](AdjustTooltipEvent& event) {
             const SourceLanguage language = fact.source->language;
-            if (hasEditorCommand(appContext(), language))
-                return;
-            event.text << L"Set a " << editorLanguageName(language) << L" editor in Settings";
+            const std::wstring command = editorCommand(appContext(), language);
+            if (!command.empty())
+                event.text << L"Current command:" << k_endLine
+                    << StyledText{ TextStyles::Code, command } << k_endLine;
+            event.text << (command.empty() ? L"Set the " : L"Change the ")
+                << editorLanguageName(language) << L" editor in "
+                << LinkText{ editorSettingsLink(language), L"Settings" } << L".";
         });
         button.onClick([this, &fact](ClickEvent&) {
             PageSourceEvent event{ *fact.source };

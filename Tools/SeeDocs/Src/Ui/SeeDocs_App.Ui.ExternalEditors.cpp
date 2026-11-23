@@ -49,6 +49,8 @@ namespace SeeDocs_App::Ui
             constexpr std::wstring_view Cpp = L"Cpp";
             constexpr std::wstring_view Delphi = L"Delphi";
         }
+        constexpr std::wstring_view k_cppEditorAnchor{ L"external-editor-cpp" };
+        constexpr std::wstring_view k_delphiEditorAnchor{ L"external-editor-delphi" };
         constexpr std::wstring_view k_commandPlaceHolder = L"A command line with {file} and {line}";
         constexpr std::wstring_view k_filePlaceHolder = L"{file}";
         constexpr std::wstring_view k_linePlaceHolder = L"{line}";
@@ -289,7 +291,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A row: what the language is called, then its command line in a project options field.
-        void addEditorRow(StackPanel& group, const std::wstring_view caption,
+        CommandBox& addEditorRow(StackPanel& group, const std::wstring_view caption,
             const std::wstring_view key, const Suggestions suggestions, TooltipText tooltip)
         {
             StackPanel& row = group.add<StackPanel>(Orientation::Horizontal, Spacing{ k_captionSpacing });
@@ -312,6 +314,7 @@ namespace SeeDocs_App::Ui
             field.setBorder(row.styleMetrics(UiElement::Button).border);
             CommandBox& box = field.createBody<CommandBox>(key, suggestions, std::move(tooltip));
             field.createRightBar<DropButton>(box);
+            return box;
         }
     }
 
@@ -327,17 +330,19 @@ namespace SeeDocs_App::Ui
     void buildExternalEditors(AppMenuPage& page)
     {
         StackPanel& group = page.addGroup(L"External editors");
-        addEditorRow(group, L"C++:", EditorKey::Cpp,
+        CommandBox& cpp = addEditorRow(group, L"C++:", EditorKey::Cpp,
             onThisDesktop(WindowsSuggestions::Cpp, LinuxSuggestions::Cpp),
             TooltipText{ L"Open a C++ source at a line - {file} and {line} are filled in" });
-        addEditorRow(group, L"Delphi:", EditorKey::Delphi,
+        CommandBox& delphi = addEditorRow(group, L"Delphi:", EditorKey::Delphi,
             onThisDesktop(WindowsSuggestions::Delphi, LinuxSuggestions::Delphi),
             TooltipText{ L"Open a Delphi source at a line - {file} and {line} are filled in" });
+        page.anchorOption(k_cppEditorAnchor, cpp);
+        page.anchorOption(k_delphiEditorAnchor, delphi);
     }
 
-    bool hasEditorCommand(AppContext& context, const SourceLanguage language)
+    std::wstring editorCommand(AppContext& context, const SourceLanguage language)
     {
-        return !commandNode(context, language).get<std::wstring>().empty();
+        return commandNode(context, language).get<std::wstring>();
     }
 
     std::wstring_view editorLanguageName(const SourceLanguage language)
@@ -352,6 +357,13 @@ namespace SeeDocs_App::Ui
             [callback = std::move(callback)](Dom::ChangeEvent&) {
                 callback();
             });
+    }
+
+    std::wstring editorSettingsLink(const SourceLanguage language)
+    {
+        std::wstring link{ L"seedocs://settings#" };
+        link += language == SourceLanguage::Pascal ? k_delphiEditorAnchor : k_cppEditorAnchor;
+        return link;
     }
 
     // openInEditorTitle
@@ -383,7 +395,7 @@ namespace SeeDocs_App::Ui
     void EditorRuns::open(const SourceLanguage language, const std::filesystem::path& file,
         const std::size_t line)
     {
-        std::wstring command = commandNode(m_context, language).get<std::wstring>();
+        std::wstring command = editorCommand(m_context, language);
         if (command.empty())
             return;
         replaceEvery(command, k_filePlaceHolder, file.wstring());
@@ -440,8 +452,9 @@ namespace SeeDocs_App::Ui
             .answers = {
                 NoticeAnswer{
                     .caption = L"Settings",
-                    .run = [](ClickEvent& event) {
-                        event.appContext().openLink(L"seedocs://settings", &event.form, event.stamp);
+                    .run = [language](ClickEvent& event) {
+                        event.appContext().openLink(
+                            editorSettingsLink(language), &event.form, event.stamp);
                     }
                 }
             }

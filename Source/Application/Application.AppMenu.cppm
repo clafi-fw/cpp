@@ -16,7 +16,7 @@ namespace ClaFi
     export class AppMenu : public Controls::TabbedBox
     {
     public:
-        explicit AppMenu(const CreateParams&);
+        explicit AppMenu(const CreateParams&, std::wstring_view settingsAnchor = {});
         std::wstring_view diagnosticText() const override { return L"AppMenu"; }
         // The page the menu was left on, which is the page the next one opens.
         [[nodiscard]] std::wstring_view pageCaption() const { return m_pageCaption; }

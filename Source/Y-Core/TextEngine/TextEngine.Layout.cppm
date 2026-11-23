@@ -274,6 +274,7 @@ namespace ClaFi
         // The link whose glyph stands under a point, or nothing - a point past the end of a line,
         // or between two lines, names no glyph and so no link. In the coordinates caretPos takes.
         [[nodiscard]] std::optional<LinkHit> linkAt(FloatPoint);
+        [[nodiscard]] std::vector<FloatRect> linkRects();
         std::size_t rowStart(CaretHit);
         std::size_t rowEnd(CaretHit);
         // The line and column a position stands at - see TextLineColumn. A binary search over the

@@ -42,6 +42,12 @@ namespace ClaFi
             { return addSection(caption).body(); }
         // The same, as the whole section - for a page that shows or hides one.
         [[nodiscard]] Section& addSection(std::wstring_view caption);
+        void anchorOption(std::wstring_view anchor, Control& option); // names a Settings link target
+        [[nodiscard]] Control* optionAtAnchor(std::wstring_view anchor) const;
+    protected:
+        void nestedControlDeleted(Control*) override;
+    private:
+        std::map<std::wstring, Control*, std::less<>> m_anchoredOptions;
     };
 
     // A slider that holds its form's size while the pointer moves it. See Application
@@ -65,7 +71,7 @@ namespace ClaFi
     export class SettingsPage : public Controls::Panel
     {
     public:
-        explicit SettingsPage(const CreateParams&);
+        explicit SettingsPage(const CreateParams&, std::wstring_view optionAnchor = {});
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"SettingsPage"; }
     private:

@@ -288,6 +288,8 @@ namespace ClaFi
             const FormControlBase& going = *m_topLayer;
             if (m_downItem && going.containsNested(m_downItem))
                 m_downItem = nullptr;
+            if (m_focusOnShow && going.containsNested(m_focusOnShow, CheckSelf::Yes))
+                m_focusOnShow = nullptr;
             std::erase_if(m_scrollIntoViewOnAlign, [&going](const Control* control) {
                 return going.containsNested(control);
             });
@@ -325,6 +327,13 @@ namespace ClaFi
     {
         m_aligned = false;
         invalidate();
+    }
+
+    void FormBase::focusOnShow(Control& target)
+    {
+        if (&target.form() != this)
+            noReach("focusOnShow: the control belongs to another form");
+        m_focusOnShow = &target;
     }
 
     void FormBase::scrollIntoViewOnAlign(Control& control)
@@ -947,7 +956,7 @@ namespace ClaFi
         m_mouseDownStamp = stamp;
         m_downItem = controlAt(m_mouseDownPos).control;
 
-        Tooltip::handleUserInput();
+        Tooltip::handleUserInput(this);
 
         Input::mouseActed(m_appContext);
         mouseTick(pt);
@@ -1588,6 +1597,8 @@ namespace ClaFi
             m_contentFocusBeforeTopLayer = nullptr;
         if (m_focusBeforePopup == item)
             m_focusBeforePopup = nullptr;
+        if (m_focusOnShow == item)
+            m_focusOnShow = nullptr;
         std::erase(m_scrollIntoViewOnAlign, item);
         // **The popup goes with the control it is over.** A list rebuilt under an open in-place
         // editor deletes the item being edited, and a popup is placed, sized and aimed by that
@@ -1645,6 +1656,12 @@ namespace ClaFi
                 popupTargetForm->m_focusBeforePopup = inOwner ? holder : nullptr;
             }
 
+            if (Control* target = m_focusOnShow; target && target->canTakeFocus())
+            {
+                target->reveal(m_content);
+                if (m_focusOnShow == target)
+                    target->scrollIntoViewOnAlign();
+            }
             updatePlacement();
 
             m_window->show();
@@ -1929,6 +1946,12 @@ namespace ClaFi
     // where it has none. A Tab emulated from the entry would land one item past it.
     void FormBase::focusEntryPoint()
     {
+        if (Control* target = std::exchange(m_focusOnShow, nullptr); target && target->trySetFocus())
+        {
+            m_navigationLine = {};
+            target->scrollIntoView();
+            return;
+        }
         FocusNavigator{ *this }.enterShown(m_content);
     }
 

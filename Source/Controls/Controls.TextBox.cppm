@@ -59,32 +59,9 @@ namespace ClaFi::Controls
         using EventOf<TextBox>::EventOf;
     };
 
-    // A link in the box's text was followed. See Controls
-    export struct LinkClickEvent : public EventOf<TextBox>
-    {
-        LinkClickEvent(TextBox&, std::wstring target, InputStamp);
-        std::wstring target;   // what the link names, as the text states it
-        InputStamp stamp;      // the press that followed the link
-    };
-
-    // The tooltip of the link under the pointer is being asked for. See Controls
-    export struct GetLinkTooltipEvent : public EventOf<TextBox>
-    {
-        GetLinkTooltipEvent(TextBox&, std::wstring_view target, TextRange range,
-            AdjustTooltipEvent&);
-        std::wstring_view target;   // what the link names, as the text states it
-        TextRange range;            // the text the link covers
-        AdjustTooltipEvent& tooltip;   // the tooltip itself: its text, placement and anchor
-    };
-
-    // The menu for a link under the pointer is being asked for. See Controls
-    export struct LinkContextPopupEvent : public EventOf<TextBox>
-    {
-        LinkContextPopupEvent(TextBox&, std::wstring target, TextRange range, ContextPopupEvent&);
-        const std::wstring target;   // what the link names, as the text states it
-        const TextRange range;       // the text the link covers
-        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
-    };
+    export using ::ClaFi::LinkClickEvent;
+    export using ::ClaFi::GetLinkTooltipEvent;
+    export using ::ClaFi::LinkContextPopupEvent;
 
     using TextBoxBase = WithEditMode<LabelWithTextLayout>;
 
@@ -109,12 +86,6 @@ namespace ClaFi::Controls
         DECLARE_EVENT(CaretMoveEvent, OnCaretMove, onCaretMove)
         // The text has been changed through the box. See Controls
         DECLARE_EVENT(TextEditEvent, OnTextEdit, onTextEdit)
-        // A link in the box's text was followed. See Controls
-        DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
-        // The tooltip of the link under the pointer is being asked for. See Controls
-        DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
-        // The menu for a link under the pointer is being asked for. See Controls
-        DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
     public:
         // setCaretPosFromMouse Is calling from nestedPressDown, nestedContextPopup
         // and on popping in in-place edit form
@@ -209,15 +180,7 @@ namespace ClaFi::Controls
         // the line states a CodeBox colors from - brings it into step here, on the same terms.
         virtual void textTaken(const Text&, const TextEdit*) const {}
         void focusChanged() override;
-        // Mouse events
-        void mouseMove(MouseMoveEvent&) override;
-        void hoverLeave() override;
-        // The tooltip of the link under the pointer, where there is one, else the box's own.
-        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
-        // Follows a link when the press and the release stayed on it and nothing was selected
-        // between them. Defined in TextBox.cpp, with the rest of what a link does.
-        void click(ClickEvent&) override;
         void doubleClick(DoubleClickEvent&) override;
         void tripleClick(TripleClickEvent&) override;
         // Defined in TextBox.cpp: the standard edit menu is built there, and the menu pulls in
@@ -272,14 +235,6 @@ namespace ClaFi::Controls
             CaretHit hit;
             FloatRect page;
         };
-        // The link the pointer stands on, live or not: what its tooltip is about.
-        struct PointedLink
-        {
-            TextRange range{};
-            std::wstring target{};
-            // The character under the pointer, which names the line the tooltip stands under.
-            std::size_t pos{ 0 };
-        };
         // Where the box stands: what is selected, and the position the view shows at its top.
         struct Place
         {
@@ -306,28 +261,14 @@ namespace ClaFi::Controls
         // is for is the right click: the menu it opens carries Copy and Cut, which act on the
         // selection, so a click aimed at the selection must leave the selection standing.
         [[nodiscard]] bool mousePosInSelection() const;
-        // Whether a link is live - underlined and pointed at under the pointer, and followed on a
-        // click. Always in a read-only box, and while Ctrl is held in one the user types into,
-        // where a plain click has to go on placing the caret.
-        [[nodiscard]] bool followsLinks(KeyModifiers) const;
-        // The link under a point in form space, or nothing.
-        [[nodiscard]] std::optional<LinkHit> linkAt(PointInForm) const;
-        // The link the caret stands in, or nothing - a caret not yet placed stands in none.
+        [[nodiscard]] bool followsLinks(KeyModifiers) const override;
+        [[nodiscard]] bool clickFollowsLink(const ClickEvent&) const override;
+        [[nodiscard]] std::optional<LinkSpan> contextLink(const ContextPopupEvent&) const override;
         [[nodiscard]] std::optional<LinkSpan> linkAtCaret() const;
-        // Return on a caret standing in a live link follows it; false leaves the key to go on.
         bool followLinkAtCaret(KeyDownEvent&);
-        // Goes to the anchor, or raises LinkClickEvent and opens what no handler took.
-        void followLink(const LinkSpan&, InputStamp);
-        // Underlines a link, or none for an empty range, repainting only when that changes.
-        void hoverLink(TextRange);
-        // Records the link the pointer stands on, and has the tooltip asked again when it changed.
-        void pointAtLink(const std::optional<LinkHit>&);
-        // What a link's tooltip says when no handler says it. See Controls#getlinktooltipevent
-        void writeLinkTooltip(AdjustTooltipEvent&) const;
-        // Ends a link's tooltip, whoever wrote it, with how a link is followed in a box that types.
-        void writeFollowLine(Text&) const;
-        // The line of the pointed link the pointer is on, in form coordinates.
-        [[nodiscard]] FloatRect pointedLinkLine() const;
+        void followLink(const LinkSpan&, InputStamp) override;
+        void writeLinkTooltip(AdjustTooltipEvent&) const override;
+        void appendLinkTooltip(Text&) const override;
         [[nodiscard]] Place currentPlace() const;
         // Puts the selection and the view back where a place names them, both clamped to the text
         // as it now stands.
@@ -365,7 +306,6 @@ namespace ClaFi::Controls
         // Where the box stood before each jump, newest last, and after each step back.
         Places m_backPlaces;
         Places m_forwardPlaces;
-        PointedLink m_pointedLink;
         // Which half of the blink the caret stands in - see paintOwnText for whether it is drawn.
         bool m_caretOn{ true };
         // The edit that produced a text the layout has not been told about yet, recorded by
@@ -693,9 +633,7 @@ namespace ClaFi::Controls
     void TextBox::textEdited()
     {
         m_editProps.targetX.reset();
-        // The link the pointer stood on was found in the text before the edit. The next move of
-        // the pointer finds it again in this one.
-        m_pointedLink = {};
+        clearLinkHover();
         invalidateFormAlign();
         scrollIntoViewOnAlign();
         restartCaretBlink();

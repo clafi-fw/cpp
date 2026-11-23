@@ -424,20 +424,17 @@ namespace ClaFi
 
         case WM_NCHITTEST:
         {
-            // **A tooltip takes no pointer**, and this is where it says so. WS_EX_TRANSPARENT says
-            // the same thing and one more besides - it holds the window's own painting back until
-            // every sibling beneath it has been painted, which starves a tooltip standing over a
-            // form that is repainting under a drag. Said here, the pointer falls through and the
-            // painting is the window's own business.
+            IntPoint mp = msg.mousePos();
+            ::ScreenToClient(handle(), reinterpret_cast<POINT*>(&mp));
+
+            // Tooltip links are client hits. The rest of the surface passes input through.
             if (role() == WindowRole::Tooltip)
             {
-                msg.result = HTTRANSPARENT;
+                msg.result = m_form.wnd_hitTest(toSurface(mp).toFloat()) == HitTest::Client
+                    ? HTCLIENT : HTTRANSPARENT;
                 msg.handled = true;
                 break;
             }
-
-            IntPoint mp = msg.mousePos();
-            ::ScreenToClient(handle(), reinterpret_cast<POINT*>(&mp));
 
             msg.result = getBorderSizingHitTest(mp);
             msg.handled = msg.result != HTCLIENT;

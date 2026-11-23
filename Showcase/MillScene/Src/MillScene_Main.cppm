@@ -117,13 +117,12 @@ namespace MillScene_App
     // it was: what paints the icon here is handed a rect and no scaler.
     constexpr float k_themeIconRadiusRatio{ 4.0f / k_themeIconSize };
 
+    constexpr std::wstring_view k_linkScheme{ L"millscene" };
+
     // What the metrics tooltip says draws the scene. See writeMetricsTooltip
     constexpr std::wstring_view k_drawnOnGpu{
         L"The scene is rendered on the GPU." };
     constexpr std::wstring_view k_drawnOnCpu{
-        L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
-        L"worked out in bands on several cores. CPU is selected under Graphics backend in Settings." };
-    constexpr std::wstring_view k_drawnOnCpuOnly{
         L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
         L"worked out in bands on several cores." };
 
@@ -1384,12 +1383,6 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
         float radius = event.scaleF(3.0f);
         event.canvas().fillCircle(event.iconRect().center(), radius, event.textRgb(InkGrade::Strongest));
         };
-    // An application that named no GPU backend offers no such setting.
-    std::wstring_view drawnOn = k_drawnOnCpuOnly;
-    if (appContext().usingGpu())
-        drawnOn = k_drawnOnGpu;
-    else if (appContext().gpuAvailable())
-        drawnOn = k_drawnOnCpu;
     const InTextIcon bullet{ 18.0f, 18.0f, drawBullet };
     event.text.clear();
     event.text << StyledText{ TextStyles::Section, L"Performance Metrics\n" };
@@ -1408,7 +1401,15 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
     };
     event.text << L"." << VSpace{ 18.0f } << k_endLine;
     event.text << StyledText{ TextStyles::Section, L"Note:\n" };
-    event.text << Space{ 18.0f } << drawnOn << k_endLine;
+    event.text << Space{ 18.0f } << (appContext().usingGpu() ? k_drawnOnGpu : k_drawnOnCpu)
+        << k_endLine;
+    if (appContext().gpuAvailable())
+    {
+        event.text << Space{ 18.0f } << L"Change the "
+            << LinkText{ L"millscene://settings#graphics-backend", L"graphics backend in Settings" }
+            << L"."
+            << k_endLine;
+    }
     event.text << Space{ 18.0f } << L"The gap between " << SizedText{ 20.0f, L"draw" };
     event.text << L" and " << SizedText{ 20.0f, L"FPS" } << L" is everything a frame waits on\n";
     event.text << Space{ 18.0f } << L"that the scene is not: the rest of the form, the copy to the screen,\n";
@@ -1789,7 +1790,9 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
 
     ApplicationProperties millSceneApplicationProperties()
     {
-        return millSceneProperties(L"MillScene");
+        ApplicationProperties properties = millSceneProperties(L"MillScene");
+        properties.linkScheme = k_linkScheme;
+        return properties;
     }
 
     Dom::Dt::Section createMillSceneConfigSchema()

@@ -114,6 +114,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // Applied by the compositor or by the frame. See Platform#window-alpha
         [[nodiscard]] ColorByte alpha() override { return m_alpha; }
         void setAlpha(ColorByte value) override;
+        void setTooltipLinkRects(std::span<const FloatRect>) override;
+        [[nodiscard]] bool pointerOver(const FloatRect&) const override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
         void showWindowMenu(PointInForm, InputStamp) override;
         // **The side is the compositor's.** A positioner may flip a popup for want of room and the
@@ -363,6 +365,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // number only while the scale is 1.
         IntSize m_surfaceSize{ 0, 0 };
         int m_scale120{ k_scaleUnit };
+        std::vector<FloatRect> m_tooltipLinkRects{};
         int m_pendingScale120{ k_scaleUnit };
         // **The outputs this surface overlaps.** Read only on a compositor too old to name the
         // scale itself; the largest scale among them is what this window should draw at.
@@ -1202,7 +1205,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     // pixel on the edge is made of a solid buffer pixel and a shadow one, and claimed solid it
     // would be shown unblended. A window at less than full opacity states none. **The input region
     // is the geometry**, reaching k_resizeGrab into the shadow on a window the user may size; a
-    // tooltip keeps the empty region its constructor gave it and takes no pointer at all.
+    // tooltip takes the pointer only over its links.
     void Window::stateGeometry()
     {
         if (!m_surface || !hasRole() || m_geometrySize.x <= 0 || m_geometrySize.y <= 0)
@@ -1240,7 +1243,22 @@ namespace ClaFi::PlatformImplementation::Wayland
                 ::wl_region_destroy(opaque);
         }
 
-        if (m_role != WindowRole::Tooltip)
+        wl_region* inputRegion = ::wl_compositor_create_region(compositor);
+        if (m_role == WindowRole::Tooltip)
+        {
+            // Select the surface points whose rounded buffer coordinates are inside each link.
+            const auto toSurfaceEdge = [this](const float edge) {
+                return static_cast<int>(std::ceil((std::ceil(edge) - 0.5f) * k_scaleUnit / m_scale120));
+            };
+            for (const FloatRect& link : m_tooltipLinkRects)
+            {
+                IntRect input{ toSurfaceEdge(link.left), toSurfaceEdge(link.top),
+                    toSurfaceEdge(link.right), toSurfaceEdge(link.bottom) };
+                if (input.intersectWith(geometry))
+                    ::wl_region_add(inputRegion, input.left, input.top, input.width(), input.height());
+            }
+        }
+        else
         {
             IntRect input = geometry;
             // A layer surface is not sized by the user, so there is no grab to reach for.
@@ -1249,11 +1267,41 @@ namespace ClaFi::PlatformImplementation::Wayland
                 input.inflate(k_resizeGrab);
                 input.intersectWith({ 0, 0, m_surfaceSize.x, m_surfaceSize.y });
             }
-            wl_region* inputRegion = ::wl_compositor_create_region(compositor);
             ::wl_region_add(inputRegion, input.left, input.top, input.width(), input.height());
-            ::wl_surface_set_input_region(m_surface, inputRegion);
-            ::wl_region_destroy(inputRegion);
         }
+        ::wl_surface_set_input_region(m_surface, inputRegion);
+        ::wl_region_destroy(inputRegion);
+    }
+
+    void Window::setTooltipLinkRects(const std::span<const FloatRect> rects)
+    {
+        if (std::ranges::equal(m_tooltipLinkRects, rects))
+            return;
+        m_tooltipLinkRects.assign(rects.begin(), rects.end());
+        stateGeometry();
+        invalidateRect(nullptr);
+    }
+
+    bool Window::pointerOver(const FloatRect& bounds) const
+    {
+        IntPoint offset{};
+        for (const Window* window = this; window; window = window->m_parent)
+        {
+            if (const auto pointer = m_display.pointerPosition(*window))
+            {
+                const IntPoint point = toBufferPoint(*pointer - offset);
+                return bounds.contains(static_cast<float>(point.x), static_cast<float>(point.y));
+            }
+            if (!window->m_popup || !window->m_parent || !window->m_popupPositionSeen)
+                break;
+
+            // The compositor positions the popup's geometry, while the pointer names the surface.
+            const FrameMargins margins = window->surfaceMargins();
+            const FrameMargins parentMargins = window->m_parent->surfaceMargins();
+            offset += window->m_popupPosition
+                + IntPoint{ parentMargins.left - margins.left, parentMargins.top - margins.top };
+        }
+        return false;
     }
 
     void Window::applySize()

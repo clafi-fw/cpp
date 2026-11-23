@@ -52,7 +52,7 @@ namespace ClaFi
         static void controlTooltipChanged(Control&); // the words its tooltip says have moved
         // The user did something. A tooltip waits for them to stop, and this is them starting
         // again.
-        static void handleUserInput();
+        static void handleUserInput(const FormBase* source = nullptr);
         // Takes down whatever is up, wherever it is, and answers whether there was anything to
         // take down - Escape is handled by having dismissed one.
         static bool stopAndHide();
@@ -63,7 +63,7 @@ namespace ClaFi
         // focus rests on while the keyboard alone does. See Control-Foundation#tooltip
         [[nodiscard]] static Control* pointedControl();
         // The control a tooltip is about has changed - to pointedControl(), or to nothing.
-        static void pointedControlChanged();
+        static void pointedControlChanged(bool allowLinkHandoff = true);
         // Whether a tooltip up about a control this one stands in still answers for this one.
         [[nodiscard]] static bool answersFor(Control&);
         void showOrHide(Control* = nullptr);
@@ -84,15 +84,13 @@ namespace ClaFi
         // The over-text window waiting or showing, in the same way and apart from the tooltip.
         inline static Tooltip* s_overTextCurrent{ nullptr };
         FormBase& m_ownerForm;
-        // **Two windows, and a tooltip has none of its own**: both are null on the one form whose
-        // role is Tooltip, and that is where the recursion of every form building one ends. Nothing
-        // asks for them there - a tooltip window takes no pointer and holds nothing that can be
-        // hovered.
+        // A tooltip form builds neither window, which ends the recursion.
         std::unique_ptr<TooltipForm> m_form;
         std::unique_ptr<OverTextForm> m_overTextForm;
         // The handler is given in the constructor rather than here: MSVC will not deduce OnEvent
         // from a lambda written in a default member initializer.
         UiTimer m_timer;
+        UiTimer m_linkHandoffTimer;
         UiTimer m_overTextTimer;
         Control* m_overTextControl{ nullptr };
         Text m_overTextText{};

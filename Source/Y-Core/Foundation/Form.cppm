@@ -261,6 +261,7 @@ namespace ClaFi
         // control.form().tooltip().showRightNow(control) - because the window a tooltip shows in is
         // owned by the window holding the control, and the form is what knows which that is.
         [[nodiscard]] Tooltip& tooltip() { return m_tooltip; }
+        void focusOnShow(Control&); // reveals, scrolls to, and focuses a control on the next show
         void invalidateAlign();
         // Brings a control into view once the alignment it is waiting for has run. A control
         // that has just been shown, or one whose host has just grown, still measures as it did
@@ -671,6 +672,7 @@ namespace ClaFi
         Actions m_actions{};
 
         FormBase* m_activePopup{ nullptr };
+        Control* m_focusOnShow{ nullptr };
         CloseAction m_closeAction{ CloseAction::Close };
         //
         bool m_aligned{ false };

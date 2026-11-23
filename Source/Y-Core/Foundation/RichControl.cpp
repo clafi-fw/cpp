@@ -3,7 +3,9 @@ module ClaFi.Core.Foundation;
 import :Action;
 import :Control;
 import :PaintEvent;
+import :WithTextLayout;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
@@ -14,6 +16,34 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    LinkClickEvent::LinkClickEvent(RichControl& control, std::wstring target, InputStamp stamp)
+        :
+        EventOf<RichControl>{ control },
+        target{ std::move(target) },
+        stamp{ stamp }
+    {
+    }
+
+    GetLinkTooltipEvent::GetLinkTooltipEvent(RichControl& control, std::wstring_view target,
+        TextRange range, AdjustTooltipEvent& tooltip)
+        :
+        EventOf<RichControl>{ control },
+        target{ target },
+        range{ range },
+        tooltip{ tooltip }
+    {
+    }
+
+    LinkContextPopupEvent::LinkContextPopupEvent(RichControl& control, std::wstring target,
+        TextRange range, ContextPopupEvent& popup)
+        :
+        EventOf<RichControl>{ control },
+        target{ std::move(target) },
+        range{ range },
+        popup{ popup }
+    {
+    }
+
     // RichControl
 
     // None where the format is empty, so the cache keys an unformatted text the one way.

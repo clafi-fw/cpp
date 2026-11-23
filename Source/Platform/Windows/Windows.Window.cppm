@@ -171,6 +171,7 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] bool standsAbove() const override { return m_standsAbove; }
         ColorByte alpha() override;
         void setAlpha(ColorByte) override;
+        [[nodiscard]] bool pointerOver(const FloatRect&) const override;
         void initiateWindowDrag(IntPoint pt, InputStamp) override;
         void showWindowMenu(PointInForm, InputStamp) override;
         [[nodiscard]] bool canSetAlwaysOnTop() const override { return true; }
@@ -692,6 +693,16 @@ namespace ClaFi::PlatformImplementation::Windows
             std::max(0, clientSize.x - band.x + margins.x),
             std::max(0, clientSize.y - band.y + margins.y)
         };
+    }
+
+    bool Window::pointerOver(const FloatRect& bounds) const
+    {
+        POINT pointer{};
+        if (!handle() || !::GetCursorPos(&pointer) || !::ScreenToClient(handle(), &pointer))
+            return false;
+        const IntPoint origin = surfaceOrigin();
+        return bounds.contains(static_cast<float>(pointer.x + origin.x),
+            static_cast<float>(pointer.y + origin.y));
     }
 
     // **Snapped to a side or a corner of the screen**, which is Win32's tiled. Looked up by name:
@@ -1273,6 +1284,7 @@ namespace ClaFi::PlatformImplementation::Windows
             switch (m_Role)
             {
             case WindowRole::Menu:
+            case WindowRole::Tooltip:
                 msg.result = MA_NOACTIVATE;
                 msg.handled = true;
                 break;

@@ -8,7 +8,6 @@ import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
-import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
@@ -23,34 +22,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    LinkClickEvent::LinkClickEvent(TextBox& box, std::wstring target, InputStamp stamp)
-        :
-        EventOf<TextBox>{ box },
-        target{ std::move(target) },
-        stamp{ stamp }
-    {
-    }
-
-    GetLinkTooltipEvent::GetLinkTooltipEvent(TextBox& box, std::wstring_view target,
-        TextRange range, AdjustTooltipEvent& tooltip)
-        :
-        EventOf<TextBox>{ box },
-        target{ target },
-        range{ range },
-        tooltip{ tooltip }
-    {
-    }
-
-    LinkContextPopupEvent::LinkContextPopupEvent(TextBox& box, std::wstring target,
-        const TextRange range, ContextPopupEvent& popup)
-        :
-        EventOf<TextBox>{ box },
-        target{ std::move(target) },
-        range{ range },
-        popup{ popup }
-    {
-    }
-
     // **Clamped**, because a position is only ever a position in some text. A host writing a new
     // text into the box names one against the text it is writing, and the box holds that text only
     // once the write has happened. The remembered column belongs to a run of vertical presses, and
@@ -258,70 +229,6 @@ namespace ClaFi::Controls
         };
     }
 
-    void TextBox::mouseMove(MouseMoveEvent& event)
-    {
-        TextBoxBase::mouseMove(event);
-
-        // The tooltip is about any link, and the underline only about one a click would follow.
-        const std::optional<LinkHit> hit = linkAt(event.posOnForm);
-        pointAtLink(hit);
-        const bool live = hit.has_value() && followsLinks(Platform::keyModifiers());
-        hoverLink(live ? hit->link.range : TextRange{});
-    }
-
-    void TextBox::hoverLeave()
-    {
-        TextBoxBase::hoverLeave();
-        // The tooltip has heard about the pointer leaving from the hover change itself, and
-        // telling it again would start a second wait for whatever the pointer went to.
-        m_pointedLink = {};
-        hoverLink({});
-    }
-
-    void TextBox::nestedAdjustTooltip(AdjustTooltipEvent& event)
-    {
-        if (!m_pointedLink.range.length)
-        {
-            TextBoxBase::nestedAdjustTooltip(event);
-            return;
-        }
-
-        // Over the line the pointer is on, from where the link starts on it, and under it where
-        // the screen has no room above: the tooltip covers neither the link nor the line it is in.
-        event.placement = FormPlacement::Top;
-        event.anchorRect = pointedLinkLine();
-
-        GetLinkTooltipEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
-        emitEvent(linkEvent);
-        if (event.text.empty())
-            writeLinkTooltip(event);
-        writeFollowLine(event.text);
-    }
-
-    // Only a pointer click lands on a link - one a key made has no point to land on, and Return
-    // answers for the caret in nestedKeyDown. A press that ended in a selection was a drag, and a
-    // drag does not follow the link it started on. The caret the press placed stands where the
-    // release did when the two are one place.
-    void TextBox::click(ClickEvent& event)
-    {
-        std::optional<LinkSpan> link{};
-        const bool pointerFollows = Input::mouse().active() && followsLinks(event.modifiers)
-            && m_editProps.selRange.length == 0;
-        if (pointerFollows)
-        {
-            if (const std::optional<LinkHit> hit = linkAt(event.clickPos()))
-                link = hit->link;
-        }
-        if (!link.has_value())
-        {
-            TextBoxBase::click(event);
-            return;
-        }
-        // The click was the link's, and goes no further up.
-        event.stopPropagation();
-        followLink(*link, event.stamp);
-    }
-
     void TextBox::nestedContextPopup(ContextPopupEvent& event)
     {
         // The menu is about the caret or the selection, which the mode shows - ahead of the link
@@ -332,26 +239,6 @@ namespace ClaFi::Controls
         // there would collapse the range before the menu is even up.
         if (!mousePosInSelection())
             setCaretPosFromMouse();
-
-        // **A link is what the menu is about** where one stands under the pointer or, from the
-        // keyboard, at the caret - ahead of the box: the box's menu is its edit commands, and none
-        // of them is about where the link goes. The target is copied out before anyone is told, as
-        // a click's is. A handler that has shown the link's menu stops the request, and the box
-        // raises nothing over it; one that has not leaves the box to answer as for a click
-        // anywhere else in it.
-        std::optional<LinkSpan> link{};
-        if (!event.mousePos)
-            link = linkAtCaret();
-        else if (const std::optional<LinkHit> hit = linkAt(*event.mousePos))
-            link = hit->link;
-        if (link.has_value())
-        {
-            LinkContextPopupEvent linkEvent{ *this, std::wstring{ link->value }, link->range,
-                event };
-            emitEvent(linkEvent);
-            if (event.propagationStopped())
-                return;
-        }
 
         // The application gets first refusal, and a handler that stops the event has replaced
         // the menu outright.
@@ -743,17 +630,17 @@ namespace ClaFi::Controls
 
     bool TextBox::followsLinks(KeyModifiers modifiers) const
     {
-        return enabled(true) && (m_readOnly == ReadOnly::Yes || modifiers.ctrl);
+        return TextBoxBase::followsLinks(modifiers) && (m_readOnly == ReadOnly::Yes || modifiers.ctrl);
     }
 
-    std::optional<LinkHit> TextBox::linkAt(PointInForm pt) const
+    bool TextBox::clickFollowsLink(const ClickEvent& event) const
     {
-        const FormContext& formContext = this->formContext();
-        const FloatRect textBounds = this->textBounds(formContext, boundsInForm());
-        TextLayout& layout = syncedLayout(formContext, textBounds);
-        const FloatPoint origin = anchoredOrigin(textBounds, layout.calculatedDimensions(),
-            textAnchor());
-        return layout.linkAt(pt - origin);
+        return m_editProps.selRange.length == 0 && followsLinks(event.modifiers);
+    }
+
+    std::optional<LinkSpan> TextBox::contextLink(const ContextPopupEvent& event) const
+    {
+        return event.mousePos ? TextBoxBase::contextLink(event) : linkAtCaret();
     }
 
     std::optional<LinkSpan> TextBox::linkAtCaret() const
@@ -788,38 +675,7 @@ namespace ClaFi::Controls
                 return;
         }
 
-        // A handler can replace the text or take down the control during dispatch.
-        FormBase& source = form();
-        const AppContext& application = source.appContext();
-        LinkClickEvent linkEvent{ *this, std::wstring{ link.value }, stamp };
-        emitEvent(linkEvent);
-        if (!linkEvent.propagationStopped())
-            application.openLink(linkEvent.target, &source, stamp);
-    }
-
-    void TextBox::hoverLink(TextRange link)
-    {
-        if (link == m_layout.hoveredLink())
-            return;
-        m_layout.setHoveredLink(link);
-        invalidate();
-    }
-
-    void TextBox::pointAtLink(const std::optional<LinkHit>& hit)
-    {
-        const TextRange range = hit.has_value() ? hit->link.range : TextRange{};
-        if (hit.has_value())
-            m_pointedLink.pos = hit->pos;
-        if (range == m_pointedLink.range)
-            return;
-
-        m_pointedLink.range = range;
-        m_pointedLink.target = hit.has_value() ? std::wstring{ hit->link.value } : std::wstring{};
-        // **A tooltip is asked for once per hovered control**, and a link is a part of this one the
-        // pointer enters and leaves - so the box says when the part changed, the way a grid says
-        // its hovered cell did. A tooltip already up is asked again where it stands, and one that
-        // is not starts the wait.
-        Tooltip::hoveredZoneChanged();
+        TextBoxBase::followLink(link, stamp);
     }
 
     void TextBox::writeLinkTooltip(AdjustTooltipEvent& event) const
@@ -829,10 +685,9 @@ namespace ClaFi::Controls
         // in its looks through selectedText, without the newline that ends it, and cut as every
         // preview is.
         Text& out = event.text;
-        const std::wstring_view target = m_pointedLink.target;
-        const std::optional<TextRange> anchor = target.starts_with(L'#')
-            ? text().anchorRange(target.substr(1))
-            : std::nullopt;
+        const std::wstring_view target = pointedLinkTarget();
+        const std::optional<Url> url = target.starts_with(L'#') ? Url::Parse(target) : std::nullopt;
+        const std::optional<TextRange> anchor = url ? text().anchorRange(url->fragment()) : std::nullopt;
         if (anchor.has_value())
         {
             TextRange paragraph = textEngine().paragraphAt(text(), anchor->start);
@@ -849,30 +704,12 @@ namespace ClaFi::Controls
 
     // A plain click places the caret here, and nothing else on screen says a link can be followed
     // at all.
-    void TextBox::writeFollowLine(Text& out) const
+    void TextBox::appendLinkTooltip(Text& out) const
     {
         if (m_readOnly != ReadOnly::No)
             return;
         out << L'\n';
         out << ColoredText{ InkGrade::Muted, L"Ctrl+click to follow" };
-    }
-
-    FloatRect TextBox::pointedLinkLine() const
-    {
-        const FormContext& formContext = this->formContext();
-        const FloatRect textBounds = this->textBounds(formContext, boundsInForm());
-        TextLayout& layout = syncedLayout(formContext, textBounds);
-        const CaretHit hit{ m_pointedLink.pos, false };
-        const std::size_t start = std::max(m_pointedLink.range.start, layout.rowStart(hit));
-        const std::size_t end = std::min(m_pointedLink.range.end(), layout.rowEnd(hit));
-        const FloatRect first = caretRect(textBounds, { start, false });
-        const FloatRect last = caretRect(textBounds, { std::max(end, start + 1), true });
-        return {
-            std::min(first.left, last.left),
-            first.top,
-            std::max(first.left, last.left),
-            first.bottom,
-        };
     }
 
     TextBox::Place TextBox::currentPlace() const

@@ -30,7 +30,7 @@
 #define DECLARE_EVENT(eventType, handlerAlias, methodName) \
     template <typename F> using handlerAlias = OnEvent<F>;\
     EventConnection methodName(auto&& callback) {\
-        return connectEvent<eventType>(std::forward<decltype(callback)>(callback));\
+        return this->template connectEvent<eventType>(std::forward<decltype(callback)>(callback));\
     }
 
 

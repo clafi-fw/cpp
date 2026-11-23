@@ -45,6 +45,7 @@ namespace ClaFi
     using namespace Controls;
 
     static void openAppMenu(ActionClickEvent&);
+    static bool showAppMenu(FormBase&, Control* presenter, std::wstring_view settingsAnchor);
 
     // A command an application asked for, as it stated it.
     struct AppCommand
@@ -91,13 +92,19 @@ namespace ClaFi
 
         const bool registered = context.registerLinkHandler(linkScheme,
             [applicationLinks = std::move(linkHandler)](const Url& url, IForm* source, InputStamp stamp) {
-                if (url.authority() == L"settings" && url.path().empty()
-                    && url.query().empty() && url.fragment().empty())
+                if (url.authority() == L"settings" && url.path().empty() && url.query().empty())
                 {
                     if (!source)
                         return false;
-                    FormBase& form = static_cast<FormBase&>(*source);
-                    openAppMenuPage(form.rootForm(), AppMenu::k_settingsPageCaption, stamp);
+                    FormBase& form = static_cast<FormBase&>(*source).rootForm();
+                    if (!url.fragment().empty())
+                    {
+                        Action& action = appMenuAction();
+                        Control* presenter = action.presenterIn(form);
+                        return action.enabled(form, presenter)
+                            && showAppMenu(form, presenter, url.fragment());
+                    }
+                    openAppMenuPage(form, AppMenu::k_settingsPageCaption, stamp);
                     return true;
                 }
                 return applicationLinks && applicationLinks(url, source, stamp);
@@ -141,20 +148,26 @@ namespace ClaFi
 
     void openAppMenu(ActionClickEvent& event)
     {
-        event.form.closeActivePopup();
-        if (event.form.activePopup())
-            return;
+        showAppMenu(event.form, event.presenter, {});
+    }
 
-        Form menu{ event.form.createPopup<AppMenu>(event.presenter) };
+    bool showAppMenu(FormBase& form, Control* presenter, const std::wstring_view settingsAnchor)
+    {
+        form.closeActivePopup();
+        if (form.activePopup())
+            return false;
+
+        Form menu{ form.createPopup<AppMenu>(presenter, settingsAnchor) };
         // Under the button that opened it; a shortcut has none, so the menu takes the middle.
-        menu.setPlacement(event.presenter ? FormPlacement::BottomLeft : FormPlacement::Default);
+        menu.setPlacement(presenter ? FormPlacement::BottomLeft : FormPlacement::Default);
         menu.execute();
         menu.storePage();
         // **A theme tried on goes with the menu.** The theme picker wears a theme the pointer is
         // over without stating it, so what the config names is what the application is left in -
         // and where nothing was tried on this is the theme it already has, which crosses to
         // itself and shows nothing. See ThemePick
-        applyStoredTheme(event.form.appContext());
+        applyStoredTheme(form.appContext());
+        return true;
     }
 
     // addCommand
@@ -184,7 +197,7 @@ namespace ClaFi
 
     // AppMenu
 
-    AppMenu::AppMenu(const CreateParams& params)
+    AppMenu::AppMenu(const CreateParams& params, const std::wstring_view settingsAnchor)
         :
         // **A floor, not a size**: a stated preference stands **in place of** the measurement - see
         // Control::calculate - and the menu has to be measured, or the page control's work below
@@ -241,9 +254,13 @@ namespace ClaFi
 
         // The strip takes a button beside its tabs the way a title bar's does.
         addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::draw);
-        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(), Icons::GearIcon::draw);
+        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(settingsAnchor),
+            Icons::GearIcon::draw);
 
-        openStoredPage();
+        if (settingsAnchor.empty())
+            openStoredPage();
+        else
+            openPage(k_settingsPageCaption);
     }
 
     // **Asked of the menu**, because appContext() is a control's and openAppMenu is not one.

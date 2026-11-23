@@ -18,8 +18,8 @@ namespace SeeDocs_App::Ui
     export [[nodiscard]] ClaFi::Dom::Dt::Section createExternalEditorsSchema();
     // Fills the Settings page's External editors group: a command line each for C++ and Delphi.
     export void buildExternalEditors(ClaFi::AppMenuPage&);
-    // Whether Settings holds a command line for the language's sources.
-    export [[nodiscard]] bool hasEditorCommand(ClaFi::AppContext&, SourceLanguage);
+    // The command line Settings holds for the language's sources.
+    export [[nodiscard]] std::wstring editorCommand(ClaFi::AppContext&, SourceLanguage);
     // What the Settings page calls the language: C++ or Delphi.
     export [[nodiscard]] std::wstring_view editorLanguageName(SourceLanguage);
     // Connects a handler raised when the language's command line changes.
@@ -27,6 +27,7 @@ namespace SeeDocs_App::Ui
         SourceLanguage, std::function<void()> callback);
     // What the button that runs the command line for a source says.
     export constexpr std::wstring_view k_openInEditorCaption = L"Open in editor";
+    export [[nodiscard]] std::wstring editorSettingsLink(SourceLanguage);
     // What a notice about opening the file heads its message with: the caption and the file's name.
     export [[nodiscard]] std::wstring openInEditorTitle(const std::filesystem::path& file);
 

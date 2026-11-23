@@ -56,6 +56,12 @@ form. A handler may not start a message loop.
 **A hidden form is placed by show()**, so this event comes with the form on screen, and a handler
 may ignore a hidden form.
 
+## FormBase focusOnShow
+
+**Name a control in the form to receive focus the next time the form opens.** The form reveals
+its containing sections, scrolls the control into view, and focuses it. The normal focus entry
+applies if the control has been removed or cannot take focus.
+
 ## RootLoopEvent
 
 `sender()` is the form. **Raised on `AppContext::events()`** each time a form takes the root loop
@@ -592,6 +598,12 @@ body holds.
 **A tooltip stays up while it is still the answer.** Moving onto a child with no tooltip of its own
 keeps the tooltip of the control the child is in. One tooltip is in play at a time, in the form of
 the control pointed at.
+
+**A tooltip link takes input over its visible text.** Each wrapped part has its own hit rectangle.
+The rest of the window passes clicks through. Hovering anywhere over a linked tooltip keeps it
+visible, including over plain text and padding. On Wayland the pointer over a transparent area is
+known where the compositor reports it to the tooltip's owner or an ancestor. A link click
+dispatches from the source window.
 
 **A tooltip is placed where its control comes to rest.** For a control still gliding, the tooltip
 goes where the glide ends and waits there. Later it moves with the control when the form is laid out

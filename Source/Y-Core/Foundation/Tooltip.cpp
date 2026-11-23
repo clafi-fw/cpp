@@ -38,6 +38,17 @@ namespace ClaFi
                 : std::make_unique<OverTextForm>(ownerForm)
         },
         m_timer{ OnEvent{ [this](TimerEvent&) { showOrHide(nullptr); } } },
+        m_linkHandoffTimer{ OnEvent{ [this](TimerEvent&) {
+            if (s_current != this)
+                return;
+            if (Input::mouse().active() && m_form->hasLinkInput()
+                && m_form->window().pointerOver(m_form->geometry()))
+            {
+                m_linkHandoffTimer.start(MilliSeconds{ 50u });
+                return;
+            }
+            pointedControlChanged(false);
+        } } },
         m_overTextTimer{ OnEvent{ [this](TimerEvent&) { showOrHideOverText(); } } }
     {
     }
@@ -54,6 +65,7 @@ namespace ClaFi
     void Tooltip::destroyForm()
     {
         m_timer.stop();
+        m_linkHandoffTimer.stop();
         m_overTextTimer.stop();
         if (s_current == this)
             s_current = nullptr;
@@ -152,9 +164,15 @@ namespace ClaFi
         return Input::focusDelegate();
     }
 
-    void Tooltip::pointedControlChanged()
+    void Tooltip::pointedControlChanged(const bool allowLinkHandoff)
     {
         Control* pointed = pointedControl();
+        if (pointed && pointed->form().windowRole() == WindowRole::Tooltip)
+        {
+            if (s_current && &pointed->form() == s_current->m_form.get())
+                s_current->m_linkHandoffTimer.stop();
+            return;
+        }
 
         // **A message stands while what is pointed at is still the control it is about** - crossing
         // between two zones of one control is not the pointer going anywhere, and the window is
@@ -170,12 +188,22 @@ namespace ClaFi
         // A tooltip already up about the control pointed at stands as it is: the mouse takes over
         // with the pointer resting on the item the focus is on, or the pointer comes to a control
         // whose tooltip was put up without the wait.
-        if (pointed && control() == pointed)
-            return;
         // Nor does one about a control the pointer has gone further into: crossing children that
         // leave the answer to their container is not leaving the container.
-        if (pointed && answersFor(*pointed))
+        if (pointed && (control() == pointed || answersFor(*pointed)))
+        {
+            s_current->m_linkHandoffTimer.stop();
             return;
+        }
+
+        // The pointer can cross a gap where the hint passes input through.
+        if (allowLinkHandoff && Input::mouse().active() && s_current
+            && s_current->m_form->hasLinkInput())
+        {
+            if (!s_current->m_linkHandoffTimer.isActive())
+                s_current->m_linkHandoffTimer.start(MilliSeconds{ 250u });
+            return;
+        }
 
         // The user has gone to something else, so the window goes - and the message goes with
         // it rather than waiting to be pointed at again, which is what makes a message a thing
@@ -200,6 +228,7 @@ namespace ClaFi
         if (s_current)
         {
             s_current->m_timer.stop();
+            s_current->m_linkHandoffTimer.stop();
             s_current->m_form->setControl(nullptr);
         }
 
@@ -273,6 +302,7 @@ namespace ClaFi
             Tooltip& tooltip = *s_current;
             s_current = nullptr;
             tooltip.m_timer.stop();
+            tooltip.m_linkHandoffTimer.stop();
             result = tooltip.m_form->stillVisible();
             tooltip.m_form->setControl(nullptr);
         }
@@ -285,12 +315,12 @@ namespace ClaFi
         return result;
     }
 
-    void Tooltip::handleUserInput()
+    void Tooltip::handleUserInput(const FormBase* source)
     {
         // The overflown text is a tooltip as any other is: the user doing something takes it down.
         if (s_overTextCurrent)
             s_overTextCurrent->stopOverText();
-        if (!s_current)
+        if (!s_current || source == s_current->m_form.get())
             return;
         if (!s_current->m_form->hideOnUserInput())
             return;

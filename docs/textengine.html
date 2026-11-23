@@ -172,7 +172,7 @@
             <li><div class="nav-item-wrapper"><a href="#editing">Editing a layout in place</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
-                    <a href="#links">Links in a TextBox</a>
+                    <a href="#links">Links in Controls</a>
                     <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
@@ -345,7 +345,7 @@ that differs by phase. The text remains the owner's; the event adjusts what is l
 <tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first as the body and the handlers after it; the caption and key over that body belong to the presenter.</td></tr>
 <tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretPos()</code> or <code>caretLineColumn()</code>, and <code>selection()</code> answers what is selected.</td></tr>
 <tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
-<tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code></td><td><code>TextBox</code></td><td>A link was followed, or its tooltip is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
+<tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code>, <code>OnLinkContextPopup</code></td><td><code>WithTextLayout</code></td><td>A link was followed, its tooltip was requested, or its context menu was requested. See <a href="#links">Links in Controls</a>.</td></tr>
 </table>
 
 <p><strong>A tooltip is a caption and a body.</strong> The presenter that draws the control states
@@ -725,12 +725,19 @@ together only when their lengths agree: the text the layout holds, plus what the
 what it replaced. A control whose text arrives from its parent edits its own text, and the two are
 not the same text.</p>
 
-<h2 id="links">Links in a TextBox</h2>
+<h2 id="links">Links in Controls</h2>
 
-<p>A link and an anchor are written as the <a href="text.html#links">Writing ClaFi Text</a> manual
-describes, and what a link <em>does</em> depends on the control that holds the text: a
-<code>TextBox</code> follows it, and a label draws it and nothing more. The control underlines the
-link under the pointer when a click there would follow it.</p>
+<p>Write links and anchors as described in the <a href="text.html#links">Writing ClaFi Text</a>
+manual. <code>WithTextLayout</code> gives controls such as <code>LabelWithTextLayout</code> and
+<code>TextBox</code> link hit testing, hover styling, tooltips, and activation.
+A click on an enabled link raises <code>OnLinkClick</code>. The application context opens the
+target if the event continues. Link events identify their sender as a <code>RichControl</code>.</p>
+
+<p>Tooltip bodies can contain <code>LinkText</code>. Each visible link takes pointer input
+over the text it occupies, including across wrapped lines. Non-link text and padding pass clicks
+through. Hovering anywhere over a linked tooltip keeps it visible, including over plain text
+and padding. On Wayland, hover over transparent areas depends on the compositor reporting the
+pointer to the tooltip's owner or an ancestor.</p>
 
 <h3 id="links-following">Following a link in a TextBox</h3>
 
@@ -769,9 +776,11 @@ A grid cell or expander header also hands an unhandled link to the application c
 
 <p>An application declares its own scheme through <code>ApplicationProperties::linkScheme</code>.
 ClaFi reserves <code>://settings</code> on that scheme and opens the current application's
-Settings. For example, SeeDocs declares <code>seedocs</code>, so its Settings link is
-<code>seedocs://settings</code>. The optional <code>ApplicationProperties::linkHandler</code>
-receives the other destinations on the scheme.</p>
+Settings. A fragment focuses the named control, opening its containing sections and scrolling
+it into view. For example, <code>seedocs://settings#external-editor-cpp</code> focuses the C++
+editor command field in SeeDocs. Applications name a Settings control through
+<code>AppMenuPage::anchorOption</code>. The optional
+<code>ApplicationProperties::linkHandler</code> receives the other destinations on the scheme.</p>
 
 <pre><code>context.<span class="fn">registerLinkHandler</span>(<span class="st">L"guide"</span>, [&amp;](
     <span class="kw">const</span> <span class="tp">Url</span>&amp; url, <span class="tp">IForm</span>* source, <span class="tp">InputStamp</span> stamp) {

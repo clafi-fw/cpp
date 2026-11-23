@@ -593,9 +593,8 @@ bullet is made that way.</p>
 
 <p>A link is a run of text that points somewhere, and an anchor is a run of text a link can point
 to. Both are fields of a run, so every edit, copy and paste keeps them with the rest of the
-formatting. What a link <em>does</em> depends on the control holding the text: a
-<code>TextBox</code> follows it, and a label draws it and does nothing more - see
-<a href="textengine.html#links">Links in a TextBox</a>.</p>
+formatting. Controls using <code>WithTextLayout</code>, including <code>LabelWithTextLayout</code>
+and <code>TextBox</code>, can follow links. See <a href="textengine.html#links">Links in Controls</a>.</p>
 
 <h3 id="links-writing">Writing a link</h3>
 

@@ -1276,6 +1276,52 @@ namespace ClaFi
         return LinkHit{ link, pos };
     }
 
+    std::vector<FloatRect> TextLayout::linkRects()
+    {
+        ensureLayout();
+        std::vector<FloatRect> result;
+        const std::vector<LinkSpan>& links = m_bakedText.links();
+        if (links.empty())
+            return result;
+
+        auto firstLink = links.begin();
+        for (const ParagraphLayoutState& paragraph : m_paragraphs)
+        {
+            const std::size_t end = paragraph.textStart + paragraph.textLength;
+            while (firstLink != links.end() && firstLink->range.end() <= paragraph.textStart)
+                ++firstLink;
+            for (auto link = firstLink; link != links.end() && link->range.start < end; ++link)
+            {
+                const TextRange local = getLocalRange(link->range, paragraph.textStart, end);
+                for (std::size_t pos = local.start; pos < local.end(); ++pos)
+                {
+                    const FloatRect leading = charRect(paragraph, pos, false);
+                    const FloatRect trailing = charRect(paragraph, pos, true);
+                    FloatRect rect{ std::min(leading.left, trailing.left), leading.top,
+                        std::max(leading.left, trailing.left), leading.bottom };
+                    rect.offset(paragraph.bounds.topLeft());
+                    rect.bottom = std::min(rect.bottom, paragraph.bounds.bottom);
+                    if (rect.left >= rect.right || rect.top >= rect.bottom)
+                        continue;
+
+                    if (!result.empty())
+                    {
+                        FloatRect& last = result.back();
+                        if (last.top == rect.top && last.bottom == rect.bottom
+                            && rect.left <= last.right && rect.right >= last.left)
+                        {
+                            last.left = std::min(last.left, rect.left);
+                            last.right = std::max(last.right, rect.right);
+                            continue;
+                        }
+                    }
+                    result.push_back(rect);
+                }
+            }
+        }
+        return result;
+    }
+
     std::size_t TextLayout::rowStart(CaretHit caretHit)
     {
         ensureLayout();

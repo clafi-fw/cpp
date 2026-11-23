@@ -209,6 +209,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // default arrow over this client's windows and nothing else, an I-beam included. Every
         // current desktop offers it.
         void setCursor(CursorShape);
+        [[nodiscard]] std::optional<IntPoint> pointerPosition(const INativeEventSink&) const;
         // The shape for a window edge, as an xdg_toplevel resize edge; zero names the arrow.
         void setResizeCursor(std::uint32_t edges);
         // The shape being shown, as the protocol numbers it, and one put back after a wait.
@@ -810,6 +811,13 @@ namespace ClaFi::PlatformImplementation::Wayland
             break;
         }
         setCursorShape(shape);
+    }
+
+    std::optional<IntPoint> DisplayManager::pointerPosition(const INativeEventSink& sink) const
+    {
+        if (m_pointerFocus == &sink)
+            return m_pointerPos;
+        return std::nullopt;
     }
 
     void DisplayManager::setResizeCursor(std::uint32_t edges)

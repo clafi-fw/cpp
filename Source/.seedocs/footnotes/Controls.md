@@ -204,6 +204,9 @@ listener may do anything with the text or the box. A caret move alone raises Car
 
 ## LinkClickEvent
 
+**The sender is the control whose laid-out text holds the link.** WithTextLayout raises this
+event and hands the target to the application context if the event continues.
+
 **A link is live** in a read-only box, and with Ctrl held in one the user types into. A live link is
 underlined, shows the hand, and is followed by a press and release on it with nothing selected
 between. Return follows the live link the caret stands in, a caret at either end of it included.

@@ -1,21 +1,53 @@
 module;
+#include "../System/EventBindings.h"
 #include "../System/Switches.h"
 
 export module ClaFi.Core.Foundation :WithTextLayout;
 
 import :Control;
+import :Form;
+import :Input;
 import :RichControl;
 import :PaintEvent;
+import :Tooltip;
 
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    // A link in a control's text was followed. See Controls
+    export struct LinkClickEvent : public EventOf<RichControl>
+    {
+        LinkClickEvent(RichControl&, std::wstring target, InputStamp);
+        std::wstring target;
+        InputStamp stamp;
+    };
+
+    // The tooltip for the link under the pointer is being asked for. See Controls
+    export struct GetLinkTooltipEvent : public EventOf<RichControl>
+    {
+        GetLinkTooltipEvent(RichControl&, std::wstring_view target, TextRange, AdjustTooltipEvent&);
+        std::wstring_view target;
+        TextRange range;
+        AdjustTooltipEvent& tooltip;
+    };
+
+    // The context menu for a link is being asked for. See Controls
+    export struct LinkContextPopupEvent : public EventOf<RichControl>
+    {
+        LinkContextPopupEvent(RichControl&, std::wstring target, TextRange, ContextPopupEvent&);
+        const std::wstring target;
+        const TextRange range;
+        ContextPopupEvent& popup;
+    };
+
     // A control that shapes its own text in place, for a text that changes. See Control-Foundation
     export template <IsRichControl HostClass>
     class WithTextLayout : public HostClass
@@ -24,9 +56,14 @@ namespace ClaFi
         template <typename... Args>
         explicit WithTextLayout(const CreateParams&, Args&&...);
     public:
+        DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
+        DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
+        DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
+    public:
         // What a line set in one monospace font does with a character the font lacks.
         [[nodiscard]] CellFallback cellFallback() const { return m_cellFallback; }
         void setCellFallback(CellFallback);
+        [[nodiscard]] CursorShape cursor() const override;
     protected:
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
@@ -41,6 +78,23 @@ namespace ClaFi
         void setBalancedWrapStart(std::size_t);
         // Tells the layout the control's text at its present revision - the whole of it.
         virtual void takeText() const;
+        void mouseMove(MouseMoveEvent&) override;
+        void hoverLeave() override;
+        void click(ClickEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
+        [[nodiscard]] virtual bool followsLinks(KeyModifiers) const;
+        [[nodiscard]] virtual bool clickFollowsLink(const ClickEvent&) const;
+        [[nodiscard]] virtual std::optional<LinkSpan> contextLink(const ContextPopupEvent&) const;
+        virtual void followLink(const LinkSpan&, InputStamp);
+        virtual void writeLinkTooltip(AdjustTooltipEvent&) const;
+        virtual void appendLinkTooltip(Text&) const {}
+        [[nodiscard]] std::optional<LinkHit> linkAt(PointInForm) const;
+        [[nodiscard]] std::vector<FloatRect> linkRectsInForm() const;
+        [[nodiscard]] std::wstring_view pointedLinkTarget() const { return m_pointedLink.target; }
+        void dispatchLink(std::wstring target, FormBase& source, InputStamp);
+        void setLinksEnabled(bool);
+        void clearLinkHover();
     protected:
         // Mutable because measuring is a const question, and the layout is the answer's working.
         mutable TextLayout m_layout;
@@ -63,11 +117,20 @@ namespace ClaFi
             std::size_t paragraphVisibilityRevision{ 0 };
             bool operator==(const Measurement&) const = default;
         };
+        struct PointedLink
+        {
+            TextRange range{};
+            std::wstring target{};
+            std::size_t pos{ 0 };
+        };
     private:
         // The text the layout draws: the control's own, or the answer a gather composed around it.
         [[nodiscard]] const ControlText& layoutSource() const;
         // What a gather answered: the control's own text, or a composed one kept beside it.
         void takeAnswer(const Text& answer);
+        void hoverLink(TextRange);
+        void pointAtLink(const std::optional<LinkHit>&);
+        [[nodiscard]] FloatRect pointedLinkLine() const;
     private:
         mutable TextStamp m_layoutStamp{}; // the revision of the source the layout holds
         // An answer composed around the control's text - a parent's or a handler's words - kept
@@ -83,6 +146,8 @@ namespace ClaFi
         mutable std::uint64_t m_layoutGeneration{ 0 };
         CellFallback m_cellFallback{ CellFallback::Native };
         std::optional<std::size_t> m_balancedWrapStart{};
+        PointedLink m_pointedLink{};
+        bool m_linksEnabled{ true };
     };
 
 
@@ -108,6 +173,12 @@ namespace ClaFi
 
         m_cellFallback = value;
         this->invalidateFormAlign();
+    }
+
+    template <IsRichControl HostClass>
+    CursorShape WithTextLayout<HostClass>::cursor() const
+    {
+        return m_layout.hoveredLink().length ? CursorShape::Hand : HostClass::cursor();
     }
 
     template <IsRichControl HostClass>
@@ -234,6 +305,162 @@ namespace ClaFi
     }
 
     template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::mouseMove(MouseMoveEvent& event)
+    {
+        HostClass::mouseMove(event);
+        const std::optional<LinkHit> hit = linkAt(event.posOnForm);
+        pointAtLink(hit);
+        hoverLink(hit && followsLinks(Platform::keyModifiers()) ? hit->link.range : TextRange{});
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::hoverLeave()
+    {
+        HostClass::hoverLeave();
+        clearLinkHover();
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::click(ClickEvent& event)
+    {
+        if (Input::mouse().active() && clickFollowsLink(event))
+        {
+            if (const std::optional<LinkHit> hit = linkAt(event.clickPos()))
+            {
+                event.stopPropagation();
+                followLink(hit->link, event.stamp);
+                return;
+            }
+        }
+        HostClass::click(event);
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::nestedAdjustTooltip(AdjustTooltipEvent& event)
+    {
+        if (!m_pointedLink.range.length)
+        {
+            HostClass::nestedAdjustTooltip(event);
+            return;
+        }
+
+        event.placement = FormPlacement::Top;
+        event.anchorRect = pointedLinkLine();
+        GetLinkTooltipEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
+        this->emitEvent(linkEvent);
+        if (event.text.empty())
+            writeLinkTooltip(event);
+        appendLinkTooltip(event.text);
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::nestedContextPopup(ContextPopupEvent& event)
+    {
+        if (const std::optional<LinkSpan> link = contextLink(event))
+        {
+            LinkContextPopupEvent linkEvent{ *this, std::wstring{ link->value }, link->range, event };
+            this->emitEvent(linkEvent);
+            if (event.propagationStopped())
+                return;
+        }
+        HostClass::nestedContextPopup(event);
+    }
+
+    template <IsRichControl HostClass>
+    bool WithTextLayout<HostClass>::followsLinks(KeyModifiers) const
+    {
+        return m_linksEnabled && this->enabled(true);
+    }
+
+    template <IsRichControl HostClass>
+    bool WithTextLayout<HostClass>::clickFollowsLink(const ClickEvent& event) const
+    {
+        return followsLinks(event.modifiers);
+    }
+
+    template <IsRichControl HostClass>
+    std::optional<LinkSpan> WithTextLayout<HostClass>::contextLink(const ContextPopupEvent& event) const
+    {
+        if (event.mousePos)
+            if (const std::optional<LinkHit> hit = linkAt(*event.mousePos))
+                return hit->link;
+        return std::nullopt;
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::followLink(const LinkSpan& link, const InputStamp stamp)
+    {
+        dispatchLink(std::wstring{ link.value }, this->form(), stamp);
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::writeLinkTooltip(AdjustTooltipEvent& event) const
+    {
+        event.text << m_pointedLink.target;
+    }
+
+    template <IsRichControl HostClass>
+    std::optional<LinkHit> WithTextLayout<HostClass>::linkAt(const PointInForm point) const
+    {
+        if (!m_linksEnabled)
+            return std::nullopt;
+        const FormContext& context = this->formContext();
+        const FloatRect bounds = this->textBounds(context, this->boundsInForm());
+        if (!FloatRect::intersection(bounds, this->visibleRectInForm()).contains(point))
+            return std::nullopt;
+        TextLayout& layout = syncedLayout(context, bounds);
+        const FloatPoint origin = anchoredOrigin(bounds, layout.calculatedDimensions(), this->textAnchor());
+        return layout.linkAt(point - origin);
+    }
+
+    template <IsRichControl HostClass>
+    std::vector<FloatRect> WithTextLayout<HostClass>::linkRectsInForm() const
+    {
+        std::vector<FloatRect> rects;
+        if (!m_linksEnabled)
+            return rects;
+        const FormContext& context = this->formContext();
+        const FloatRect bounds = this->textBounds(context, this->boundsInForm());
+        const FloatRect clip = FloatRect::intersection(bounds, this->visibleRectInForm());
+        TextLayout& layout = syncedLayout(context, bounds);
+        const FloatPoint origin = anchoredOrigin(bounds, layout.calculatedDimensions(), this->textAnchor());
+        for (FloatRect rect : layout.linkRects())
+        {
+            rect.offset(origin);
+            if (rect.intersectWith(clip))
+                rects.push_back(rect);
+        }
+        return rects;
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::dispatchLink(std::wstring target, FormBase& source,
+        const InputStamp stamp)
+    {
+        // The handler can change the text or take down the control.
+        const AppContext& application = source.appContext();
+        LinkClickEvent event{ *this, std::move(target), stamp };
+        this->emitEvent(event);
+        if (!event.propagationStopped())
+            application.openLink(event.target, &source, stamp);
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::setLinksEnabled(const bool value)
+    {
+        m_linksEnabled = value;
+        if (!value)
+            clearLinkHover();
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::clearLinkHover()
+    {
+        m_pointedLink = {};
+        hoverLink({});
+    }
+
+    template <IsRichControl HostClass>
     const ControlText& WithTextLayout<HostClass>::layoutSource() const
     {
         return m_answerComposed ? m_composedAnswer : this->text();
@@ -253,6 +480,48 @@ namespace ClaFi
         if (!m_answerComposed || m_composedAnswer != answer)
             m_composedAnswer = answer;
         m_answerComposed = true;
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::hoverLink(const TextRange link)
+    {
+        if (link == m_layout.hoveredLink())
+            return;
+        m_layout.setHoveredLink(link);
+        this->invalidate();
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::pointAtLink(const std::optional<LinkHit>& hit)
+    {
+        const TextRange range = hit ? hit->link.range : TextRange{};
+        if (hit)
+            m_pointedLink.pos = hit->pos;
+        const std::wstring_view target = hit ? hit->link.value : std::wstring_view{};
+        if (range == m_pointedLink.range && target == m_pointedLink.target)
+            return;
+
+        m_pointedLink.range = range;
+        m_pointedLink.target = target;
+        Tooltip::hoveredZoneChanged();
+    }
+
+    template <IsRichControl HostClass>
+    FloatRect WithTextLayout<HostClass>::pointedLinkLine() const
+    {
+        const FormContext& context = this->formContext();
+        const FloatRect bounds = this->textBounds(context, this->boundsInForm());
+        TextLayout& layout = syncedLayout(context, bounds);
+        const FloatPoint origin = anchoredOrigin(bounds, layout.calculatedDimensions(), this->textAnchor());
+        const CaretHit hit{ m_pointedLink.pos, false };
+        const std::size_t start = std::max(m_pointedLink.range.start, layout.rowStart(hit));
+        const std::size_t end = std::min(m_pointedLink.range.end(), layout.rowEnd(hit));
+        const FloatRect first = layout.getCaretRect({ start, false });
+        const FloatRect last = layout.getCaretRect({ std::max(end, start + 1), true });
+        FloatRect rect{ std::min(first.left, last.left), first.top,
+            std::max(first.left, last.left), first.bottom };
+        rect.offset(origin);
+        return rect;
     }
 
 }

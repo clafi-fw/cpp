@@ -60,19 +60,26 @@ the app's declared link scheme.
 ## ApplicationProperties
 
 **The app may declare a link scheme.** Set `linkScheme` to a scheme name without its colon.
-The framework opens Settings for `scheme://settings`. The optional `linkHandler` answers the
-other destinations on that scheme.
+The framework opens Settings for `scheme://settings`. A fragment names the control to focus,
+for example `scheme://settings#graphics-backend`. Settings opens the control's containing
+sections and scrolls it into view. An unavailable target leaves Settings at its usual starting
+position. The optional `linkHandler` answers other destinations on that scheme.
 
-## OptionsPage
+## AppMenuPage
 
 The page every backstage page is built on: a vertical Stack of sections, each an expander whose
 caption heads a column of options. addGroup adds a section and returns its column. Collapsing a
 caption hides its options, and the caption is drawn as a divider with no surface under the options.
 
-## OptionsPage addSection
+## AppMenuPage addSection
 
 **Hide the section, not its options.** A section draws its caption and line itself, so one whose
 options are all hidden still shows them.
+
+## AppMenuPage anchorOption
+
+**An anchor names a control on the Settings page.** Register it after adding the control, and use
+its name as the fragment in a Settings URL. Give each anchor a unique name within the page.
 
 ## SettingsPage
 

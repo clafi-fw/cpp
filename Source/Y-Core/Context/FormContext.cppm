@@ -334,6 +334,9 @@ namespace ClaFi
         [[nodiscard]] virtual bool standsAbove() const = 0;
         virtual ColorByte alpha() = 0;
         virtual void setAlpha(ColorByte value) = 0;
+        // Which rectangles of a tooltip take pointer input, in form pixels.
+        virtual void setTooltipLinkRects(std::span<const FloatRect>) {}
+        [[nodiscard]] virtual bool pointerOver(const FloatRect&) const { return false; }
         // **Hands the window to the system to be dragged**, on the press that asked for it. The
         // stamp is the **press's** and not the move's: a display server that authorises this weighs
         // the request against the event that started the gesture.

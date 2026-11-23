@@ -40,6 +40,7 @@ namespace ClaFi
         // Held to Tooltip::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         ScaledSize calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
+        void followLink(const LinkSpan&, InputStamp) override;
     private:
         // The width the words this tooltip repeats were broken at, and zero for a tooltip repeating
         // none - see OverTextForm::setAnswer.
@@ -51,27 +52,32 @@ namespace ClaFi
     {
         friend Tooltip;
     public:
-        explicit TooltipWindow(FormBase& ownerForm);
+        explicit TooltipWindow(FormBase& ownerForm, bool linkInput = false);
         ~TooltipWindow() override;
         [[nodiscard]] Control* control() { return m_control; }
         void setControl(Control* control);
         void startAlphaAnimation();
         [[nodiscard]] bool stillVisible() const;
         [[nodiscard]] bool hideOnUserInput() const { return m_hideOnUserInput; }
+        [[nodiscard]] bool hasLinkInput() const { return !m_linkRects.empty(); }
     protected:
         void setBreakWidth(const float value) { content().m_breakWidth = value; }
         void setBalancedWrapStart(std::size_t position) { content().setBalancedWrapStart(position); }
         void setHideOnUserInput(const bool value) { m_hideOnUserInput = value; }
         void updateVisibility() override;
+        HitTest wnd_hitTest(PointInForm) override;
         // The control the tooltip is about, which the window goes along with as a popup does.
         [[nodiscard]] const Control* placementTarget() const override { return m_control; }
         // Where the control comes to rest, which is where a tooltip about it is placed.
         [[nodiscard]] FloatRect placementTargetBounds(const Control&) const override;
     private:
+        void updateLinkInput();
+    private:
         static constexpr ColorByte m_alpha = 255; // a bit of transparency looks good only when bg is blurred
     private:
         bool m_hideOnUserInput{ true };
         Control* m_control{ nullptr };
+        std::vector<FloatRect> m_linkRects{};
     };
 
     // The window a caption and a body are shown in, and the only one the tooltip event reaches.
@@ -121,13 +127,22 @@ namespace ClaFi
         return WithTextLayout<FormControlBase>::measureText(event, maxDimensions, text);
     }
 
+    void TooltipLabel::followLink(const LinkSpan& link, const InputStamp stamp)
+    {
+        if (FormBase* owner = form().popupTargetForm())
+        {
+            std::wstring target{ link.value };
+            Tooltip::stopAndHide();
+            dispatchLink(std::move(target), *owner, stamp);
+        }
+    }
+
     // TooltipWindow
 
-    TooltipWindow::TooltipWindow(FormBase& ownerForm)
+    TooltipWindow::TooltipWindow(FormBase& ownerForm, const bool linkInput)
         :
         Form{
             ownerForm.appContext(),
-            // The pointer goes through the window to whatever is behind it.
             WindowRole::Tooltip,
             // **The form it stands over, named directly.** Every other popup names the **control**
             // it was opened on and its form is read off that; this one is a member of the form it
@@ -135,12 +150,15 @@ namespace ClaFi
             // window to that form is what keeps it above that form - a menu's tooltip over the
             // menu - and is why the window carries no always-on-top bit of its own.
             ownerForm,
-            // And the label under it is not pointed at either. Said in its own right rather than
-            // taken from the window: the two are separate answers, and this one is the label's.
-            ClickTarget::Parent,
+            linkInput ? ClickTarget::Self : ClickTarget::Parent,
+            MouseFocus::Keep,
             UiElement::Tooltip
         }
     {
+        content().setLinksEnabled(linkInput);
+        onAligned([this](FormAlignedEvent&) {
+            updateLinkInput();
+        });
         window().setAlpha(0);
         // A tooltip is sized by what is in it, and its text changes under it: the same control
         // answers differently as its state moves, and a control it never left can hand it a
@@ -188,8 +206,17 @@ namespace ClaFi
         // nope! Form::updateVisibility();
         if (visible())
             updatePlacement();
+        updateLinkInput();
         startAlphaAnimation();
         window().show();
+    }
+
+    HitTest TooltipWindow::wnd_hitTest(const PointInForm point)
+    {
+        const bool linkHit = std::ranges::any_of(m_linkRects, [point](const FloatRect& rect) {
+            return rect.contains(point.x, point.y);
+        });
+        return linkHit ? HitTest::Client : HitTest::Transparent;
     }
 
     FloatRect TooltipWindow::placementTargetBounds(const Control& target) const
@@ -200,11 +227,20 @@ namespace ClaFi
         return bounds;
     }
 
+    void TooltipWindow::updateLinkInput()
+    {
+        if (visible() && m_control)
+            m_linkRects = content().linkRectsInForm();
+        else
+            m_linkRects.clear();
+        window().setTooltipLinkRects(m_linkRects);
+    }
+
     // TooltipForm
 
     TooltipForm::TooltipForm(FormBase& ownerForm)
         :
-        TooltipWindow{ ownerForm }
+        TooltipWindow{ ownerForm, true }
     {
     }
 

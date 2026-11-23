@@ -295,6 +295,27 @@ namespace ClaFi
         );
     }
 
+    void AppMenuPage::anchorOption(const std::wstring_view anchor, Control& option)
+    {
+        if (anchor.empty() || !containsNested(option))
+            noReach("anchorOption: a Settings anchor needs a name and an option on the page");
+        m_anchoredOptions.try_emplace(std::wstring{ anchor }, &option);
+    }
+
+    Control* AppMenuPage::optionAtAnchor(const std::wstring_view anchor) const
+    {
+        const auto found = m_anchoredOptions.find(anchor);
+        return found == m_anchoredOptions.end() ? nullptr : found->second;
+    }
+
+    void AppMenuPage::nestedControlDeleted(Control* control)
+    {
+        StackPanel::nestedControlDeleted(control);
+        std::erase_if(m_anchoredOptions, [control](const auto& entry) {
+            return entry.second == control;
+        });
+    }
+
     // ScaleSlider
 
     // **Before the base**, which sends the position to the point under the pointer and raises the
@@ -334,7 +355,7 @@ namespace ClaFi
     {
     }
 
-    SettingsPage::SettingsPage(const CreateParams& params)
+    SettingsPage::SettingsPage(const CreateParams& params, const std::wstring_view optionAnchor)
         :
         // The room around the options is the column's own, and the divider is what parts it from
         // the foot, so the panel between them adds nothing of its own.
@@ -565,10 +586,15 @@ namespace ClaFi
         // backend has one way to draw, and the section is what draws the caption and its line.
         if (!appContext().gpuAvailable())
             m_performanceSection.setVisible(false);
+        else
+            m_options.anchorOption(L"graphics-backend",
+                appContext().usingGpu() ? m_gpuBackend : m_cpuBackend);
 
         // Under the common options, so those stand in one place in every application.
         for (const AppMenuPageBuilder& build : mutableAppSettings())
             build(m_options);
+        if (Control* option = m_options.optionAtAnchor(optionAnchor))
+            form().focusOnShow(*option);
 
         // **The folder is the permission.** Nothing is stored until one exists, so the check reads
         // the folder rather than a value of its own - see AppContext::configFolderExists.
