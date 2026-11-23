@@ -2,6 +2,7 @@ module Themes_App.Main;
 
 import Themes_App.ThemeToCppCode;
 import Themes_App.Consts;
+import Themes_App.ThemesBrowser;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.App.WindowApplication;
@@ -9,11 +10,15 @@ import ClaFi.App.ThemeIcon;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
 
@@ -32,7 +37,18 @@ namespace Themes_App
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"Themes-v"
             },
-            .elements = k_appElements
+            .elements = k_appElements,
+            .linkScheme = k_themesLinkScheme,
+            .linkHandler = [](const Url& url, IForm* source, InputStamp) {
+                if (!source || url.authority() || !url.query().empty())
+                {
+                    return false;
+                }
+                FormBase& root = static_cast<FormBase&>(*source).rootForm();
+                return &root == root.appContext().rootLoopForm()
+                    && static_cast<Form<ThemesBrowser>&>(root).content()
+                        .openElement(url.path(), url.fragment());
+            }
         };
     }
 

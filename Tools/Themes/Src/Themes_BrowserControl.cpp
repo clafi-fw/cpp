@@ -14,10 +14,12 @@ import ClaFi.Browser.Settings;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
 
@@ -32,6 +34,41 @@ namespace Themes_App
         for (BrowserTab& tab : tabs())
             if (tab.page())
                 ThemesBrowser::saveViewState(tab);
+    }
+
+    bool ThemesBrowser::openElement(const std::wstring_view themePath, const std::wstring_view name)
+    {
+        if (!themePath.starts_with(L'/') || name.empty())
+        {
+            return false;
+        }
+
+        const BrowserPage* page = currentPage();
+        if (!page)
+        {
+            return false;
+        }
+        if (page->tag().value == Documents::k_documentPageTag
+            && page->pageData().path() == themePath)
+        {
+            if (!static_cast<const ThemePage&>(*page).tabTheme().styles.of(name))
+            {
+                return false;
+            }
+            goTo(Url{ themePath, styleAnchor(name) });
+            return true;
+        }
+
+        auto& manager = static_cast<ThemesManager&>(folder());
+        static_cast<void>(manager.userThemes());
+        const AppTheme* theme = manager.themeByName(themePath.substr(1));
+        if (!theme || !theme->styles.of(name))
+        {
+            return false;
+        }
+
+        goToLater(Url{ themePath, styleAnchor(name) });
+        return true;
     }
 
     void ThemesBrowser::fetchSubItems(PageData& data)

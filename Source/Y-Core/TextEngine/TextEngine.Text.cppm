@@ -316,6 +316,7 @@ namespace ClaFi
         [[nodiscard]] std::optional<LinkSpan> linkAtCaret(std::size_t caretPos) const;
         // The target of the first link in the text, or nothing where it holds none.
         [[nodiscard]] std::optional<std::wstring_view> firstLink() const;
+        [[nodiscard]] std::optional<LinkSpan> firstLinkSpan() const;
 
         // Words put in where they go, in the style there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const std::wstring_view = {});

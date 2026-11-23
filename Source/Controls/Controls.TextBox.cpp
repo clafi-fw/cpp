@@ -684,7 +684,6 @@ namespace ClaFi::Controls
         // heading - and what the reader wants before jumping is what stands around them. Taken
         // in its looks through selectedText, without the newline that ends it, and cut as every
         // preview is.
-        Text& out = event.text;
         const std::wstring_view target = pointedLinkTarget();
         const std::optional<Url> url = target.starts_with(L'#') ? Url::Parse(target) : std::nullopt;
         const std::optional<TextRange> anchor = url ? text().anchorRange(url->fragment()) : std::nullopt;
@@ -695,10 +694,6 @@ namespace ClaFi::Controls
             if (paragraph.length && plain[paragraph.end() - 1] == L'\n')
                 --paragraph.length;
             event.writePreview(text().selectedText(paragraph));
-        }
-        else
-        {
-            out << target;
         }
     }
 

@@ -5,6 +5,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
@@ -21,15 +22,21 @@ namespace ClaFi::Controls::Grids
         const Column& column;
     };
 
-    class CellEventBase : public Event
+    class CellEventLocation
     {
     public:
-        CellEventBase(const RowBase&, const Column&);
-        Cell cell() const { return m_cell; }
-        const RowBase& row() const { return m_cell.row; }
-        const Column& column() const { return m_cell.column; }
+        CellEventLocation(const RowBase&, const Column&);
+        [[nodiscard]] Cell cell() const { return m_cell; }
+        [[nodiscard]] const RowBase& row() const { return m_cell.row; }
+        [[nodiscard]] const Column& column() const { return m_cell.column; }
     private:
         const Cell m_cell;
+    };
+
+    class CellEventBase : public Event, public CellEventLocation
+    {
+    public:
+        using CellEventLocation::CellEventLocation;
     };
 
     // The text one cell is about to be written with.
@@ -72,40 +79,39 @@ namespace ClaFi::Controls::Grids
         bool hasContent{ true };
     };
 
-    // The tooltip for one cell, asked while the pointer rests on it. See Grids
+    // The tooltip for a cell where the pointer is outside linked text. See Grids
     export class GetCellTooltipEvent : public CellEventBase
     {
     public:
-        GetCellTooltipEvent(const RowBase&, const Column&, AdjustTooltipEvent&,
-            std::wstring_view link);
+        GetCellTooltipEvent(const RowBase&, const Column&, AdjustTooltipEvent&);
+    public:
         [[nodiscard]] AdjustTooltipEvent& tooltip() { return m_tooltip; }
         [[nodiscard]] Text& text() { return m_tooltip.text; }
-        // What the link under the pointer names, as the cell's text states it; empty off a link.
-        [[nodiscard]] std::wstring_view link() const { return m_link; }
     private:
         AdjustTooltipEvent& m_tooltip;
-        std::wstring_view m_link;
     };
 
-    // A link in one cell's text was clicked. It goes to the row, then to the grid. See Grids
-    export class CellLinkClickEvent : public CellEventBase
+    // A link in one cell was followed. See Grids
+    export class CellLinkClickEvent : public LinkClickEvent, public CellEventLocation
     {
     public:
-        CellLinkClickEvent(const RowBase&, const Column&, std::wstring target, InputStamp);
-    public:
-        const std::wstring target; // what the link was written with
-        const InputStamp stamp;    // the click the link answers
+        CellLinkClickEvent(RowBase&, const Column&, std::wstring target, InputStamp);
     };
 
-    // The menu for a link in one cell's text is being asked for; the row, then the grid. See Grids
-    export class CellLinkContextPopupEvent : public CellEventBase
+    // The tooltip for a link in one cell is being asked for. See Grids
+    export class GetCellLinkTooltipEvent : public GetLinkTooltipEvent, public CellEventLocation
     {
     public:
-        CellLinkContextPopupEvent(const RowBase&, const Column&, std::wstring target,
+        GetCellLinkTooltipEvent(RowBase&, const Column&, std::wstring_view target, TextRange,
+            AdjustTooltipEvent&, FloatRect anchorRect);
+    };
+
+    // The menu for a link in one cell is being asked for. See Grids
+    export class CellLinkContextPopupEvent : public LinkContextPopupEvent, public CellEventLocation
+    {
+    public:
+        CellLinkContextPopupEvent(RowBase&, const Column&, std::wstring target, TextRange,
             ContextPopupEvent&);
-    public:
-        const std::wstring target;   // what the link was written with
-        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
     };
 
     // Stored cell callbacks, not construction properties. A handler passed when a grid or a
@@ -126,11 +132,10 @@ namespace ClaFi::Controls::Grids
     //-------------------------------------------------------------------------
 
 
-    // CellEventBase
+    // CellEventLocation
 
-    CellEventBase::CellEventBase(const RowBase& row, const Column& column)
+    CellEventLocation::CellEventLocation(const RowBase& row, const Column& column)
         :
-        Event{},
         m_cell{ row, column }
     {
     }
@@ -156,33 +161,10 @@ namespace ClaFi::Controls::Grids
     // GetCellTooltipEvent
 
     GetCellTooltipEvent::GetCellTooltipEvent(const RowBase& row, const Column& column,
-        AdjustTooltipEvent& tooltip, const std::wstring_view link)
+        AdjustTooltipEvent& tooltip)
         :
         CellEventBase{ row, column },
-        m_tooltip{ tooltip },
-        m_link{ link }
-    {
-    }
-
-    // CellLinkClickEvent
-
-    CellLinkClickEvent::CellLinkClickEvent(const RowBase& row, const Column& column,
-        std::wstring linkTarget, const InputStamp inputStamp)
-        :
-        CellEventBase{ row, column },
-        target{ std::move(linkTarget) },
-        stamp{ inputStamp }
-    {
-    }
-
-    // CellLinkContextPopupEvent
-
-    CellLinkContextPopupEvent::CellLinkContextPopupEvent(const RowBase& row, const Column& column,
-        std::wstring linkTarget, ContextPopupEvent& popup)
-        :
-        CellEventBase{ row, column },
-        target{ std::move(linkTarget) },
-        popup{ popup }
+        m_tooltip{ tooltip }
     {
     }
 

@@ -106,6 +106,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents.Utils.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Documents\\Documents_Facade.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CheckBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.ColorSlider.cppm" />

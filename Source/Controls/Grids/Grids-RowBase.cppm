@@ -70,11 +70,17 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(GetCellEditorTextEvent, OnGetCellEditorText, onGetCellEditorText)
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
-        // The tooltip for one cell, asked while the pointer rests on it. See Grids
+        // The tooltip for a cell where the pointer is outside linked text. See Grids
         DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
-        // A link in one cell's text was clicked. See Grids
+        // An activated link reaches the row and then the grid. See Grids#celllinkclickevent
+        DECLARE_EVENT(CellLinkClickEvent, OnLinkClick, onLinkClick)
+        // The hovered link asks the row and grid for a tooltip. See Grids#getcelllinktooltipevent
+        DECLARE_EVENT(GetCellLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
+        // A cell link offers its menu before the row does. See Grids#celllinkcontextpopupevent
+        DECLARE_EVENT(CellLinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
+        // Shares the onLinkClick event. See Grids#celllinkclickevent
         DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
-        // The menu for a link in one cell's text is being asked for. See Grids
+        // Shares the onLinkContextPopup event. See Grids#celllinkcontextpopupevent
         DECLARE_EVENT(CellLinkContextPopupEvent, OnCellLinkContextPopup, onCellLinkContextPopup)
     public:
         std::vector<float>& calculatedHeight() { return m_calculatedHeight; }
@@ -119,6 +125,7 @@ namespace ClaFi::Controls::Grids
         virtual void getCellEditorText(GetCellEditorTextEvent&);
         // A link clicked in one cell, told to this row's listeners and then to the grid.
         virtual void cellLinkClick(CellLinkClickEvent&);
+        virtual void getLinkTooltip(GetCellLinkTooltipEvent&);
         // The menu for a link in one cell, asked of this row's listeners and then of the grid.
         virtual void cellLinkContextPopup(CellLinkContextPopupEvent&);
         // The other end of getCellText: an in-place edit of this cell is being committed, and
@@ -208,6 +215,7 @@ namespace ClaFi::Controls::Grids
         {
             const Column* column;
             std::wstring target;
+            TextRange range;
         };
         // A link found in a cell's text - what it was written with, and where it stands in it.
         struct CellLink

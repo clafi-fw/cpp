@@ -33,6 +33,8 @@ namespace Themes_App
         template<typename... Args>
         explicit ThemesBrowser(const CreateParams&, Args&&...);
         ~ThemesBrowser() override;
+    public:
+        bool openElement(std::wstring_view themePath, std::wstring_view name);
     protected:
         void fetchSubItems(PageData&) override;
         void drawTabIcon(BrowserTab&, DrawIconEvent&) override;

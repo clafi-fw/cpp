@@ -187,6 +187,11 @@ focus stays in that work, and the keys still reach the button.
 **Tool buttons used as a list's items state MouseFocus::Self**, as TreeItem does: a focus scope
 makes current and selects only the items a mouse press focuses.
 
+## LinkButton
+
+**Give the button ordinary text.** The caption uses the theme's link ink and underlines on hover.
+The default ClickTarget::Self gives the button its own hover state and click target.
+
 ## AppButton
 
 **It needs no wiring** - it presents appMenuAction, so a click opens the AppMenu. Only the icon
@@ -204,29 +209,32 @@ listener may do anything with the text or the box. A caret move alone raises Car
 
 ## LinkClickEvent
 
-**The sender is the control whose laid-out text holds the link.** WithTextLayout raises this
-event and hands the target to the application context if the event continues.
+**The sender is the control whose displayed text holds the link.** A handler that opens the link
+calls stopPropagation(). A browser can handle a relative target against the page that contains
+the link. The dispatch method takes the source form and a callback that emits the event.
+An unstopped target with a scheme reaches the application's registered handler with the input
+stamp. For cells, see CellLinkClickEvent.
 
-**A link is live** in a read-only box, and with Ctrl held in one the user types into. A live link is
-underlined, shows the hand, and is followed by a press and release on it with nothing selected
-between. Return follows the live link the caret stands in, a caret at either end of it included.
+**In a TextBox, a link is live** in a read-only box, and with Ctrl held in one the user types into.
+A live link is underlined, shows the hand, and is followed by a press and release on it with nothing
+selected between. Return follows the live link at the caret, including either end of the link.
 
-- `#name` the box's text holds - the box goes there itself and raises nothing. See
-  TextBox::goToAnchor.
-- Any other target raises the event, and a handler that answers it stops it.
-- What no handler stops goes to the application's scheme registry, with the source form and
-  input stamp. See AppContext openLink.
+- A fragment `#name` in the box's own text is relative to that text. The box resolves it itself.
+  See TextBox::goToAnchor.
+- Other targets raise the event. A containing browser can resolve a fragment the box cannot find.
+- An unstopped target with a scheme reaches the scheme handler. See AppContext openLink.
 
 The click goes no further up.
 
 ## GetLinkTooltipEvent
 
-**Every link has a tooltip, live or not**, and it replaces the box's own while the pointer is on the
-link. It shows above the pointer's line, from where the link starts - FormPlacement::Top - and
-drops under the line where the screen has no room above.
+**The tooltip shows the link's target by default.** A handler can set tooltip.text to supply a
+body. The event carries the text range and has already set the tooltip to open above the anchor
+rectangle supplied by the control. When the hovered link changes, the control calls
+Tooltip::hoveredZoneChanged() to refresh the answer.
 
-**A handler writes the tooltip's words**, its placement and anchor already set. Where it writes
-nothing, the box writes its own:
+**A TextBox supplies a tooltip over the hovered line.** In the absence of a handler's body, the
+box supplies one of the following:
 
 - `#name` the box's text holds - the anchor's paragraph, formatted, cut after six lines by
   AdjustTooltipEvent::writePreview;
@@ -237,12 +245,11 @@ Ctrl+click to follow.
 
 ## LinkContextPopupEvent
 
-A mouse right click on a link raises this ahead of the box's own edit menu, as does a menu asked
-for from the keyboard while the caret stands in a link. **A handler that shows a menu stops
-`popup`**, and the box shows nothing over it. Otherwise the box answers as anywhere else in it: a
-ContextPopupEvent handler first, then the edit menu.
+**A handler that shows a menu stops popup.** The event carries the target and its text range.
+When the original popup request continues, the control follows its usual menu path.
 
-A menu raised from the keyboard drops at the caret.
+A TextBox raises this before its edit menu on a right mouse click on a link, or on a keyboard
+menu request with the caret in a link. A menu requested from the keyboard drops at the caret.
 
 ## TextBox goToAnchor
 

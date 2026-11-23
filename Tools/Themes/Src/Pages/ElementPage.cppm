@@ -85,6 +85,7 @@ namespace Themes_App
     // The theme's styles as the tree lists them, asked for as a page's rows are built.
     export using OnGetStyleNames = std::function<SetNames()>;
     export using OnElementCommand = std::function<void()>;
+    export using OnFollowElementLink = std::function<void(LinkClickEvent&)>;
 
     // What a page shows and what it calls, handed over whole.
     export struct PageBinding
@@ -99,6 +100,7 @@ namespace Themes_App
         OnRulesChanged onRulesChanged{};
         OnElementCommand onAddChild{};
         OnElementCommand onDeleteStyle{};
+        OnFollowElementLink onFollowElementLink{};
     };
 
     // The grid's columns, as their tags name them.
@@ -177,6 +179,7 @@ namespace Themes_App
         [[nodiscard]] OnGetRuleBase ruleBaseOf(std::size_t index, RuleChannel) const;
         // The words a style reads by, as the tree names it, and its token where the tree does not.
         [[nodiscard]] std::wstring_view nameOf(std::wstring_view token) const;
+        void writeElementLink(Text&, std::wstring_view token) const;
         // What a change to one thing of the style is called.
         [[nodiscard]] Text changeStepName(std::wstring_view what) const;
         // What a change to one column of one rule is called - the rule named by its place.
@@ -270,8 +273,7 @@ namespace Themes_App
             HorizontalAlign::Left,
             UiElement::Field,
             Padding{ 6.0f, 4.0f },
-            Spacing{ 8.0f },
-            TooltipText{ L"The element this style inherits rules and sizes from" }
+            Spacing{ 8.0f }
         ) };
 
         Label& m_baseLabel{ m_baseFact.add<Label>(
@@ -279,7 +281,10 @@ namespace Themes_App
             VerticalTextAnchor::Center
         ) };
 
-        Label& m_baseName{ m_baseFact.add<Label>(VerticalTextAnchor::Center) };
+        LabelWithTextLayout& m_baseName{ m_baseFact.add<LabelWithTextLayout>(
+            ClickTarget::Self,
+            VerticalTextAnchor::Center
+        ) };
 
         StackPanel& m_standsOnFact{ m_facts.add<StackPanel>(
             Orientation::Horizontal,
@@ -455,6 +460,13 @@ namespace Themes_App
             if (&event.action == &StdActions::del)
                 deleteSelectedRules();
         });
+        m_baseName.onLinkClick([this](LinkClickEvent& event) {
+            if (m_binding.onFollowElementLink)
+            {
+                m_binding.onFollowElementLink(event);
+            }
+        });
+
         m_resetButton.onClick([this](ClickEvent&) {
             resetRules();
         });

@@ -68,7 +68,8 @@ namespace Themes_App
         template<typename F>
         EventConnection onPagePick(F&& callback);
         [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
-        void bind(AppTheme&, const OnGetElementRuleBase&, const OnRulesChanged&);
+        void bind(AppTheme&, const OnGetElementRuleBase&, const OnRulesChanged&,
+            const OnFollowElementLink&);
         void rebuildRules();
     protected:
         void visibilityChanged() override;
@@ -127,6 +128,7 @@ namespace Themes_App
         ThemeStyles* m_styles{};
         OnGetElementRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
+        OnFollowElementLink m_onFollowElementLink{};
         const ThemeStyles m_defaultStyles{ AppTheme{}.styles };
 
         std::wstring m_newStyleBase{};

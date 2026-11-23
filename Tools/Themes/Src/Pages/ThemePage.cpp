@@ -40,6 +40,7 @@ import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.Events;
@@ -47,6 +48,7 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 import ClaFi.Browser.Control;
+import ClaFi.Browser.PageData;
 import ClaFi.Browser.Settings;
 
 import ClaFi.Core.System.Utils;
@@ -471,6 +473,23 @@ namespace Themes_App
     {
         const ScopedFlag showing{ m_showingAnchor };
         m_designPage.pickPage(event.url.fragment());
+    }
+
+    void ThemePage::followElementLink(LinkClickEvent& event)
+    {
+        if (!event.target.starts_with(L'#'))
+        {
+            return;
+        }
+
+        const std::optional<Url> link = Url::Parse(event.target);
+        if (!link || !m_editTheme.styles.of(link->fragment()))
+        {
+            return;
+        }
+
+        event.stopPropagation();
+        tab().browserControl().goTo(Url{ pageData().path(), styleAnchor(link->fragment()) });
     }
 
     void ThemePage::rulesChanged(const EditPhase phase, const Text& what,

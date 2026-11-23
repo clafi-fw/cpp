@@ -16,28 +16,38 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    LinkClickEvent::LinkClickEvent(RichControl& control, std::wstring target, InputStamp stamp)
+    LinkClickEvent::LinkClickEvent(Control& control, std::wstring target, InputStamp stamp)
         :
-        EventOf<RichControl>{ control },
+        EventOf<Control>{ control },
         target{ std::move(target) },
         stamp{ stamp }
     {
     }
 
-    GetLinkTooltipEvent::GetLinkTooltipEvent(RichControl& control, std::wstring_view target,
-        TextRange range, AdjustTooltipEvent& tooltip)
+    GetLinkTooltipEvent::GetLinkTooltipEvent(Control& control, std::wstring_view target,
+        TextRange range, AdjustTooltipEvent& tooltip, FloatRect anchorRect)
         :
-        EventOf<RichControl>{ control },
+        EventOf<Control>{ control },
         target{ target },
         range{ range },
         tooltip{ tooltip }
     {
+        tooltip.placement = FormPlacement::Top;
+        tooltip.anchorRect = anchorRect;
     }
 
-    LinkContextPopupEvent::LinkContextPopupEvent(RichControl& control, std::wstring target,
+    void GetLinkTooltipEvent::writeDefaultTooltip() const
+    {
+        if (tooltip.text.empty())
+        {
+            tooltip.text << target;
+        }
+    }
+
+    LinkContextPopupEvent::LinkContextPopupEvent(Control& control, std::wstring target,
         TextRange range, ContextPopupEvent& popup)
         :
-        EventOf<RichControl>{ control },
+        EventOf<Control>{ control },
         target{ std::move(target) },
         range{ range },
         popup{ popup }

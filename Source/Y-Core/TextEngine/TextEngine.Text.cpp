@@ -653,6 +653,20 @@ namespace ClaFi
         return std::nullopt;
     }
 
+    std::optional<LinkSpan> Text::firstLinkSpan() const
+    {
+        std::size_t start = 0;
+        for (const Run& run : m_runs)
+        {
+            if (run.link)
+            {
+                return linkAtCaret(start);
+            }
+            start += run.length;
+        }
+        return std::nullopt;
+    }
+
     void Text::replaceText(const TextRange& range, const std::wstring_view words)
     {
         edit(range, Text{ words }, Insertion::Nested);

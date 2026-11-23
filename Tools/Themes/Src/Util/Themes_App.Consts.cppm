@@ -32,6 +32,22 @@ namespace Themes_App
     // The token the Palette page goes by.
     export constexpr std::wstring_view k_paletteToken{ L"Palette" };
 
+    export constexpr std::wstring_view k_themesLinkScheme{ L"themes" };
+    export constexpr std::wstring_view k_stylePrefix{ L"Style/" };
+
+    export constexpr std::wstring styleAnchor(const std::wstring_view name)
+    {
+        std::wstring anchor{ k_stylePrefix };
+        for (const wchar_t character : name)
+        {
+            if (character == L'%')
+                anchor.append(L"%25");
+            else
+                anchor.push_back(character);
+        }
+        return anchor;
+    }
+
     // **The application's own two elements** - test subjects nothing in the framework wears, for
     // trying rules out on a bare control. Only the rules a theme states for one reach it.
     export constexpr std::wstring_view k_testeeName{ L"Testee" };

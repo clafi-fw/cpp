@@ -32,6 +32,7 @@ import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -634,11 +635,15 @@ namespace Themes_App
             for (const ColorRule& rule : base.rules)
                 if (!droppingOf(chain, level, rule).dropped)
                     ++kept;
-            Text header{};
-            header << ColoredText{ InkGrade::Muted, L"from " } << nameOf(base.name);
+            Text header{ ColoredText{ InkGrade::Muted, L"from " } };
+            writeElementLink(header, base.name);
             writeRuleTally(header, kept, base.rules.size());
             Grids::RowExpander& group = m_grid.addExpander();
             group.header().setHeaderText(header);
+            if (m_binding.onFollowElementLink)
+            {
+                group.header().onLinkClick(m_binding.onFollowElementLink);
+            }
             m_groups.push_back(&group);
             for (std::size_t rule = 0ull; rule != base.rules.size(); ++rule)
                 addInheritedRow(group.body(), chain, level, rule);
@@ -669,9 +674,12 @@ namespace Themes_App
         }
         InheritedRuleRow& row = body.add<InheritedRuleRow>(Tag{ rule });
         row.bind(inherited, *m_binding.colors, state, droppedBy);
-        row.onCellLinkClick([this, level, rule](Grids::CellLinkClickEvent& event) {
+        row.onLinkClick([this, level, rule](Grids::CellLinkClickEvent& event) {
             if (event.target == k_restoreLink)
+            {
+                event.stopPropagation();
                 restoreRule(level, rule);
+            }
         });
         m_inheritedRows.push_back(InheritedRow{
             .level = level,
@@ -748,10 +756,16 @@ namespace Themes_App
     void ElementPage::showFacts()
     {
         const ControlStyle* stated = shownStyle();
-        const std::wstring_view base = stated ? std::wstring_view{ stated->base } : std::wstring_view{};
-        m_baseName.text() = base.empty()
-            ? Text{ ColoredText{ InkGrade::Muted, L"none" } }
-            : Text{ base };
+        Text baseName;
+        if (stated && !stated->base.empty())
+        {
+            writeElementLink(baseName, stated->base);
+        }
+        else
+        {
+            baseName << ColoredText{ InkGrade::Muted, L"none" };
+        }
+        m_baseName.text() = std::move(baseName);
         m_showingFacts = true;
         m_standsOnItems.clear();
         m_standsOnTokens.clear();
@@ -851,6 +865,18 @@ namespace Themes_App
             if (name.token == token)
                 return name.name;
         return token;
+    }
+
+    void ElementPage::writeElementLink(Text& text, const std::wstring_view token) const
+    {
+        const auto found = std::ranges::find(m_names, token, &SetName::token);
+        if (found == m_names.end())
+        {
+            text << token;
+            return;
+        }
+        const Url target{ {}, token };
+        text << LinkText{ target.str(), found->name };
     }
 
     Text ElementPage::changeStepName(const std::wstring_view what) const

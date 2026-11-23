@@ -160,6 +160,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.AppButton.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cppm">
       <Filter>Controls</Filter>
     </ClCompile>

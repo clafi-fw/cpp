@@ -57,11 +57,17 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(GetCellEditorTextEvent, OnGetCellEditorText, onGetCellEditorText)
         // The text an in-place edit was left with, on its way back to the cell's source. See Grids
         DECLARE_EVENT(AcceptCellTextEvent, OnAcceptCellText, onAcceptCellText)
-        // The tooltip for one cell, asked while the pointer rests on it. See Grids
+        // The tooltip for a cell where the pointer is outside linked text. See Grids
         DECLARE_EVENT(GetCellTooltipEvent, OnGetCellTooltip, onGetCellTooltip)
-        // A link in one cell's text was clicked, and no row listener took it. See Grids
+        // An activated link reaches the row and then the grid. See Grids#celllinkclickevent
+        DECLARE_EVENT(CellLinkClickEvent, OnLinkClick, onLinkClick)
+        // The hovered link asks the row and grid for a tooltip. See Grids#getcelllinktooltipevent
+        DECLARE_EVENT(GetCellLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
+        // A cell link offers its menu before the row does. See Grids#celllinkcontextpopupevent
+        DECLARE_EVENT(CellLinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
+        // Shares the onLinkClick event. See Grids#celllinkclickevent
         DECLARE_EVENT(CellLinkClickEvent, OnCellLinkClick, onCellLinkClick)
-        // The menu for a link in one cell is asked for, and no row listener showed one. See Grids
+        // Shares the onLinkContextPopup event. See Grids#celllinkcontextpopupevent
         DECLARE_EVENT(CellLinkContextPopupEvent, OnCellLinkContextPopup, onCellLinkContextPopup)
         // Raised when the new-item row asks for an item. See Grids
         DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)

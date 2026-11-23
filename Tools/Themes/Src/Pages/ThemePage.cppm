@@ -198,6 +198,7 @@ namespace Themes_App
         void restoreView();
         void designPagePicked(); // shows its preview, and sends it to the browser as the anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
+        void followElementLink(LinkClickEvent&);
         // A rule or a size was changed on the Design page, or a style reset.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
         // Asks whether the user is the one this button is for, and answers whether they said so.
@@ -550,6 +551,9 @@ namespace Themes_App
             },
             [this](const EditPhase phase, const Text& what, const RuleSelection& at) {
                 rulesChanged(phase, what, at);
+            },
+            [this](LinkClickEvent& event) {
+                followElementLink(event);
             }
         );
         bindPigmentEditors();

@@ -8,7 +8,6 @@ import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -25,40 +24,20 @@ namespace ClaFi::Controls
         }
     }
 
-    // HeaderLinkClickEvent
-
-    HeaderLinkClickEvent::HeaderLinkClickEvent(ExpanderHeader& header, std::wstring target,
-        InputStamp stamp)
-        :
-        EventOf<ExpanderHeader>{ header },
-        target{ std::move(target) },
-        stamp{ stamp }
-    {
-    }
-
-    // HeaderLinkContextPopupEvent
-
-    HeaderLinkContextPopupEvent::HeaderLinkContextPopupEvent(ExpanderHeader& header,
-        std::wstring target, ContextPopupEvent& popup)
-        :
-        EventOf<ExpanderHeader>{ header },
-        target{ std::move(target) },
-        popup{ popup }
-    {
-    }
-
     // ExpanderHeader
 
     CursorShape ExpanderHeader::cursor() const
     {
-        return m_hoveredLink.length != 0 ? CursorShape::Hand : PanelBase::cursor();
+        return m_hoveredLink ? CursorShape::Hand : PanelBase::cursor();
     }
 
-    void ExpanderHeader::mouseMove(MouseMoveEvent& event)
+    void ExpanderHeader::nestedMouseMove(const MouseMoveEvent& event)
     {
-        PanelBase::mouseMove(event);
-        const std::optional<LabelLink> link = linkAt(event.posOnForm);
-        hoverLink(link.has_value() ? link->range : TextRange{});
+        PanelBase::nestedMouseMove(event);
+        if (hoverLink(&event.control == this ? linkAt(event.posOnForm) : std::nullopt))
+        {
+            Tooltip::hoveredZoneChanged();
+        }
     }
 
     void ExpanderHeader::hoverLeave()
@@ -90,26 +69,39 @@ namespace ClaFi::Controls
         PanelBase::click(event);
     }
 
+    void ExpanderHeader::nestedAdjustTooltip(AdjustTooltipEvent& event)
+    {
+        if (!m_hoveredLink || Input::hoveredControl() != this)
+        {
+            PanelBase::nestedAdjustTooltip(event);
+            return;
+        }
+
+        const FloatRect anchor = textBounds(formContext(), boundsInForm());
+        GetLinkTooltipEvent linkEvent{ *this, m_hoveredLink->target, m_hoveredLink->range, event,
+            anchor };
+        emitEvent(linkEvent);
+        linkEvent.writeDefaultTooltip();
+    }
+
     // **A link is what the menu is about** where one stands under the pointer or, from the
     // keyboard, where the focus is on the header - the label's first link then. A handler that
     // has shown the link's menu stops the request; one that has not leaves it to go on up as from
     // anywhere else on the header.
     void ExpanderHeader::nestedContextPopup(ContextPopupEvent& event)
     {
-        std::optional<std::wstring> target;
+        std::optional<LabelLink> link;
         if (event.mousePos)
         {
-            std::optional<LabelLink> link = linkAt(*event.mousePos);
-            if (link.has_value())
-                target = std::move(link->target);
+            link = linkAt(*event.mousePos);
         }
         else if (event.control == this)
         {
-            target = firstLink();
+            link = firstLink();
         }
-        if (target.has_value())
+        if (link)
         {
-            HeaderLinkContextPopupEvent linkEvent{ *this, std::move(*target), event };
+            LinkContextPopupEvent linkEvent{ *this, std::move(link->target), link->range, event };
             emitEvent(linkEvent);
             if (event.propagationStopped())
                 return;
@@ -128,11 +120,11 @@ namespace ClaFi::Controls
     {
         if (event.key == Keys::Return)
         {
-            std::optional<std::wstring> target = firstLink();
-            if (target.has_value())
+            std::optional<LabelLink> link = firstLink();
+            if (link)
             {
                 event.handled = true;
-                followLink(std::move(*target), event.stamp);
+                followLink(std::move(link->target), event.stamp);
                 return;
             }
         }
@@ -156,12 +148,10 @@ namespace ClaFi::Controls
 
     void ExpanderHeader::followLink(std::wstring target, const InputStamp stamp)
     {
-        FormBase& source = form();
-        const AppContext& application = source.appContext();
-        HeaderLinkClickEvent event{ *this, std::move(target), stamp };
-        emitEvent(event);
-        if (!event.propagationStopped())
-            application.openLink(event.target, &source, stamp);
+        LinkClickEvent event{ *this, std::move(target), stamp };
+        event.dispatch(form(), [&](){
+            emitEvent(event);
+        });
     }
 
     DrawTextResult ExpanderHeader::drawText(PaintEvent& event, const FloatRect& textBounds,
@@ -178,7 +168,7 @@ namespace ClaFi::Controls
 #endif
             wordWrap(),
             textFormat(),
-            m_hoveredLink
+            m_hoveredLink ? m_hoveredLink->range : TextRange{}
         );
     }
 
@@ -209,8 +199,10 @@ namespace ClaFi::Controls
         if (!hasLink(label))
             return std::nullopt;
         const FloatRect bounds = textBounds(context, boundsInForm());
-        if (bounds.empty())
+        if (!FloatRect::intersection(bounds, visibleRectInForm()).contains(point))
+        {
             return std::nullopt;
+        }
         const ScaledSize drawn = textEngine().measureText(context, label, bounds.dimensions(),
             false, wordWrap(), textFormat());
         const FloatPoint origin = anchoredOrigin(bounds, drawn, textAnchor());
@@ -221,20 +213,25 @@ namespace ClaFi::Controls
         return LabelLink{ std::wstring{ hit->link.value }, hit->link.range };
     }
 
-    std::optional<std::wstring> ExpanderHeader::firstLink() const
+    std::optional<ExpanderHeader::LabelLink> ExpanderHeader::firstLink() const
     {
         Text buffer;
         const Text& label = adjustedText(formContext(), buffer, EventPhase::Paint);
-        if (const std::optional<std::wstring_view> link = label.firstLink())
-            return std::wstring{ *link };
+        if (const std::optional<LinkSpan> link = label.firstLinkSpan())
+        {
+            return LabelLink{ std::wstring{ link->value }, link->range };
+        }
         return std::nullopt;
     }
 
-    void ExpanderHeader::hoverLink(const TextRange range)
+    bool ExpanderHeader::hoverLink(std::optional<LabelLink> link)
     {
-        if (range == m_hoveredLink)
-            return;
-        m_hoveredLink = range;
+        if (link == m_hoveredLink)
+        {
+            return false;
+        }
+        m_hoveredLink = std::move(link);
         invalidate();
+        return true;
     }
 }

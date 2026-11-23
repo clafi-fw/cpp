@@ -169,6 +169,7 @@ namespace SeeDocs_App::Ui
             text << L"A comment ending in " << ColoredText{ InkColor::Spot, L"See <note>" }
                 << L" or " << ColoredText{ InkColor::Spot, L"See <note>#<anchor>" }
                 << L" links that footnote, and the See is left out of the hint";
+            text << k_endLine << LinkText{ L"https://seedocs.app/#hints", L"Hints and footnotes" };
             return text;
         }
 

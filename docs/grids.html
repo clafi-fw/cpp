@@ -135,6 +135,7 @@
                     <li><a href="#merging">Merging</a></li>
                     <li><a href="#widths">Widths</a></li>
                     <li><a href="#keys">Tags</a></li>
+                    <li><a href="#cell-links">Links in Cells</a></li>
                 </ul>
             </li>
             <li class="has-children">
@@ -715,6 +716,33 @@ A column declared without a <code>Tag</code> is legal, but no cell can name it.
 <code>Tag{}</code> holding zero is an ordinary tag: the first enumerator of a plain enum is
 zero, so the property's absence is tracked by whether it was passed, not by its value.
 </div>
+<h2 id="cell-links">Links in Cells</h2>
+
+<p>Write <code>LinkText{ target, caption }</code> in the cell's displayed text. See the
+<a href="textengine.html#links">guide to adding links to controls</a>. The row receives each link
+event first. The owning grid receives it if propagation continues. Each event supplies
+<code>cell()</code>, <code>row()</code> and <code>column()</code>. Its <code>sender()</code> is the row.</p>
+
+<table>
+<tr><th>Handler</th><th>Event type</th><th>Default</th></tr>
+<tr><td><code>onLinkClick</code></td><td><code>Grids::CellLinkClickEvent</code></td><td>
+An unstopped target with a scheme goes to the application's registered handler for that
+scheme.</td></tr>
+<tr><td><code>onGetLinkTooltip</code></td><td><code>Grids::GetCellLinkTooltipEvent</code></td><td>
+The tooltip opens above the cell. The target fills the body if the link handlers leave it
+empty.</td></tr>
+<tr><td><code>onLinkContextPopup</code></td><td><code>Grids::CellLinkContextPopupEvent</code></td><td>
+The usual menu request continues unless a handler stops <code>event.popup</code>.</td></tr>
+</table>
+
+<p><code>onGetCellTooltip</code> supplies the tooltip when the pointer rests outside linked
+text in a cell.</p>
+
+<p>Use the grid event types in construction handlers such as <code>Grid::OnLinkClick</code>.
+Return follows the selected cell's first link in a read-only column or a column with no editor.
+Ctrl+Return follows the link in an editable column. A keyboard context-menu request uses
+the selected cell's first link.</p>
+
 <h2 id="reference">Blueprint Reference</h2>
 
 <pre><code><span class="kw">import</span> ClaFi.Controls.Grids_Dt;

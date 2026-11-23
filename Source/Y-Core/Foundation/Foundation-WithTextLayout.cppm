@@ -23,30 +23,47 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     // A link in a control's text was followed. See Controls
-    export struct LinkClickEvent : public EventOf<RichControl>
+    export struct LinkClickEvent : public EventOf<Control>
     {
-        LinkClickEvent(RichControl&, std::wstring target, InputStamp);
+        LinkClickEvent(Control&, std::wstring target, InputStamp);
         std::wstring target;
         InputStamp stamp;
+
+        template<typename Notify>
+        void dispatch(FormBase& source, Notify&&);
     };
 
     // The tooltip for the link under the pointer is being asked for. See Controls
-    export struct GetLinkTooltipEvent : public EventOf<RichControl>
+    export struct GetLinkTooltipEvent : public EventOf<Control>
     {
-        GetLinkTooltipEvent(RichControl&, std::wstring_view target, TextRange, AdjustTooltipEvent&);
-        std::wstring_view target;
-        TextRange range;
+        GetLinkTooltipEvent(Control&, std::wstring_view target, TextRange, AdjustTooltipEvent&,
+            FloatRect anchorRect);
+        const std::wstring target;
+        const TextRange range;
         AdjustTooltipEvent& tooltip;
+
+        void writeDefaultTooltip() const;
     };
 
     // The context menu for a link is being asked for. See Controls
-    export struct LinkContextPopupEvent : public EventOf<RichControl>
+    export struct LinkContextPopupEvent : public EventOf<Control>
     {
-        LinkContextPopupEvent(RichControl&, std::wstring target, TextRange, ContextPopupEvent&);
+        LinkContextPopupEvent(Control&, std::wstring target, TextRange, ContextPopupEvent&);
         const std::wstring target;
         const TextRange range;
         ContextPopupEvent& popup;
     };
+
+    template<typename Notify>
+    void LinkClickEvent::dispatch(FormBase& source, Notify&& notify)
+    {
+        const AppContext& application = source.appContext();
+        std::forward<Notify>(notify)();
+        if (!propagationStopped())
+        {
+            application.openLink(target, &source, stamp);
+        }
+    }
 
     // A control that shapes its own text in place, for a text that changes. See Control-Foundation
     export template <IsRichControl HostClass>
@@ -87,7 +104,7 @@ namespace ClaFi
         [[nodiscard]] virtual bool clickFollowsLink(const ClickEvent&) const;
         [[nodiscard]] virtual std::optional<LinkSpan> contextLink(const ContextPopupEvent&) const;
         virtual void followLink(const LinkSpan&, InputStamp);
-        virtual void writeLinkTooltip(AdjustTooltipEvent&) const;
+        virtual void writeLinkTooltip(AdjustTooltipEvent&) const {}
         virtual void appendLinkTooltip(Text&) const {}
         [[nodiscard]] std::optional<LinkHit> linkAt(PointInForm) const;
         [[nodiscard]] std::vector<FloatRect> linkRectsInForm() const;
@@ -344,12 +361,14 @@ namespace ClaFi
             return;
         }
 
-        event.placement = FormPlacement::Top;
-        event.anchorRect = pointedLinkLine();
-        GetLinkTooltipEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event };
+        GetLinkTooltipEvent linkEvent{ *this, m_pointedLink.target, m_pointedLink.range, event,
+            pointedLinkLine() };
         this->emitEvent(linkEvent);
         if (event.text.empty())
+        {
             writeLinkTooltip(event);
+        }
+        linkEvent.writeDefaultTooltip();
         appendLinkTooltip(event.text);
     }
 
@@ -394,12 +413,6 @@ namespace ClaFi
     }
 
     template <IsRichControl HostClass>
-    void WithTextLayout<HostClass>::writeLinkTooltip(AdjustTooltipEvent& event) const
-    {
-        event.text << m_pointedLink.target;
-    }
-
-    template <IsRichControl HostClass>
     std::optional<LinkHit> WithTextLayout<HostClass>::linkAt(const PointInForm point) const
     {
         if (!m_linksEnabled)
@@ -437,12 +450,10 @@ namespace ClaFi
     void WithTextLayout<HostClass>::dispatchLink(std::wstring target, FormBase& source,
         const InputStamp stamp)
     {
-        // The handler can change the text or take down the control.
-        const AppContext& application = source.appContext();
         LinkClickEvent event{ *this, std::move(target), stamp };
-        this->emitEvent(event);
-        if (!event.propagationStopped())
-            application.openLink(event.target, &source, stamp);
+        event.dispatch(source, [&](){
+            this->emitEvent(event);
+        });
     }
 
     template <IsRichControl HostClass>

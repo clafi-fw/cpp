@@ -3,6 +3,7 @@ module;
 
 module ClaFi.Controls.Grids;
 
+import :Cell;
 import :Columns;
 import :RowBase;
 
@@ -17,13 +18,36 @@ import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls::Grids
 {
+    CellLinkClickEvent::CellLinkClickEvent(RowBase& row, const Column& column,
+        std::wstring target, InputStamp stamp)
+        :
+        LinkClickEvent{ row, std::move(target), stamp },
+        CellEventLocation{ row, column }
+    {
+    }
+
+    GetCellLinkTooltipEvent::GetCellLinkTooltipEvent(RowBase& row, const Column& column,
+        std::wstring_view target, TextRange range, AdjustTooltipEvent& tooltip, FloatRect anchorRect)
+        :
+        GetLinkTooltipEvent{ row, target, range, tooltip, anchorRect },
+        CellEventLocation{ row, column }
+    {
+    }
+
+    CellLinkContextPopupEvent::CellLinkContextPopupEvent(RowBase& row, const Column& column,
+        std::wstring target, TextRange range, ContextPopupEvent& popup)
+        :
+        LinkContextPopupEvent{ row, std::move(target), range, popup },
+        CellEventLocation{ row, column }
+    {
+    }
+
     namespace
     {
         // A moving cell's text, shaped into a layout that lives for the one call and is never
@@ -257,20 +281,31 @@ namespace ClaFi::Controls::Grids
 
     void RowBase::cellLinkClick(CellLinkClickEvent& event)
     {
-        FormBase& source = form();
-        const AppContext& application = source.appContext();
+        event.dispatch(form(), [&](){
+            emitEvent(event);
+            if (!event.propagationStopped())
+            {
+                m_descriptor.m_owner.cellLinkClick(event);
+            }
+        });
+    }
+
+    void RowBase::getLinkTooltip(GetCellLinkTooltipEvent& event)
+    {
         emitEvent(event);
         if (!event.propagationStopped())
-            m_descriptor.m_owner.cellLinkClick(event);
-        if (!event.propagationStopped())
-            application.openLink(event.target, &source, event.stamp);
+        {
+            m_descriptor.m_owner.getLinkTooltip(event);
+        }
     }
 
     void RowBase::cellLinkContextPopup(CellLinkContextPopupEvent& event)
     {
         emitEvent(event);
-        if (!event.popup.propagationStopped())
+        if (!event.propagationStopped() && !event.popup.propagationStopped())
+        {
             m_descriptor.m_owner.cellLinkContextPopup(event);
+        }
     }
 
     CursorShape RowBase::cursor() const
@@ -641,10 +676,16 @@ namespace ClaFi::Controls::Grids
         // **The cell's own tooltip**, where whoever answers for its text answers for its tooltip
         // too. The anchor is set ahead so a placement against the cell needs nothing more.
         event.anchorRect = cellRect;
-        const std::wstring_view link = m_hoveredLink.column == hoveredColumn
-            ? std::wstring_view{ m_hoveredLink.target }
-            : std::wstring_view{};
-        GetCellTooltipEvent cellEvent{ *this, *hoveredColumn, event, link };
+        if (m_hoveredLink.column == hoveredColumn && Input::hoveredControl() == this)
+        {
+            GetCellLinkTooltipEvent linkEvent{ *this, *hoveredColumn, m_hoveredLink.target,
+                m_hoveredLink.range, event, cellRect };
+            getLinkTooltip(linkEvent);
+            linkEvent.writeDefaultTooltip();
+            return;
+        }
+
+        GetCellTooltipEvent cellEvent{ *this, *hoveredColumn, event };
         getCellTooltip(cellEvent);
     }
 
@@ -838,7 +879,7 @@ namespace ClaFi::Controls::Grids
             if (std::optional<LinkTarget> link = menuLink(event))
             {
                 CellLinkContextPopupEvent linkEvent{ *this, *link->column, std::move(link->target),
-                    event };
+                    link->range, event };
                 cellLinkContextPopup(linkEvent);
                 if (event.propagationStopped())
                     return;
@@ -1176,8 +1217,10 @@ namespace ClaFi::Controls::Grids
         if (cellRect.empty())
             return std::nullopt;
         const FloatRect textBounds = cellTextBounds(column, cellRect);
-        if (textBounds.empty())
+        if (!FloatRect::intersection(textBounds, visibleRectInForm()).contains(point))
+        {
             return std::nullopt;
+        }
         Text cellText;
         doGetCellText(column, cellText);
         if (!hasLink(cellText))
@@ -1217,8 +1260,10 @@ namespace ClaFi::Controls::Grids
             return std::nullopt;
         Text cellText;
         doGetCellText(*column, cellText);
-        if (const std::optional<std::wstring_view> link = cellText.firstLink())
-            return LinkTarget{ column, std::wstring{ *link } };
+        if (const std::optional<LinkSpan> link = cellText.firstLinkSpan())
+        {
+            return LinkTarget{ column, std::wstring{ link->value }, link->range };
+        }
         return std::nullopt;
     }
 
@@ -1245,7 +1290,7 @@ namespace ClaFi::Controls::Grids
         std::optional<CellLink> link = linkAt(*column, point);
         if (!link.has_value())
             return std::nullopt;
-        return LinkTarget{ column, std::move(link->target) };
+        return LinkTarget{ column, std::move(link->target), link->range };
     }
 
     void RowBase::hoverLink(const HoveredLink& link)

@@ -65,14 +65,14 @@
         }
         .toggle-btn:hover { background-color: rgba(0, 0, 0, 0.05); color: var(--accent-color); }
         .toggle-btn svg { width: 16px; height: 16px; fill: currentColor; transform: rotate(90deg); transition: transform 0.2s ease; }
-        .sidebar li.has-children.collapsed ul { display: none !important; }
-        .sidebar li.has-children.collapsed .toggle-btn svg { transform: rotate(0deg); }
+        .sidebar li.has-children.collapsed > ul { display: none !important; }
+        .sidebar li.has-children.collapsed > .nav-item-wrapper > .toggle-btn svg { transform: rotate(0deg); }
         .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
         header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
         h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
         h1 { font-size: 2.5rem; margin: 0; }
         h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
-        h3 { scroll-margin-top: 2rem; }
+        h3, h4 { scroll-margin-top: 2rem; }
         main {
             max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
@@ -117,77 +117,107 @@
     </style>
 </head>
 <body>
-    <nav class="sidebar">
+    <nav class="sidebar" aria-label="Manual contents">
         <div class="sidebar-brand"><a class="brand-link" href="index.html"><span class="sidebar-brand-text">ClaFi</span></a></div>
         <div class="sidebar-header">Contents</div>
         <ul>
             <li><div class="nav-item-wrapper"><a href="#introduction">Introduction</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
-                    <a href="#control-text">Text on a Control</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <a href="#using-controls">Using Existing Controls</a>
+                    <button class="toggle-btn" aria-label="Toggle using existing controls" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
-                    <li><a href="#control-text-props">The properties</a></li>
-                    <li><a href="#control-text-writing">Writing it later</a></li>
+                    <li class="has-children collapsed">
+                        <div class="nav-item-wrapper">
+                            <a href="#control-text">Text on a Control</a>
+                            <button class="toggle-btn" aria-label="Toggle text on a control" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#control-text-props">The properties</a></li>
+                            <li><a href="#control-text-writing">Writing it later</a></li>
+                        </ul>
+                    </li>
+                    <li class="has-children collapsed">
+                        <div class="nav-item-wrapper">
+                            <a href="#format">Text Format</a>
+                            <button class="toggle-btn" aria-label="Toggle text format" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#format-holds">What it holds</a></li>
+                            <li><a href="#format-under">Under the text</a></li>
+                            <li><a href="#format-control">On a control</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#anchors">Text Anchors</a></li>
+                    <li><a href="#events">Text Events</a></li>
+                    <li class="has-children collapsed">
+                        <div class="nav-item-wrapper">
+                            <a href="#copying">Copying and Moving Text</a>
+                            <button class="toggle-btn" aria-label="Toggle copying and moving text" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#copying-values">Values and ranges</a></li>
+                            <li><a href="#copying-clipboard">The clipboard</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#codebox-folding">CodeBox Folding</a></li>
+                    <li class="has-children">
+                        <div class="nav-item-wrapper">
+                            <a href="#links">Adding Links to Controls</a>
+                            <button class="toggle-btn" aria-label="Toggle adding links" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#links-relative">Relative links</a></li>
+                            <li><a href="#links-button">Link buttons</a></li>
+                            <li><a href="#links-following">Following a link in a TextBox</a></li>
+                            <li><a href="#links-history">Back and forward</a></li>
+                            <li><a href="#links-tooltips">Link tooltips</a></li>
+                            <li><a href="#links-events">Handling link events</a></li>
+                            <li><a href="#links-schemes">Registering a URL scheme</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
-                    <a href="#copying">Copying and Moving Text</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <a href="#writing-controls">Writing Controls</a>
+                    <button class="toggle-btn" aria-label="Toggle writing controls" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
-                    <li><a href="#copying-values">Values and ranges</a></li>
-                    <li><a href="#copying-clipboard">The clipboard</a></li>
+                    <li><a href="#control-format-defaults">Setting a Default Text Format</a></li>
+                    <li><a href="#drawing">Drawing and Measuring</a></li>
+                    <li><a href="#line-wrap">Line Wrap Modes</a></li>
+                    <li class="has-children collapsed">
+                        <div class="nav-item-wrapper">
+                            <a href="#own-layout">Holding a Text Layout</a>
+                            <button class="toggle-btn" aria-label="Toggle holding a text layout" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#own-layout-when">When a control needs one</a></li>
+                            <li><a href="#own-layout-seams">Drawing and measuring overrides</a></li>
+                            <li><a href="#own-layout-synced">Bringing the layout up to date</a></li>
+                            <li><a href="#own-layout-positions">Positions on a held layout</a></li>
+                            <li><a href="#own-layout-folding">Folding paragraphs</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#editing">Editing a Layout in Place</a></li>
+                    <li class="has-children collapsed">
+                        <div class="nav-item-wrapper">
+                            <a href="#links-implementation">Implementing Link Behavior</a>
+                            <button class="toggle-btn" aria-label="Toggle implementing link behavior" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                        </div>
+                        <ul>
+                            <li><a href="#links-layout">Links on a held layout</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#do-dont">Checklist for Control Authors</a></li>
                 </ul>
             </li>
-            <li><div class="nav-item-wrapper"><a href="#events">Text Events</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
-                    <a href="#format">Text Format</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                </div>
-                <ul>
-                    <li><a href="#format-holds">What it holds</a></li>
-                    <li><a href="#format-under">Under the text</a></li>
-                    <li><a href="#format-control">On a control</a></li>
-                </ul>
-            </li>
-            <li><div class="nav-item-wrapper"><a href="#anchors">Text Anchors</a></div></li>
-            <li><div class="nav-item-wrapper"><a href="#drawing">Drawing and Measuring</a></div></li>
-            <li><div class="nav-item-wrapper"><a href="#line-wrap">Line Wrap Modes</a></div></li>
-            <li class="has-children">
-                <div class="nav-item-wrapper">
-                    <a href="#own-layout">A control that holds its own layout</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                </div>
-                <ul>
-                    <li><a href="#own-layout-when">When a control needs one</a></li>
-                    <li><a href="#own-layout-seams">The two seams</a></li>
-                    <li><a href="#own-layout-synced">Bringing the layout up to date</a></li>
-                    <li><a href="#own-layout-positions">Positions on a held layout</a></li>
-                </ul>
-            </li>
-            <li><div class="nav-item-wrapper"><a href="#editing">Editing a layout in place</a></div></li>
-            <li class="has-children">
-                <div class="nav-item-wrapper">
-                    <a href="#links">Links in Controls</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                </div>
-                <ul>
-                    <li><a href="#links-following">Following a link</a></li>
-                    <li><a href="#links-schemes">Registering a URL scheme</a></li>
-                    <li><a href="#links-history">Back and forward</a></li>
-                    <li><a href="#links-tooltips">Link tooltips</a></li>
-                    <li><a href="#links-layout">Links on a held layout</a></li>
-                </ul>
-            </li>
-            <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
-            <li class="has-children">
-                <div class="nav-item-wrapper">
-                    <a href="#howitworks">How It Works</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                    <a href="#howitworks">Text Engine Internals</a>
+                    <button class="toggle-btn" aria-label="Toggle text engine internals" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
                     <li><a href="#hiw-baked">Runs to spans</a></li>
@@ -201,30 +231,33 @@
     <div class="page-content">
         <header>
             <h1>Working with Text in Controls</h1>
-            <p>Text layout, shaping and line breaking</p>
+            <p>Using and implementing controls that display text</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>
 
-<p>A control keeps its text as a <code>ControlText</code>, and the <code>TextEngine</code> lays it
-out: it shapes the text, measures it for the layout pass, and draws it in the paint. Applications
-use the text through properties that state it and its format, through the calls that read and write
-it, through events raised around layout, and through anchors that place it inside the control's
-box. The engine caches the layouts it builds.</p>
+<p>This manual covers text displayed by ClaFi controls. A control stores its content in
+<code>ControlText</code>. The text engine shapes, measures and draws it.</p>
 
-<p>The runs, styles, colors, paragraphs and links of a <code>Text</code> are written as
-the <a href="text.html">Writing ClaFi Text</a> manual describes.</p>
+<ul>
+<li><a href="#using-controls">Using existing controls</a> covers setting text and formatting,
+handling events, and adding links and tooltips to application UI.</li>
+<li><a href="#writing-controls">Writing controls</a> covers implementing a control that draws,
+measures or edits text, including the link contract for custom controls.</li>
+<li><a href="#howitworks">Text engine internals</a> explains shaping, caching and drawing.</li>
+</ul>
 
-<div class="info">
-<strong>Module imports:</strong> <code>ClaFi.Core.TextEngine</code> for the engine that draws and
-measures, <code>ClaFi.Core.TextEngine.Layout</code> for <code>TextLayout</code>, and
-<code>ClaFi.Core.Foundation</code> for the controls and <code>WithTextLayout</code>.
-</div>
+<p>For the syntax of runs, styles, colors, paragraphs and links, see the
+<a href="text.html">Writing ClaFi Text</a> manual.</p>
 
-<h2 id="control-text">Text on a Control</h2>
+<h2 id="using-controls">Using Existing Controls</h2>
 
-<h3 id="control-text-props">The properties</h3>
+<p>For application developers who configure controls, supply their text and handle their events.</p>
+
+<h3 id="control-text">Text on a Control</h3>
+
+<h4 id="control-text-props">The properties</h4>
 
 <p>Every control built on <code>RichControl</code> receives its text through properties, and each
 property has a distinct type, so the type alone identifies which text the caller supplied:</p>
@@ -245,7 +278,7 @@ property has a distinct type, so the type alone identifies which text the caller
     <span class="tp">TextFormat</span>{ <span class="tp">TextStyles</span>::SubBody }
 ) };</code></pre>
 
-<h3 id="control-text-writing">Writing it later</h3>
+<h4 id="control-text-writing">Writing it later</h4>
 
 <p><code>text()</code> returns a live <code>ControlText</code>: a <code>Text</code> that carries a
 stamp, and every write advances the stamp. A layout or a measurement stores the stamp it was built
@@ -268,9 +301,160 @@ reference does not advance the stamp. A control that identifies its text by the 
 <a href="#own-layout">holds its own layout</a>, continues to draw the old text.
 </div>
 
-<h2 id="copying">Copying and Moving Text</h2>
+<h3 id="format">Text Format</h3>
 
-<h3 id="copying-values">Values and ranges</h3>
+<p>A <code>TextFormat</code> defines what a control's text is laid out over: a style name, an ink
+and a paragraph look. It contains no characters. The engine applies it beneath the text's own
+styles, and it never becomes part of the text.</p>
+
+<pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
+<span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
+format &lt;&lt; <span class="tp">TextStyles</span>::SubBody;</code></pre>
+
+<h4 id="format-holds">What it holds</h4>
+
+<table>
+<tr><th>Written</th><th>Holds</th></tr>
+<tr><td>A style name - <code>TextStyles::Code</code>, <code>L"Readout"</code></td><td>The style, found where the text is laid out: among the text's own styles and in its sheet, each time the text is laid out.</td></tr>
+<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code></td><td>The ink the text runs in, spelled as <code>ColoredText</code> spells it.</td></tr>
+<tr><td><code>TextAlign</code>, <code>TextIndent{ f }</code>, <code>TextLineSpacing{ f }</code></td><td>The paragraph look, for every paragraph of the text.</td></tr>
+<tr><td><code>TextFormat</code></td><td>What the other states, each field over this one's.</td></tr>
+</table>
+
+<p><strong>A size or a family comes in a style.</strong> An application states one in its sheet and
+the format names it:</p>
+
+<pre><code>sheet.<span class="fn">set</span>(<span class="tp">TextStyle</span>{
+    .name = <span class="st">L"Readout"</span>,
+    .base = sheet.<span class="fn">find</span>(<span class="tp">TextStyles</span>::Body),
+    .fontSize = <span class="kw">11.0f</span>,
+});
+<span class="tp">TextFormat</span>{ <span class="st">L"Readout"</span> };</code></pre>
+
+<p><strong>Values only.</strong> A character, a link or an anchor is rejected at compile time, and so
+is a value that merely converts to one of those types, so a <code>wchar_t</code> is never accepted as a
+<code>Color</code>.</p>
+
+<p><strong>One of each kind.</strong> A value replaces the value the format already holds of its kind,
+and another format replaces every field it states. Two formats with equal fields compare equal and
+share one layout in the cache, however they were built.</p>
+
+<pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextStyles</span>::Code };
+format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</span>::Red, <span class="tp">TextAlign</span>::Left };
+<span class="cm">// Left, red, in Code.</span></code></pre>
+
+<h4 id="format-under">Under the text</h4>
+
+<p><strong>The text's own styles take precedence over the format.</strong> A field is resolved from
+the first source that states it: the run's style and its bases, then the format's style and its
+bases. A face, size, weight or slant that neither states comes from the text's Body, and an ink
+comes from the text ink. A link's ink sits between the run's ink and the format's. A paragraph's own
+look overrides the format's in the same way, and where neither states a field the paragraph is
+left-aligned, unindented and singly spaced.</p>
+
+<p>A style name that the text cannot resolve anywhere is reported with
+<code>UnknownStyleEvent</code>, as a wrapper's is, and the text is laid out as it would be without
+it.</p>
+
+<p><strong>A format is how a control shows its text</strong>, kept separate from what the text
+contains. A selection, the edit history and a document see the text alone: a range copied out of a
+centered box pastes uncentered. A copy stores the box's format beside the text so that a preview can
+draw it in - see <a href="#copying-clipboard">The clipboard</a>. A control with a format and no text
+is blank.</p>
+
+<h4 id="format-control">On a control</h4>
+
+<p>Every control built on <code>RichControl</code> takes a <code>TextFormat</code> property and
+returns it from <code>textFormat()</code> - or no format, while the property is empty. Several
+formats in one argument list compose kind by kind, and a later one overrides an earlier one;
+<code>setTextFormat</code> replaces the format as a whole. Stating a format invalidates nothing; the
+caller requests the pass.</p>
+
+<p>The format applies to everything that lays the control's text out: the paint and the measurement,
+a <code>TextBox</code>'s placeholder, the overflow window that repeats clipped text, and the
+in-place editor for the control. A grid column supplies one format to all its cells. See the
+<a href="grids.html#cells">Grid manual</a>.</p>
+
+<p>When defining a control class, see <a href="#control-format-defaults">Setting a default text
+format</a>.</p>
+
+<h3 id="anchors">Text Anchors</h3>
+
+<p>A control lays its text out in a box, and two anchors determine where the text sits inside that
+box.</p>
+
+<table>
+<tr><th>Property</th><th>Values</th><th>Default</th></tr>
+<tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
+<tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
+</table>
+
+<p><code>VerticalTextAnchor</code> positions the text block in the box by its measured height.</p>
+
+<p><code>HorizontalTextAnchor::None</code> creates no block. Each line is placed across the whole width
+of the box by its paragraph's <code>TextAlign</code>, and nothing moves it afterward; this suits a
+page, a grid cell and any text whose lines align to the edges of its box. <code>Left</code>,
+<code>Center</code> and <code>Right</code> create one: the text is measured as a block as wide as
+its widest line, each line is aligned inside that block, and the anchor moves the block as a whole.
+A wrapped text's block is never wider than the width it was broken at.</p>
+
+<table>
+<tr><th>The text</th><th><code>None</code></th><th><code>Left</code></th><th><code>Center</code></th><th><code>Right</code></th></tr>
+<tr><td>One line, aligned <code>Right</code></td><td>at the right edge</td><td>at the left edge - the block is the line</td><td>centered</td><td>at the right edge</td></tr>
+<tr><td>Two lines, aligned <code>Center</code></td><td>each centered in the box</td><td>centered on one another, the block at the left</td><td>each centered in the box</td><td>centered on one another, the block at the right</td></tr>
+</table>
+
+<p>The two anchors compose. A document tile centers its block under its mark, and it centers every
+line of a name that wraps inside the block:</p>
+
+<pre><code><span class="tp">HorizontalTextAnchor</span>::Center,
+<span class="tp">TextFormat</span>{ <span class="tp">TextAlign</span>::Center },</code></pre>
+
+<p>The overflow window repeats clipped text starting where the control placed the block.</p>
+
+<h3 id="events">Text Events</h3>
+
+<p>A control's text is its <code>text()</code>, written by whoever owns the control when the content
+changes - a reading on its tick, a count as it moves. Every measurement and every paint lays that
+text out and raises <code>AdjustTextEvent</code> first, where the control, its host and the handlers
+add material around the text: a mark, a key at the end of a menu line, a parent's text, an answer
+that differs by phase. The text remains the owner's; the event adjusts what is laid out.</p>
+
+<table>
+<tr><th>Event</th><th>On</th><th>Raised</th></tr>
+<tr><td><code>OnAdjustText</code><br><code>AdjustTextEvent</code></td><td>Every control</td><td>The control's text about to be laid out. The text is named first; a handler streams after it into <code>event.text</code>, or starts over with <code>event.text.clear()</code>.</td></tr>
+<tr><td><code>OnAdjustChildText</code><br><code>AdjustChildTextEvent</code></td><td>A parent</td><td>A child's text about to be laid out. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
+<tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first as the body and the handlers after it; the caption and key over that body belong to the presenter.</td></tr>
+<tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretPos()</code> or <code>caretLineColumn()</code>, and <code>selection()</code> answers what is selected.</td></tr>
+<tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
+<tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code>, <code>OnLinkContextPopup</code></td><td>Controls that support links</td><td>See <a href="#links-events">Handling link events</a>.</td></tr>
+</table>
+
+<p><strong>A tooltip is a caption and a body.</strong> The presenter that draws the control states
+the caption line - the control's name and the key that runs it - and <code>AdjustTooltipEvent</code>
+fills only the body. The body uses <a href="#line-wrap">balanced wrapping</a> and keeps explicit
+line breaks. The overflow window repeats the control's clipped text with its original line breaks.</p>
+
+<p><code>ButtonBase::showsCaption()</code> reports whether the button lays out its caption.
+A caption on a visible dropdown strip counts. A hidden caption can supply a caption-only tooltip.</p>
+
+<p>A gather runs in one of two phases, which <code>event.phase()</code> reports:
+<code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be
+measured from a line it never shows - a reading measures the room its widest value needs and paints
+the value it holds - and a text supplied only in the paint takes no room:</p>
+
+<pre><code><span class="tp">OnEvent</span>{ [](<span class="tp">AdjustTextEvent</span>&amp; event) {
+    <span class="cm">// Measured as nothing, so the tabs beside the title keep the room.</span>
+    <span class="kw">if</span> (event.<span class="fn">phase</span>() == <span class="tp">EventPhase</span>::Paint)
+        event.text &lt;&lt; event.<span class="fn">control</span>().<span class="fn">appContext</span>().<span class="fn">appName</span>();
+} }</code></pre>
+
+<p>Update <code>text()</code> when the content changes. Use the handler for content that depends
+on the phase. Its work runs on every measurement and paint that asks for the text.</p>
+
+<h3 id="copying">Copying and Moving Text</h3>
+
+<h4 id="copying-values">Values and ranges</h4>
 
 <p>A <code>Text</code> is a value. Assigning one copies or moves it together with its runs and its
 style sheet, so a text built for a control is moved in rather than copied, and a text read out of a
@@ -305,7 +489,7 @@ inserted into in the same way. A paragraph that an edit empties takes the first 
 text, so a text pasted into an empty box, or over every word of a paragraph, starts in the look it
 was copied in.</p>
 
-<h3 id="copying-clipboard">The clipboard</h3>
+<h4 id="copying-clipboard">The clipboard</h4>
 
 <p>A <code>TextBox</code> copies its selection in up to three formats, and the clipboard offers
 plain text converted from the first, so an application that does not use ClaFi can paste the
@@ -330,117 +514,176 @@ copied text with the copied format, as it was drawn where it was copied. A paste
 pasted into keeps its own format, so a range copied out of a <code>CodeBox</code> pastes in whatever
 style the destination box lays its text out in.</p>
 
-<h2 id="events">Text Events</h2>
+<h3 id="codebox-folding">CodeBox Folding</h3>
 
-<p>A control's text is its <code>text()</code>, written by whoever owns the control when the content
-changes - a reading on its tick, a count as it moves. Every measurement and every paint lays that
-text out and raises <code>AdjustTextEvent</code> first, where the control, its host and the handlers
-add material around the text: a mark, a key at the end of a menu line, a parent's text, an answer
-that differs by phase. The text remains the owner's; the event adjusts what is laid out.</p>
+<p><code>CodeBox</code> uses the language's block boundaries to show gutter chevrons. A collapsed
+block marks its opening line with an ellipsis and hides the lines through its closer.
+Searches and copies still use the full source. The gutter's context menu offers
+<strong>Expand all</strong>, <strong>Collapse all</strong>, and <strong>Collapse others</strong>.
+<strong>Collapse others</strong> keeps open the blocks containing the clicked line.</p>
 
-<table>
-<tr><th>Event</th><th>On</th><th>Raised</th></tr>
-<tr><td><code>OnAdjustText</code><br><code>AdjustTextEvent</code></td><td>Every control</td><td>The control's text about to be laid out. The text is named first; a handler streams after it into <code>event.text</code>, or starts over with <code>event.text.clear()</code>.</td></tr>
-<tr><td><code>OnAdjustChildText</code><br><code>AdjustChildTextEvent</code></td><td>A parent</td><td>A child's text about to be laid out. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
-<tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first as the body and the handlers after it; the caption and key over that body belong to the presenter.</td></tr>
-<tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretPos()</code> or <code>caretLineColumn()</code>, and <code>selection()</code> answers what is selected.</td></tr>
-<tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
-<tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code>, <code>OnLinkContextPopup</code></td><td><code>WithTextLayout</code></td><td>A link was followed, its tooltip was requested, or its context menu was requested. See <a href="#links">Links in Controls</a>.</td></tr>
-</table>
+<h3 id="links">Adding Links to Controls</h3>
 
-<p><strong>A tooltip is a caption and a body.</strong> The presenter that draws the control states
-the caption line - the control's name and the key that runs it - and <code>AdjustTooltipEvent</code>
-fills only the body. The body uses <a href="#line-wrap">balanced wrapping</a> and keeps explicit
-line breaks. The overflow window repeats the control's clipped text with its original line breaks.</p>
+<p>Write <code>LinkText{ target, caption }</code> into the text of a control that supports links.
+The caption is the text the control displays. The target is the address the control follows and
+the default text of its link tooltip. If you are building a control, see
+<a href="#links-implementation">Implementing Link Behavior</a>.</p>
 
-<p><code>ButtonBase::showsCaption()</code> reports whether the button lays out its caption.
-A caption on a visible dropdown strip counts. A hidden caption can supply a caption-only tooltip.</p>
+<p><code>LabelWithTextLayout</code> displays a link label. Give it <code>ClickTarget::Self</code>
+so it receives the click.</p>
 
-<p>A gather runs in one of two phases, which <code>event.phase()</code> reports:
-<code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be
-measured from a line it never shows - a reading measures the room its widest value needs and paints
-the value it holds - and a text supplied only in the paint takes no room:</p>
+<pre><code>panel.<span class="fn">add</span>&lt;<span class="tp">LabelWithTextLayout</span>&gt;(
+    <span class="tp">ClickTarget</span>::Self,
+    <span class="tp">Text</span>{ <span class="tp">LinkText</span>{ <span class="st">L"https://example.com/guide"</span>, <span class="st">L"Guide"</span> } }
+);</code></pre>
 
-<pre><code><span class="tp">OnEvent</span>{ [](<span class="tp">AdjustTextEvent</span>&amp; event) {
-    <span class="cm">// Measured as nothing, so the tabs beside the title keep the room.</span>
-    <span class="kw">if</span> (event.<span class="fn">phase</span>() == <span class="tp">EventPhase</span>::Paint)
-        event.text &lt;&lt; event.<span class="fn">control</span>().<span class="fn">appContext</span>().<span class="fn">appName</span>();
-} }</code></pre>
+<p>You can also put <code>LinkText</code> in a <code>TextBox</code>, an <code>ExpanderHeader</code>
+label, or <a href="grids.html#cell-links">a grid cell</a>. Return on an expander header follows
+the first link in its label.</p>
 
-<p>The gather <em>names</em> a control's own text rather than copying it, so a text that no handler
-modifies costs only a pointer. A handler that writes adds to the text, and the result is then built.
-Values computed inside the handler are built at every measure and every paint, so a value that
-changes independently is written into <code>text()</code> when it changes, and the handlers compose
-only what the moment of the call requires.</p>
+<h4 id="links-relative">Relative links</h4>
 
-<h2 id="format">Text Format</h2>
+<p>A browser resolves a relative link against the page that contains it. A fragment-only link
+such as <code>#AnyWindow</code> keeps the current page and names a destination within it.
+In Themes, the current theme supplies the document and its element view supplies the scope.
+The link tooltip shows the fragment as written.</p>
 
-<p>A <code>TextFormat</code> defines what a control's text is laid out over: a style name, an ink
-and a paragraph look. It contains no characters. The engine applies it beneath the text's own
-styles, and it never becomes part of the text.</p>
+<p>A <code>TextBox</code> can serve as both the browser and the page. Its text is the current
+document, so a link to <code>#details</code> can go directly to the <code>AnchorText</code>
+named <code>details</code> in that text. If the box cannot resolve a fragment, it raises
+<code>onLinkClick</code> so the containing browser can handle it.</p>
 
-<pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
-<span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
-format &lt;&lt; <span class="tp">TextStyles</span>::SubBody;</code></pre>
+<h4 id="links-button">Link buttons</h4>
 
-<h3 id="format-holds">What it holds</h3>
+<p><code>LinkButton</code> is a button with a link-colored caption and an underline on hover.
+Give it an <code>Action</code> or an <code>onClick</code> handler for its command. It receives
+mouse clicks through its default <code>ClickTarget::Self</code>.</p>
+
+<h4 id="links-following">Following a link in a TextBox</h4>
 
 <table>
-<tr><th>Written</th><th>Holds</th></tr>
-<tr><td>A style name - <code>TextStyles::Code</code>, <code>L"Readout"</code></td><td>The style, found where the text is laid out: among the text's own styles and in its sheet, each time the text is laid out.</td></tr>
-<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code></td><td>The ink the text runs in, spelled as <code>ColoredText</code> spells it.</td></tr>
-<tr><td><code>TextAlign</code>, <code>TextIndent{ f }</code>, <code>TextLineSpacing{ f }</code></td><td>The paragraph look, for every paragraph of the text.</td></tr>
-<tr><td><code>TextFormat</code></td><td>What the other states, each field over this one's.</td></tr>
+<tr><th>Box</th><th>Mouse gesture that follows the link</th><th>Effect of a plain mouse click</th></tr>
+<tr><td>Read-only</td><td>Click</td><td>Follows the link.</td></tr>
+<tr><td>Editable</td><td>Ctrl+click</td><td>Places the caret.</td></tr>
 </table>
 
-<p><strong>A size or a family comes in a style.</strong> An application states one in its sheet and
-the format names it:</p>
+<p>The underline and hand cursor show when the mouse gesture can follow the link. A mouse drag
+that selects text leaves the selection in place. At the caret, use Return in a read-only box and
+Ctrl+Return in an editable box.</p>
 
-<pre><code>sheet.<span class="fn">set</span>(<span class="tp">TextStyle</span>{
-    .name = <span class="st">L"Readout"</span>,
-    .base = sheet.<span class="fn">find</span>(<span class="tp">TextStyles</span>::Body),
-    .fontSize = <span class="kw">11.0f</span>,
+<p>For a <code>#name</code> held in the box's own text, the box selects the anchor's text and brings
+its line to the top of the view. This jump stays inside the box. Other destinations, including a
+fragment the box cannot resolve, go through <a href="#links-events">the link click event</a>.
+A handler can open another page and call <code>goToAnchor</code> on its box.</p>
+
+<h4 id="links-history">Back and forward</h4>
+
+<pre><code><span class="cm">// false, and nothing moves, where the text holds no such anchor</span>
+<span class="kw">bool</span> <span class="fn">goToAnchor</span>(<span class="tp">std::wstring_view</span> name);
+<span class="kw">void</span> <span class="fn">goBack</span>();
+<span class="kw">void</span> <span class="fn">goForward</span>();
+<span class="kw">bool</span> <span class="fn">canGoBack</span>() <span class="kw">const</span>;
+<span class="kw">bool</span> <span class="fn">canGoForward</span>() <span class="kw">const</span>;</code></pre>
+
+<p>Every jump is remembered. Before going to an anchor, the box records its current position - the
+selection, and the position the view showed at its top - and <code>Alt+Left</code> goes back to it
+while <code>Alt+Right</code> goes forward again, as a browser's history does.
+<code>goToAnchor</code> records a position whether a link or the application called it. With nothing
+to go back or forward to, the key is left unhandled and passes to the control above the box.</p>
+
+<p>An edit made through the box moves every remembered position with the text, so going back after
+typing returns to where the user was. An undo or a redo clears the history. A text written by the
+host leaves the history intact, and a position past the end of that text is clamped to its end when
+it is restored.</p>
+
+<h4 id="links-tooltips">Link tooltips</h4>
+
+<p>The tooltip normally displays the target. A <code>TextBox</code> anchors it to the link on
+the hovered line and places it above that line when there is room. For a <code>#name</code> in
+its own text, the box previews the formatted paragraph, up to six lines. An editable box appends
+<em>Ctrl+click to follow</em> to either the default body or a custom one.</p>
+
+<p>Use <code>onGetLinkTooltip</code> to supply a different body or placement. The control supplies
+its default body when the handler leaves <code>event.tooltip.text</code> empty.</p>
+
+<pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
+    event.tooltip.text &lt;&lt; <span class="st">L"Open "</span> &lt;&lt; event.target;
+});</code></pre>
+
+<div class="info">
+<strong>The tooltip wraps at 480 design pixels.</strong> Its window fits the widest resulting
+line. The overflow window that repeats clipped text uses the control's original line breaks.
+</div>
+
+<p>A tooltip body can contain its own <code>LinkText</code>. In a linked tooltip, the visible
+link text receives mouse clicks, including on wrapped lines. Plain text and padding pass clicks
+through. Hovering over the tooltip keeps it open when the platform reports that hover. For
+transparent areas on Wayland, this depends on the compositor reporting the pointer to the owner
+or one of its ancestors.</p>
+
+<h4 id="links-events">Handling link events</h4>
+
+<p>Subscribe to the event that matches what the application needs to customize. The
+<code>sender()</code> is the control whose text contains the link. A grid event also names its
+cell. See <a href="grids.html#cell-links">Grid link events</a>.</p>
+
+<table>
+<tr><th>Connect with</th><th>Payload and handler behavior</th></tr>
+<tr><td><code>onLinkClick</code></td><td><code>LinkClickEvent</code> carries <code>target</code>
+and the input <code>stamp</code>. Call <code>stopPropagation()</code> if the handler opens the
+destination. A handler can pass a relative target to the browser that owns the page. An
+unhandled target with a scheme goes to the registered handler for that scheme.</td></tr>
+<tr><td><code>onGetLinkTooltip</code></td><td><code>GetLinkTooltipEvent</code> carries
+<code>target</code>, the text <code>range</code>, and <code>tooltip</code>. Write the body to
+<code>event.tooltip.text</code>.</td></tr>
+<tr><td><code>onLinkContextPopup</code></td><td><code>LinkContextPopupEvent</code> carries
+<code>target</code>, <code>range</code>, and the original <code>popup</code> request. If you display
+a menu, call <code>event.popup.stopPropagation()</code>. Otherwise the normal menu request
+continues.</td></tr>
+</table>
+
+<h4 id="links-schemes">Registering a URL scheme</h4>
+
+<p>The application context keeps a handler for each scheme. ClaFi registers <code>http</code>,
+<code>https</code> and <code>mailto</code> to open in the system's browser or mail client.</p>
+
+<p>An application declares its own scheme through <code>ApplicationProperties::linkScheme</code>.
+ClaFi reserves <code>://settings</code> on that scheme and opens the current application's
+Settings. A fragment focuses the named control, opening its containing sections and scrolling
+it into view. For example, <code>seedocs://settings#external-editor-cpp</code> focuses the C++
+editor command field in SeeDocs. Applications name a Settings control through
+<code>AppMenuPage::anchorOption</code>. The optional
+<code>ApplicationProperties::linkHandler</code> receives the other destinations on the scheme.</p>
+
+<pre><code>context.<span class="fn">registerLinkHandler</span>(<span class="st">L"guide"</span>, [&amp;](
+    <span class="kw">const</span> <span class="tp">Url</span>&amp; url, <span class="tp">IForm</span>* source, <span class="tp">InputStamp</span> stamp) {
+    <span class="kw">return</span> <span class="fn">openGuidePage</span>(url.<span class="fn">path</span>(), url.<span class="fn">fragment</span>(), source, stamp);
 });
-<span class="tp">TextFormat</span>{ <span class="st">L"Readout"</span> };</code></pre>
+<span class="kw">const</span> <span class="tp">Url</span> url = <span class="tp">Url</span>::<span class="fn">Build</span>(
+    <span class="st">L"guide"</span>, <span class="st">L"/getting started"</span>, <span class="st">L"setup"</span>);
+text &lt;&lt; <span class="tp">LinkText</span>{ url.<span class="fn">str</span>(), <span class="st">L"Setup"</span> };</code></pre>
 
-<p><strong>Values only.</strong> A character, a link or an anchor is rejected at compile time, and so
-is a value that merely converts to one of those types, so a <code>wchar_t</code> is never accepted as a
-<code>Color</code>.</p>
+<p>A scheme is registered without its colon. Registration is case-insensitive and returns
+false when the scheme is already registered or the registration is invalid. A handler returns
+true when it accepts the URL. The source form may be null for a programmatic call. Other schemes
+become active when the application registers a handler for them.</p>
 
-<p><strong>One of each kind.</strong> A value replaces the value the format already holds of its kind,
-and another format replaces every field it states. Two formats with equal fields compare equal and
-share one layout in the cache, however they were built.</p>
+<p><code>Url::Build</code> escapes the path, query parameters and fragment. It keeps slashes as
+path separators and accepts an optional authority in URL spelling. <code>Url::Parse</code>
+returns an optional URL. Its <code>str()</code> gives back the address as supplied, while
+<code>path()</code>, <code>query()</code> and <code>fragment()</code> give decoded values.
+Query parameters keep their order and repeated names.</p>
 
-<pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextStyles</span>::Code };
-format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</span>::Red, <span class="tp">TextAlign</span>::Left };
-<span class="cm">// Left, red, in Code.</span></code></pre>
+<h2 id="writing-controls">Writing Controls</h2>
 
-<h3 id="format-under">Under the text</h3>
+<p>For control authors who set class defaults or implement text layout, drawing, editing and
+link behavior.</p>
 
-<p><strong>The text's own styles take precedence over the format.</strong> A field is resolved from
-the first source that states it: the run's style and its bases, then the format's style and its
-bases. A face, size, weight or slant that neither states comes from the text's Body, and an ink
-comes from the text ink. A link's ink sits between the run's ink and the format's. A paragraph's own
-look overrides the format's in the same way, and where neither states a field the paragraph is
-left-aligned, unindented and singly spaced.</p>
+<p>Import <code>ClaFi.Core.TextEngine</code> to draw and measure text,
+<code>ClaFi.Core.TextEngine.Layout</code> for <code>TextLayout</code>, and
+<code>ClaFi.Core.Foundation</code> for <code>WithTextLayout</code> and the common link events.</p>
 
-<p>A style name that the text cannot resolve anywhere is reported with
-<code>UnknownStyleEvent</code>, as a wrapper's is, and the text is laid out as it would be without
-it.</p>
-
-<p><strong>A format is how a control shows its text</strong>, kept separate from what the text
-contains. A selection, the edit history and a document see the text alone: a range copied out of a
-centered box pastes uncentered. A copy stores the box's format beside the text so that a preview can
-draw it in - see <a href="#copying-clipboard">The clipboard</a>. A control with a format and no text
-is blank.</p>
-
-<h3 id="format-control">On a control</h3>
-
-<p>Every control built on <code>RichControl</code> takes a <code>TextFormat</code> property and
-returns it from <code>textFormat()</code> - or no format, while the property is empty. Several
-formats in one argument list compose kind by kind, and a later one overrides an earlier one;
-<code>setTextFormat</code> replaces the format as a whole. Stating a format invalidates nothing; the
-caller requests the pass.</p>
+<h3 id="control-format-defaults">Setting a Default Text Format</h3>
 
 <p>A class states its format ahead of the arguments it forwards, as it states any other property.
 Along a chain of constructors the caller's value takes precedence for every kind it states, then the
@@ -450,57 +693,18 @@ monospace style this way, and the text passed to it states no style of its own:<
 <pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyles</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
 
 <div class="warning">
-<strong>Never call <code>setTextFormat</code> in a constructor body.</strong> The body runs after the
-caller's properties are bound, so the call replaces them.
+<strong>Pass class defaults in the base initializer.</strong> A call to
+<code>setTextFormat</code> in the constructor body replaces the caller's bound format.
 </div>
 
-<p>The format applies to everything that lays the control's text out: the paint and the measurement,
-a <code>TextBox</code>'s placeholder, the tooltip that repeats the control's clipped text
-(<code>OverTextAnswer::format</code>), and an in-place editor, which lays out its own text using the
-covered control's format (<code>EditTarget::textFormat</code>). A grid column states one format for
-all of its cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
+<p>When supplying the format yourself, pass it to both drawing and measurement. For an overflow
+window, supply <code>OverTextAnswer::format</code>. An in-place editor reads the format through
+<code>EditTarget::textFormat</code>.</p>
 
-<h2 id="anchors">Text Anchors</h2>
-
-<p>A control lays its text out in a box, and two anchors determine where the text sits inside that
-box.</p>
-
-<table>
-<tr><th>Property</th><th>Values</th><th>Default</th></tr>
-<tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
-<tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
-</table>
-
-<p><code>VerticalTextAnchor</code> positions the text block in the box by its measured height.</p>
-
-<p><code>HorizontalTextAnchor::None</code> creates no block. Each line is placed across the whole width
-of the box by its paragraph's <code>TextAlign</code>, and nothing moves it afterward; this suits a
-page, a grid cell and any text whose lines align to the edges of its box. <code>Left</code>,
-<code>Center</code> and <code>Right</code> create one: the text is measured as a block as wide as
-its widest line, each line is aligned inside that block, and the anchor moves the block as a whole.
-A wrapped text's block is never wider than the width it was broken at.</p>
-
-<table>
-<tr><th>The text</th><th><code>None</code></th><th><code>Left</code></th><th><code>Center</code></th><th><code>Right</code></th></tr>
-<tr><td>One line, aligned <code>Right</code></td><td>at the right edge</td><td>at the left edge - the block is the line</td><td>centered</td><td>at the right edge</td></tr>
-<tr><td>Two lines, aligned <code>Center</code></td><td>each centered in the box</td><td>centered on one another, the block at the left</td><td>each centered in the box</td><td>centered on one another, the block at the right</td></tr>
-</table>
-
-<p>The two anchors compose. A document tile centers its block under its mark, and it centers every
-line of a name that wraps inside the block:</p>
-
-<pre><code><span class="tp">HorizontalTextAnchor</span>::Center,
-<span class="tp">TextFormat</span>{ <span class="tp">TextAlign</span>::Center },</code></pre>
-
-<p>A tooltip that repeats an anchored control's clipped text repeats the block, starting where the
-control placed it. The engine receives the anchor with every <code>drawText</code>, and a control
-that <a href="#own-layout">holds its own layout</a> passes it to the layout with
-<code>setHorizontalAnchor</code>.</p>
-
-<h2 id="drawing">Drawing and Measuring</h2>
+<h3 id="drawing">Drawing and Measuring</h3>
 
 <p>The engine builds the layout. A control passes it a text, a rectangle, the colors it resolved,
-and the position of the text block inside that rectangle:</p>
+and the position of the text block inside that rectangle.</p>
 
 <pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
@@ -509,6 +713,10 @@ and the position of the text block inside that rectangle:</p>
 <span class="tp">ScaledSize</span> <span class="fn">measureText</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
     <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);</code></pre>
+
+<p>Pass the text returned by <code>adjustedText()</code> to drawing and measurement. A text
+gather can return the control's own text by reference. It builds a combined value when a handler
+or parent contributes text. See <a href="#events">Text Events</a> for the handler order.</p>
 
 <p>The format is laid out under the text - see <a href="#format">Text Format</a>. A null format and
 an empty format are equivalent, and <code>isTextTrimmed</code> accepts one in the same way.</p>
@@ -522,6 +730,10 @@ size, and the anchor states where in the bounds that box is placed. A call that 
 against a box the text does not occupy. The position each anchor produces is described in
 <a href="#anchors">Text Anchors</a>.
 </div>
+
+<p>Pass the anchor with each call to <code>drawText</code>. A control that
+<a href="#own-layout">holds its own layout</a> sets its horizontal anchor with
+<code>TextLayout::setHorizontalAnchor</code>.</p>
 
 <p>With <code>CLAFI_TEXT_MOVING</code> set to 1 in <code>Source/Y-Core/System/Switches.h</code>,
 <code>drawText</code> and <code>TextLayout::draw</code> take a <code>TextRenderMode</code> after the
@@ -551,7 +763,7 @@ cuts the text and leaves an empty row where the newline was.</p>
 caret and every position it measures run on that one layout, so a caret is never read off one build
 and drawn on another.</p>
 
-<h2 id="line-wrap">Line Wrap Modes</h2>
+<h3 id="line-wrap">Line Wrap Modes</h3>
 
 <p><code>TextLayout::setWrapMode</code> controls automatic wrapping. <code>LineWrapMode::None</code>
 lays out each paragraph on one line. <code>Normal</code>, the default, fills each line in order.
@@ -564,9 +776,9 @@ Justified paragraphs and paragraphs with tabs or flex spaces use normal wrapping
 <code>setWrap(true)</code> selects <code>Normal</code> and <code>setWrap(false)</code> selects
 <code>None</code>.</p>
 
-<h2 id="own-layout">A control that holds its own layout</h2>
+<h3 id="own-layout">Holding a Text Layout</h3>
 
-<h3 id="own-layout-when">When a control needs one</h3>
+<h4 id="own-layout-when">When a control needs one</h4>
 
 <p><code>WithTextLayout&lt;HostClass&gt;</code> gives a control a <code>TextLayout</code> of its own
 to shape in, instead of drawing through the engine's cache. It is written in the base list and
@@ -593,7 +805,7 @@ the cache and forces every label on the form to be shaped again.</p>
 another control's text, and nothing to evict. Editing is the second reason: an edited text is a
 different text on every key, and the paint and the caret have to read one build.</p>
 
-<h3 id="own-layout-seams">The two seams</h3>
+<h4 id="own-layout-seams">Drawing and measuring overrides</h4>
 
 <p>Two virtuals on <code>Control</code> determine which layout provides an answer, and they are a
 <strong>pair</strong>:</p>
@@ -610,7 +822,7 @@ that a run which does not wrap is measured against no width, and the clamp to th
 draws on another.
 </div>
 
-<h3 id="own-layout-synced">Bringing the layout up to date</h3>
+<h4 id="own-layout-synced">Bringing the layout up to date</h4>
 
 <p>Both seams, and every other call that queries the layout, go through one function, which keeps a
 position from being read off one build and drawn on another:</p>
@@ -644,11 +856,10 @@ only while the format matches the one it was made with.</p>
 about; this is the call for a text rewritten from nothing. A host that tracks what changed
 overrides it and reports the change instead - see <a href="#editing">Editing a layout in place</a>.</p>
 
-<h3 id="own-layout-positions">Positions on a held layout</h3>
+<h4 id="own-layout-positions">Positions on a held layout</h4>
 
-<p>Whoever holds a layout queries it for positions. The word-level functions above need no layout;
-these do, because the results are about lines, and lines exist only once a text has been broken to a
-width.</p>
+<p>Query the held layout for positions that depend on line breaking. The
+<a href="#drawing">word-level functions</a> operate on text directly.</p>
 
 <table>
 <tr><th>Call</th><th>Answers</th></tr>
@@ -675,7 +886,7 @@ visit the paragraphs, which is the cost of a result that depends on where the li
 applies <code>anchoredOrigin</code> in both directions: subtracting it from a point passed in,
 adding it to a rect returned.</p>
 
-<h3 id="own-layout-folding">Folding paragraphs</h3>
+<h4 id="own-layout-folding">Folding paragraphs</h4>
 
 <p><code>TextLayout::setHiddenParagraphs</code> takes sorted, non-overlapping ranges of zero-based
 paragraph indices. The first paragraph stays visible. An empty list restores all paragraphs.
@@ -685,13 +896,7 @@ visible paragraph. Update the ranges when an edit changes their indices.
 <code>paragraphVisibilityRevision()</code> changes when the supplied ranges change, so a caller
 can include it in a measurement cache key.</p>
 
-<p><code>CodeBox</code> uses the language's block boundaries to show gutter chevrons. A collapsed
-block marks its opening line with an ellipsis and hides the lines through its closer.
-Searches and copies still use the full source. The gutter's context menu offers
-<strong>Expand all</strong>, <strong>Collapse all</strong>, and <strong>Collapse others</strong>.
-<strong>Collapse others</strong> keeps open the blocks containing the clicked line.</p>
-
-<h2 id="editing">Editing a layout in place</h2>
+<h3 id="editing">Editing a Layout in Place</h3>
 
 <p>A layout is normally given a whole text. A caller that tracks the change can report it
 instead, and then a paragraph the edit did not reach keeps the shaping it already has:</p>
@@ -725,141 +930,44 @@ together only when their lengths agree: the text the layout holds, plus what the
 what it replaced. A control whose text arrives from its parent edits its own text, and the two are
 not the same text.</p>
 
-<h2 id="links">Links in Controls</h2>
+<h3 id="links-implementation">Implementing Link Behavior</h3>
 
-<p>Write links and anchors as described in the <a href="text.html#links">Writing ClaFi Text</a>
-manual. <code>WithTextLayout</code> gives controls such as <code>LabelWithTextLayout</code> and
-<code>TextBox</code> link hit testing, hover styling, tooltips, and activation.
-A click on an enabled link raises <code>OnLinkClick</code>. The application context opens the
-target if the event continues. Link events identify their sender as a <code>RichControl</code>.</p>
-
-<p>Tooltip bodies can contain <code>LinkText</code>. Each visible link takes pointer input
-over the text it occupies, including across wrapped lines. Non-link text and padding pass clicks
-through. Hovering anywhere over a linked tooltip keeps it visible, including over plain text
-and padding. On Wayland, hover over transparent areas depends on the compositor reporting the
-pointer to the tooltip's owner or an ancestor.</p>
-
-<h3 id="links-following">Following a link in a TextBox</h3>
-
-<table>
-<tr><th>Box</th><th>Follows a link on</th><th>A plain click on a link</th></tr>
-<tr><td>Read-only</td><td>A click</td><td>Follows it.</td></tr>
-<tr><td>One the user types into</td><td>Ctrl+click</td><td>Places the caret, as it does anywhere else in the text.</td></tr>
-</table>
-
-<p>The same rule controls when a link is underlined and when the hand pointer is shown, so the
-element under the pointer always indicates what a click there will do. A press that ends in a
-selection was a drag, and it follows nothing.</p>
-
-<p>A followed link is resolved in this order:</p>
+<p><code>WithTextLayout&lt;HostClass&gt;</code> supplies hit testing, hover feedback and link
+events for a control with one rich-text layout. If the control manages its own text regions,
+such as grid cells, implement the same behavior for each region.</p>
 
 <ol>
-<li><strong>When the box's own text holds the <code>#name</code></strong>, the box goes to that
-anchor. The anchor's text is selected, and its line is brought to the top of the view, as a browser
-does for a fragment. No event is raised.</li>
-<li><strong>Any other target</strong> raises <code>OnLinkClick</code> with that target. A handler
-that acts on the target stops the event.</li>
-<li><strong>A target that no handler stopped</strong> goes to
-<code>AppContext::openLink</code> with the form and input stamp that opened it.</li>
+<li><strong>Hit-test the text the control drew.</strong> Use its layout, anchor and visible clip.
+Show the hand and underline for a link that can be followed with the current input. Call
+<code>Tooltip::hoveredZoneChanged()</code> when the pointer moves onto, off, or between links,
+so the tooltip is refreshed within the same control.</li>
+<li><strong>Dispatch activation.</strong> When a mouse click follows a link, stop the ordinary
+click. Construct a <code>LinkClickEvent</code> with the source control, target and input stamp.
+Call <code>event.dispatch(form(), [&amp;] { emitEvent(event); })</code>. If the
+event continues, <code>dispatch</code> passes the target, form and stamp to
+<code>AppContext::openLink</code>. Use the control's caret or selection rules to choose a link
+for a keyboard gesture and dispatch it through the same event.</li>
+<li><strong>Answer the tooltip request.</strong> In <code>nestedAdjustTooltip</code>, construct
+<code>GetLinkTooltipEvent</code> with the hovered target, text range, original tooltip request
+and an anchor rectangle in form coordinates. It sets the initial placement above that rectangle.
+Emit the event, then call <code>writeDefaultTooltip()</code> to fill an empty body with the
+target. A control can first supply its own preview, as <code>TextBox</code> does for a local
+anchor. Use the ordinary tooltip path while the pointer is outside linked text.</li>
+<li><strong>Offer the link context menu.</strong> In <code>nestedContextPopup</code>, choose the
+link under the pointer or use the control's keyboard selection. Emit
+<code>LinkContextPopupEvent</code> with the target, text range and original request. Continue
+the normal menu path when the original request is still active.</li>
 </ol>
 
-<p><code>LinkClickEvent</code> carries <code>target</code>, as the text states it, and
-<code>stamp</code>, the press that followed the link. A <code>#name</code> that the box's text does
-not hold is raised like any other target, which is how a link reaches an anchor on another page: the
-handler opens that page and calls <code>goToAnchor</code> on its box.</p>
+<p>Pass relative targets through as written. The browser or page handling the event supplies
+the navigation context. A control that holds its own document can resolve its own anchors
+before raising the event, as <code>TextBox</code> does.</p>
 
-<h3 id="links-schemes">Registering a URL scheme</h3>
+<p>Expose the connection methods listed in <a href="#links-events">Handling link events</a>.
+A grid uses event types that inherit the common link events and add <code>cell()</code>.
+It offers the event first to the row, then to the owning grid when propagation continues.</p>
 
-<p>The application context keeps a handler for each scheme. ClaFi registers <code>http</code>,
-<code>https</code> and <code>mailto</code> to open in the system's browser or mail client.
-A grid cell or expander header also hands an unhandled link to the application context.</p>
-
-<p>An application declares its own scheme through <code>ApplicationProperties::linkScheme</code>.
-ClaFi reserves <code>://settings</code> on that scheme and opens the current application's
-Settings. A fragment focuses the named control, opening its containing sections and scrolling
-it into view. For example, <code>seedocs://settings#external-editor-cpp</code> focuses the C++
-editor command field in SeeDocs. Applications name a Settings control through
-<code>AppMenuPage::anchorOption</code>. The optional
-<code>ApplicationProperties::linkHandler</code> receives the other destinations on the scheme.</p>
-
-<pre><code>context.<span class="fn">registerLinkHandler</span>(<span class="st">L"guide"</span>, [&amp;](
-    <span class="kw">const</span> <span class="tp">Url</span>&amp; url, <span class="tp">IForm</span>* source, <span class="tp">InputStamp</span> stamp) {
-    <span class="kw">return</span> <span class="fn">openGuidePage</span>(url.<span class="fn">path</span>(), url.<span class="fn">fragment</span>(), source, stamp);
-});
-<span class="kw">const</span> <span class="tp">Url</span> url = <span class="tp">Url</span>::<span class="fn">Build</span>(
-    <span class="st">L"guide"</span>, <span class="st">L"/getting started"</span>, <span class="st">L"setup"</span>);
-text &lt;&lt; <span class="tp">LinkText</span>{ url.<span class="fn">str</span>(), <span class="st">L"Setup"</span> };</code></pre>
-
-<p>A scheme is registered without its colon. Registration is case-insensitive and returns
-false when the scheme is already registered or the registration is invalid. A handler returns
-true when it accepts the URL. The source form may be null for a programmatic call. Other schemes
-become active when the application registers a handler for them.</p>
-
-<p><code>Url::Build</code> escapes the path, query parameters and fragment. It keeps slashes as
-path separators and accepts an optional authority in URL spelling. <code>Url::Parse</code>
-returns an optional URL. Its <code>str()</code> gives back the address as supplied, while
-<code>path()</code>, <code>query()</code> and <code>fragment()</code> give decoded values.
-Query parameters keep their order and repeated names.</p>
-
-<h3 id="links-history">Back and forward</h3>
-
-<pre><code><span class="cm">// false, and nothing moves, where the text holds no such anchor</span>
-<span class="kw">bool</span> <span class="fn">goToAnchor</span>(<span class="tp">std::wstring_view</span> name);
-<span class="kw">void</span> <span class="fn">goBack</span>();
-<span class="kw">void</span> <span class="fn">goForward</span>();
-<span class="kw">bool</span> <span class="fn">canGoBack</span>() <span class="kw">const</span>;
-<span class="kw">bool</span> <span class="fn">canGoForward</span>() <span class="kw">const</span>;</code></pre>
-
-<p>Every jump is remembered. Before going to an anchor, the box records its current position - the
-selection, and the position the view showed at its top - and <code>Alt+Left</code> goes back to it
-while <code>Alt+Right</code> goes forward again, as a browser's history does.
-<code>goToAnchor</code> records a position whether a link or the application called it. With nothing
-to go back or forward to, the key is left unhandled and passes to the control above the box.</p>
-
-<p>An edit made through the box moves every remembered position with the text, so going back after
-typing returns to where the user was. An undo or a redo clears the history. A text written by the
-host leaves the history intact, and a position past the end of that text is clamped to its end when
-it is restored.</p>
-
-<h3 id="links-tooltips">Link tooltips</h3>
-
-<p>Every link has a tooltip, whether a click would follow it or not: the underline indicates that a
-click would follow it, and the tooltip shows where the link goes, which is as useful in a box the
-user types into as in one the user reads. The tooltip is placed over the line the pointer is on,
-starting where the link starts on that line, so it covers neither the link nor the words around it.
-Where the screen has no room above the line, it is placed under it. While the pointer is on a link,
-its tooltip replaces the box's own.</p>
-
-<p>When no handler writes a tooltip, the box supplies it:</p>
-
-<table>
-<tr><th>Target</th><th>Tooltip</th></tr>
-<tr><td><code>#name</code>, held by the box's text</td><td>The paragraph that contains the anchor, with its formatting - in the Ledger, the clue that a reference names. A paragraph longer than six lines is cut at the end of the sixth line and ends in an ellipsis, in the styles still open at that point.</td></tr>
-<tr><td>Any other target</td><td>The target as the text states it.</td></tr>
-</table>
-
-<p>In a box the user types into, the tooltip also shows a muted line:
-<em>Ctrl+click to follow</em>. A plain click there places the caret, and no other element on screen
-indicates that the link can be followed.</p>
-
-<p><code>OnGetLinkTooltip</code> is raised first. Its event carries <code>target</code>,
-<code>range</code> - the text the link covers - and <code>tooltip</code>, the tooltip itself with
-its placement and anchor already set. Whatever a handler writes into <code>tooltip.text</code>
-becomes the entire tooltip, and the box then writes nothing.</p>
-
-<pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
-    <span class="kw">if</span> (event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
-        event.tooltip.text &lt;&lt; <span class="st">L"Opens the "</span> &lt;&lt; event.target.<span class="fn">substr</span>(6) &lt;&lt; <span class="st">L" page"</span>;
-    });</code></pre>
-
-<div class="info">
-<strong>A tooltip breaks its lines at 480 design pixels</strong>, and its window is sized to the
-widest line in it, so a short tooltip stays short and a long one wraps instead of extending to the
-edge of the screen. This applies to every tooltip except one over a control's own text, which
-repeats the lines that control broke. A preview is cut at six lines of that width.
-</div>
-
-<h3 id="links-layout">Links on a held layout</h3>
+<h4 id="links-layout">Links on a held layout</h4>
 
 <p>A control that draws links of its own - one that <a href="#own-layout">holds its own layout</a> -
 queries the layout for the link under a point and sets which link is underlined:</p>
@@ -883,25 +991,22 @@ repaints. A new text clears it, since the range was stated in the text where it 
 and its target - and <code>BakedText::links()</code> returns every link in text order. The target is
 a view into the text the spans were baked from, and remains valid while that text is unchanged.</p>
 
-<h2 id="do-dont">Do and Don't</h2>
+<h3 id="do-dont">Checklist for Control Authors</h3>
 
 <div class="rules-grid">
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
             <li><strong>Build a <code>Text</code> per paint.</strong> An identical text hits the layout cache, so rebuilding costs a hash and a compare.</li>
-            <li><strong>Write a control's text through <code>text()</code></strong> and request the pass the change needs.</li>
             <li><strong>Pass the anchor</strong> that matches how the control positions its text.</li>
             <li><strong>Leave the horizontal anchor at <code>None</code></strong> for text whose lines align to the edges of their box.</li>
             <li><strong>State what every text of a control shares as its <code>TextFormat</code></strong>, ahead of the arguments a constructor forwards, rather than writing it into each text.</li>
-            <li><strong>Handle your own link targets in <code>OnLinkClick</code> and stop the event.</strong> For any target the handler does not stop, the box opens only http, https and mailto.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
             <li><strong>Don't hold a <code>Text</code> to avoid rebuilding it</strong> unless it is expensive to assemble. The layout cache is part of the engine, not of the control.</li>
-            <li><strong>Don't write through a <code>Text&amp;</code> taken from <code>text()</code>.</strong> The stamp stays where it was.</li>
             <li><strong>Don't measure editable text as static</strong> and then draw it editable. The two produce different heights.</li>
             <li><strong>Don't call <code>setTextFormat</code> in a constructor body.</strong> It replaces what the caller passed.</li>
             <li><strong>Don't put a text that changes while the user watches through the cache.</strong> A control whose text changes often derives from <code>WithTextLayout</code> and shapes it in place.</li>
@@ -909,7 +1014,7 @@ a view into the text the spans were baked from, and remains valid while that tex
     </div>
 </div>
 
-<h2 id="howitworks">How It Works</h2>
+<h2 id="howitworks">Text Engine Internals</h2>
 
 <h3 id="hiw-baked">Runs to spans</h3>
 
@@ -1046,13 +1151,14 @@ is one or two lines of a single link.</p>
         document.addEventListener('DOMContentLoaded', () => {
             const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
             collapsibleElements.forEach(li => {
-                const btn = li.querySelector('.toggle-btn');
-                const link = li.querySelector('.nav-item-wrapper > a');
-                const toggle = (e) => { e.preventDefault(); e.stopPropagation(); li.classList.toggle('collapsed'); };
-                if (btn) btn.addEventListener('click', toggle);
-                if (link) link.addEventListener('click', () => {
-                    if (li.classList.contains('collapsed')) li.classList.remove('collapsed');
-                });
+                const button = li.querySelector(':scope > .nav-item-wrapper > .toggle-btn');
+                const link = li.querySelector(':scope > .nav-item-wrapper > a');
+                const setCollapsed = (collapsed) => {
+                    li.classList.toggle('collapsed', collapsed);
+                    button.setAttribute('aria-expanded', String(!collapsed));
+                };
+                button.addEventListener('click', () => setCollapsed(!li.classList.contains('collapsed')));
+                link.addEventListener('click', () => setCollapsed(false));
             });
         });
     </script>

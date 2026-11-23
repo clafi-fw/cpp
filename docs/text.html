@@ -593,8 +593,8 @@ bullet is made that way.</p>
 
 <p>A link is a run of text that points somewhere, and an anchor is a run of text a link can point
 to. Both are fields of a run, so every edit, copy and paste keeps them with the rest of the
-formatting. Controls using <code>WithTextLayout</code>, including <code>LabelWithTextLayout</code>
-and <code>TextBox</code>, can follow links. See <a href="textengine.html#links">Links in Controls</a>.</p>
+formatting. <code>LabelWithTextLayout</code>, <code>TextBox</code>, expander headers and grid cells
+can follow links. See <a href="textengine.html#links">Adding Links to Controls</a>.</p>
 
 <h3 id="links-writing">Writing a link</h3>
 
@@ -609,7 +609,10 @@ and <code>TextBox</code>, can follow links. See <a href="textengine.html#links">
 
 <p>The target is any string at all - a URL, a path, <code>#</code> and an anchor name, or a word the
 application handles itself, such as <code>clafi:ledger</code>. The engine never reads it, and a
-document and the clipboard store it unchanged.</p>
+document and the clipboard store it unchanged. A fragment-only target such as
+<code>#gallery</code> refers to an anchor in the current page. See
+<a href="textengine.html#links-relative">Relative links</a> for how a browser or a
+<code>TextBox</code> resolves it.</p>
 
 <p><strong>A link is drawn in the accent ink</strong> where no color is written inside it, by itself
 or through its style. A color set around the link is replaced by that ink, and a color set inside it
@@ -617,7 +620,9 @@ takes precedence; a link that should not look like one is written that way:</p>
 
 <pre><code><span class="tp">LinkText</span>{ <span class="st">L"clafi:ledger"</span>, <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Strongest, <span class="st">L"the ledger"</span> } }</code></pre>
 
-<p>Where links nest, the inner link applies.</p>
+<p>Where links nest, the inner link applies. <code>Text::firstLinkSpan()</code> returns the first
+link's target and text range, or an empty optional when the text has no link. The target is a view
+into the text and stays valid while the text is unchanged.</p>
 
 <p>The underline belongs to the control rather than the text: the control underlines the link under
 the pointer when a click there would follow it, as the second link above shows. The underline is

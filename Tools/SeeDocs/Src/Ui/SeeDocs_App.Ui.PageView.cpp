@@ -1105,9 +1105,15 @@ namespace SeeDocs_App::Ui
             });
             if (!group.tooltip.empty())
             {
-                span.onGetCellTooltip([this, &group](Grids::GetCellTooltipEvent& event) {
-                    event.text() = Text{ *m_styles };
-                    writeRuns(event.text(), group.tooltip);
+                const auto writeTooltip = [this, &group](Text& text) {
+                    text = Text{ *m_styles };
+                    writeRuns(text, group.tooltip);
+                };
+                span.onGetCellTooltip([writeTooltip](Grids::GetCellTooltipEvent& event) {
+                    writeTooltip(event.text());
+                });
+                span.onGetLinkTooltip([writeTooltip](Grids::GetCellLinkTooltipEvent& event) {
+                    writeTooltip(event.tooltip.text);
                 });
             }
             target = &groupRow.body();
@@ -1123,9 +1129,13 @@ namespace SeeDocs_App::Ui
             header.setHeaderText(label);
             if (!group.tooltip.empty())
             {
-                header.onAdjustTooltip([this, &group](AdjustTooltipEvent& event) {
+                const auto writeTooltip = [this, &group](AdjustTooltipEvent& event) {
                     event.text = Text{ *m_styles };
                     writeRuns(event.text, group.tooltip);
+                };
+                header.onAdjustTooltip(writeTooltip);
+                header.onGetLinkTooltip([writeTooltip](GetLinkTooltipEvent& event) {
+                    writeTooltip(event.tooltip);
                 });
             }
             connectLinks(header);
@@ -1172,13 +1182,13 @@ namespace SeeDocs_App::Ui
             // The mark previews its footnote over the row, as a link previews its anchor.
             if (anchor.has_value())
             {
-                gridRow.onGetCellTooltip([this, &row](Grids::GetCellTooltipEvent& event) {
+                gridRow.onGetLinkTooltip([this, &row](Grids::GetCellLinkTooltipEvent& event) {
                     if (event.column().tag().value != k_markColumn)
+                    {
                         return;
-                    AdjustTooltipEvent& tooltip = event.tooltip();
-                    tooltip.placement = FormPlacement::Top;
-                    tooltip.text = Text{ *m_styles };
-                    tooltip.writePreview(textOf(row.excerpt->blocks, *m_styles));
+                    }
+                    event.tooltip.text = Text{ *m_styles };
+                    event.tooltip.writePreview(textOf(row.excerpt->blocks, *m_styles));
                 });
             }
             // **A hint running over the empty cells before it** is written in the parent over
@@ -1633,21 +1643,17 @@ namespace SeeDocs_App::Ui
     // See Browser
     void PageView::connectLinks(Grids::Grid& grid)
     {
-        // The event names its row const, and the row stands as any control of the page does.
-        grid.onCellLinkClick([this](Grids::CellLinkClickEvent& event) {
-            open(event.target, const_cast<Grids::RowBase&>(event.row()));
+        grid.onLinkClick([this](LinkClickEvent& event) {
+            open(event.target, event.sender());
         });
-        // The row, which is where the request was raised.
-        grid.onCellLinkContextPopup([this](Grids::CellLinkContextPopupEvent& event) {
+        grid.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(*event.popup.control, event.target, event.popup);
         });
-        // Over the cell, as a link's tooltip stands over its line - where the row has not answered
-        // for the cell already, as a method's row answers with its signatures.
-        grid.onGetCellTooltip([this](Grids::GetCellTooltipEvent& event) {
-            if (event.link().empty() || !event.text().empty())
-                return;
-            if (writePreview(event.text(), event.link()))
-                event.tooltip().placement = FormPlacement::Top;
+        grid.onGetLinkTooltip([this](GetLinkTooltipEvent& event) {
+            if (event.tooltip.text.empty())
+            {
+                writePreview(event.tooltip.text, event.target);
+            }
         });
     }
 
@@ -1668,10 +1674,10 @@ namespace SeeDocs_App::Ui
 
     void PageView::connectLinks(ExpanderHeader& header)
     {
-        header.onLinkClick([this](HeaderLinkClickEvent& event) {
+        header.onLinkClick([this](LinkClickEvent& event) {
             open(event.target, event.sender());
         });
-        header.onLinkContextPopup([this](HeaderLinkContextPopupEvent& event) {
+        header.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
         });
     }

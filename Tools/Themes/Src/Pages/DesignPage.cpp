@@ -39,7 +39,6 @@ namespace Themes_App
     namespace
     {
         constexpr std::wstring_view k_elementsAnchor{ L"Elements" };
-        constexpr std::wstring_view k_stylePrefix{ L"Style/" };
         constexpr std::wstring_view k_newStyleName{ L"New element" };
         constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
         constexpr std::array k_foundTextOutputs{ PaintChannel::Surface };
@@ -118,19 +117,6 @@ namespace Themes_App
 
         using ElementItem = EditableElementRow<TreeItem>;
         using ElementHeader = EditableElementRow<TreeNodeHeader>;
-
-        [[nodiscard]] std::wstring styleAnchor(const std::wstring_view name)
-        {
-            std::wstring anchor{ k_stylePrefix };
-            for (const wchar_t character : name)
-            {
-                if (character == L'%')
-                    anchor.append(L"%25");
-                else
-                    anchor.push_back(character);
-            }
-            return anchor;
-        }
 
         [[nodiscard]] Text rowText(const PageKind kind, const std::wstring_view name)
         {
@@ -240,12 +226,13 @@ namespace Themes_App
     }
 
     void DesignPage::bind(AppTheme& theme, const OnGetElementRuleBase& ruleBase,
-        const OnRulesChanged& onRulesChanged)
+        const OnRulesChanged& onRulesChanged, const OnFollowElementLink& onFollowElementLink)
     {
         m_colors = &theme.colors;
         m_styles = &theme.styles;
         m_ruleBase = ruleBase;
         m_onRulesChanged = onRulesChanged;
+        m_onFollowElementLink = onFollowElementLink;
         rebuildTree();
     }
 
@@ -456,7 +443,8 @@ namespace Themes_App
             },
             .onDeleteStyle = [this, name]() {
                 deleteStyle(name);
-            }
+            },
+            .onFollowElementLink = m_onFollowElementLink
         });
     }
 

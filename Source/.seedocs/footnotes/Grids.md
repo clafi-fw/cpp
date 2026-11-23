@@ -138,24 +138,32 @@ Asked of the row, then the grid. Write the tooltip into text(). The anchor arriv
 rect and the placement as the pointer - change them through tooltip(). A cell nobody writes for
 repeats the words its column cut.
 
-**A link has a tooltip of its own.** link() names the link under the pointer, as the cell's text
-states it, and is empty off a link. The tooltip is asked again where it stands as the pointer moves
-onto a link, off one, or from one to another.
+**This event answers for the parts of the cell outside linked text.** See GetCellLinkTooltipEvent
+for the tooltip over a link.
 
 ## CellLinkClickEvent
 
 A cell's text carries links as any Text does - a LinkText around the words. A mouse click on one
-follows it. Return follows the selected cell's first link, which stands for the cell, in a column
-that opens no editor; a column that edits keeps Return for the editor and follows on Ctrl+Return.
-The click goes no further up, so the grid's own click handling never sees it.
+follows it. Return follows the first link in a selected cell in a read-only column or a column with
+no editor. Ctrl+Return follows the link in an editable column.
+**The row receives onLinkClick first, then the owning grid.** The event adds cell(), row() and
+column() to LinkClickEvent. Stop it to take the link. The ordinary click ends at the row.
+
+## GetCellLinkTooltipEvent
+
+**The row receives onGetLinkTooltip first, then the owning grid.** The event adds cell(), row()
+and column() to GetLinkTooltipEvent. A handler can write the tooltip body. The destination fills
+an empty body after those handlers. Moving between links or between a link and plain text
+refreshes the tooltip.
 
 ## CellLinkContextPopupEvent
 
 Raised from the keyboard, it is about the first link in the selected cell, and the menu drops under
 that cell.
 
-**A handler that shows a menu stops `popup`**, and the request goes no further up. Left unstopped,
-it goes to the grid, then on up as from anywhere else on the row.
+**The row receives onLinkContextPopup first, then the owning grid.** The event adds cell(),
+row() and column() to LinkContextPopupEvent. A handler that shows a menu stops popup. An
+unstopped popup request follows the row's usual menu path.
 
 ## Dt::Column
 

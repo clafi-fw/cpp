@@ -4,6 +4,8 @@ export import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -35,6 +37,16 @@ namespace ClaFi::Controls
     public:
         template<typename... Args>
         explicit ToolButton(const CreateParams&, Args&&...);
+    };
+
+    // A button whose caption is drawn in hyperlink style. See Controls
+    export class LinkButton : public ButtonBase
+    {
+    public:
+        template<typename... Args>
+        explicit LinkButton(const CreateParams&, Args&&...);
+    protected:
+        DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     };
 
 
@@ -71,6 +83,13 @@ namespace ClaFi::Controls
             MouseFocus::Keep,
             std::forward<Args>(args)...
         }
+    {
+    }
+
+    template<typename... Args>
+    LinkButton::LinkButton(const CreateParams& params, Args&&... args)
+        :
+        ButtonBase{ params, ClickTarget::Self, std::forward<Args>(args)... }
     {
     }
 

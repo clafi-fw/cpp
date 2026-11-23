@@ -66,24 +66,6 @@ namespace ClaFi::Controls
         bool m_expanded;
     };
 
-    export class ExpanderHeader;
-
-    // A link in a header's label was followed.
-    export struct HeaderLinkClickEvent : public EventOf<ExpanderHeader>
-    {
-        HeaderLinkClickEvent(ExpanderHeader&, std::wstring target, InputStamp);
-        std::wstring target;   // what the link names, as the label states it
-        InputStamp stamp;      // the press that followed the link
-    };
-
-    // The menu for a link in a header's label is being asked for.
-    export struct HeaderLinkContextPopupEvent : public EventOf<ExpanderHeader>
-    {
-        HeaderLinkContextPopupEvent(ExpanderHeader&, std::wstring target, ContextPopupEvent&);
-        const std::wstring target;   // what the link names, as the label states it
-        ContextPopupEvent& popup;    // the request; a handler that has shown a menu stops it
-    };
-
     // The strip an expander is picked and opened by.
     export class ExpanderHeader : public PanelBase
     {
@@ -93,10 +75,12 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit ExpanderHeader(const CreateParams& params, Args&&...);
     public:
-        // A link in the label was followed: a mouse click on it, or Return from the header.
-        DECLARE_EVENT(HeaderLinkClickEvent, OnLinkClick, onLinkClick)
-        // The menu for a link in the label is being asked for.
-        DECLARE_EVENT(HeaderLinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
+        // Return follows the first link in the label. See Controls#linkclickevent
+        DECLARE_EVENT(LinkClickEvent, OnLinkClick, onLinkClick)
+        // The link tooltip is anchored to the label. See Controls#getlinktooltipevent
+        DECLARE_EVENT(GetLinkTooltipEvent, OnGetLinkTooltip, onGetLinkTooltip)
+        // A keyboard request uses the first link. See Controls#linkcontextpopupevent
+        DECLARE_EVENT(LinkContextPopupEvent, OnLinkContextPopup, onLinkContextPopup)
     public:
         void invalidateChevron() const { m_button.invalidate(); }
         void toggleExpanded() { setExpanded(!expanded()); }
@@ -118,11 +102,12 @@ namespace ClaFi::Controls
         [[nodiscard]] CursorShape cursor() const override;
     protected:
         void adjustPaint(AdjustPaintEvent&) override;
-        void mouseMove(MouseMoveEvent&) override;
+        void nestedMouseMove(const MouseMoveEvent&) override;
         void hoverLeave() override;
         // A mouse click on a link follows it, and a key's click toggles all looks but TreeNode.
         void click(ClickEvent&) override;
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         ScaledSize calculateContent(AlignEvent&) override;
@@ -141,6 +126,8 @@ namespace ClaFi::Controls
         {
             std::wstring target;
             TextRange range;
+
+            bool operator==(const LabelLink&) const = default;
         };
     private:
         [[nodiscard]] static TextPlacement textPlacementFor(ExpanderViewMode);
@@ -156,15 +143,15 @@ namespace ClaFi::Controls
         // The link under the point, as the label is drawn; nothing where none stands.
         [[nodiscard]] std::optional<LabelLink> linkAt(PointInForm) const;
         // The label's first link, which the keyboard names, since it names no point in the label.
-        [[nodiscard]] std::optional<std::wstring> firstLink() const;
+        [[nodiscard]] std::optional<LabelLink> firstLink() const;
         // Underlines the range, or nothing for an empty one, repainting only when that changes.
-        void hoverLink(TextRange);
+        bool hoverLink(std::optional<LabelLink>);
     private:
         static constexpr std::wstring_view k_ellipsis = L"\u2026";
         bool m_expanded{ true };
         float m_expandedFactor{ 1.0f };
         float m_lead{};
-        TextRange m_hoveredLink{};   // the link under the pointer; empty for none
+        std::optional<LabelLink> m_hoveredLink{};
         // Declared before the button: the look names the slot the button is built into, and a
         // member initializer runs in declaration order.
         ExpanderViewMode m_viewMode;

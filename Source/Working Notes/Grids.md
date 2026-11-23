@@ -23,7 +23,7 @@ second lands on the cell it picked.
 Without it a combo box sized its own column: a pixel short after a scale change, "No change" broke
 onto two lines and the column shrank to its longer word.
 
-## GetCellTooltipEvent
+## GetCellLinkTooltipEvent
 
 The row tells the tooltip when the link under the pointer changes, through
 Tooltip::hoveredZoneChanged, as TextBox does - see the Controls note. A move tells it and a leave
