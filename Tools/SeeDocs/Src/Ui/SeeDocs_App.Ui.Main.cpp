@@ -15,12 +15,14 @@ import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
 
@@ -34,6 +36,14 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_publisher = L"ClaFi Framework";
         constexpr std::wstring_view k_openPageCaption = L"Open";
         constexpr std::wstring_view k_newProjectCaption = L"New project";
+
+        [[nodiscard]] MainForm* mainFormOf(FormBase& form)
+        {
+            FormBase& root = form.rootForm();
+            if (&root != root.appContext().rootLoopForm())
+                return nullptr;
+            return &static_cast<Form<MainForm>&>(root).content();
+        }
     }
 
     ApplicationProperties seeDocsParams()
@@ -47,6 +57,11 @@ namespace SeeDocs_App::Ui
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"SeeDocs-v"
+            },
+            .linkScheme = SurfaceBrowser::k_pageLinkScheme,
+            .linkHandler = [](const Url& url, IForm* source, InputStamp) {
+                MainForm* mainForm = source ? mainFormOf(static_cast<FormBase&>(*source)) : nullptr;
+                return mainForm && mainForm->openPageLink(url);
             }
         };
     }
@@ -89,7 +104,7 @@ namespace SeeDocs_App::Ui
     void MainForm::connectMenus()
     {
         connectAppPage(k_openPageCaption, drawOpenIcon, [](AppMenuPage& page) {
-            MainForm* mainForm = dynamic_cast<MainForm*>(&page.form().rootForm());
+            MainForm* mainForm = mainFormOf(page.form());
             if (mainForm && mainForm->m_workspace)
             {
                 buildOpenPage(page, *mainForm->m_workspace);
@@ -97,7 +112,7 @@ namespace SeeDocs_App::Ui
         });
         connectAppCommand(k_newProjectCaption, drawNewProjectIcon, EndIcon::OpensWindow,
             [](ClickEvent& event) {
-                MainForm* mainForm = dynamic_cast<MainForm*>(&event.form.rootForm());
+                MainForm* mainForm = mainFormOf(event.form);
                 if (mainForm && mainForm->m_workspace)
                 {
                     event.closeForm();

@@ -211,7 +211,8 @@ between. Return follows the live link the caret stands in, a caret at either end
 - `#name` the box's text holds - the box goes there itself and raises nothing. See
   TextBox::goToAnchor.
 - Any other target raises the event, and a handler that answers it stops it.
-- What no handler stops opens through the shell, for an `http:`, `https:` or `mailto:` target alone.
+- What no handler stops goes to the application's scheme registry, with the source form and
+  input stamp. See AppContext openLink.
 
 The click goes no further up.
 
@@ -334,7 +335,7 @@ be copied into a search.
 ## MessageDialog OnLinkClick
 
 The dialog raises the message box's LinkClickEvent again here - the same event object. **A handler
-that stops it** keeps the box from opening the target through the shell. Otherwise the link opens
+that stops it** keeps the box from handing the target to the scheme registry. Otherwise the link opens
 as in any TextBox - see LinkClickEvent.
 
 ## MessageBar

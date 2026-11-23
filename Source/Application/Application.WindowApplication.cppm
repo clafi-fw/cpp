@@ -76,7 +76,7 @@ namespace ClaFi
         // initialize and finalize are called from derived WindowApplication<Platform, Backend>
         // constructor and destructor, to make sure the Platform is in valid state
         // during that calls
-        void initialize();
+        void initialize(const ApplicationProperties&);
         // Runs once. An application whose own members the exit save reaches - a BrowserApplication
         // and its settings - calls it from its destructor, while they stand; the call from
         // ~WindowApplication then finds it done.
@@ -214,7 +214,7 @@ namespace ClaFi
         config().save();
     }
 
-    void WindowApplicationBase::initialize()
+    void WindowApplicationBase::initialize(const ApplicationProperties& properties)
     {
         // **First**, before any window exists: the identity a toplevel is made under.
         Platform::setApplicationId(publisher(), name().plainText());
@@ -226,7 +226,7 @@ namespace ClaFi
         // references, and the tables would be filled in some builds and empty in others.
         StdActions::registerTransferFormats(m_context.platform().clipboard());
         // The application menu under every AppButton.
-        connectAppMenu();
+        connectAppMenu(m_context, properties.linkScheme, properties.linkHandler);
         // The notices over the main window, from the moment it takes the root loop.
         connectNotices(m_context);
         // Built before the config is read, so a line logged while reading it has somewhere to
@@ -366,8 +366,8 @@ namespace ClaFi
             .answers = {
                 NoticeAnswer{
                     .caption = L"Visit",
-                    .run = [address](ClickEvent&) {
-                        Platform::shellExecute(nullptr, address);
+                    .run = [address](ClickEvent& event) {
+                        event.appContext().openLink(address, &event.form, event.stamp);
                     },
                     .tooltip = address
                 }
@@ -418,7 +418,7 @@ namespace ClaFi
         }
     {
         //m_platform.initialize(context());
-        initialize();
+        initialize(properties);
     }
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>

@@ -4,6 +4,7 @@ import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -47,7 +48,7 @@ namespace ClaFi
     export [[nodiscard]] Dom::Dt::Section createAppMenuConfigSchema();
 
     // Puts the menu under every AppButton, once per application. See Application
-    export void connectAppMenu();
+    export void connectAppMenu(AppContext&, std::wstring_view linkScheme, LinkHandler);
 
     // Adds a command of the application's own below its pages. See Application
     export void connectAppCommand(std::wstring_view caption, DrawIconFunc drawIcon, EndIcon,

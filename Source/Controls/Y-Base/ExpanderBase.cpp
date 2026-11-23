@@ -8,6 +8,7 @@ import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -78,8 +79,7 @@ namespace ClaFi::Controls
             if (link.has_value())
             {
                 event.stopPropagation();
-                HeaderLinkClickEvent linkEvent{ *this, std::move(link->target), event.stamp };
-                emitEvent(linkEvent);
+                followLink(std::move(link->target), event.stamp);
                 return;
             }
         }
@@ -132,8 +132,7 @@ namespace ClaFi::Controls
             if (target.has_value())
             {
                 event.handled = true;
-                HeaderLinkClickEvent linkEvent{ *this, std::move(*target), event.stamp };
-                emitEvent(linkEvent);
+                followLink(std::move(*target), event.stamp);
                 return;
             }
         }
@@ -153,6 +152,16 @@ namespace ClaFi::Controls
             }
         }
         PanelBase::nestedKeyDown(event);
+    }
+
+    void ExpanderHeader::followLink(std::wstring target, const InputStamp stamp)
+    {
+        FormBase& source = form();
+        const AppContext& application = source.appContext();
+        HeaderLinkClickEvent event{ *this, std::move(target), stamp };
+        emitEvent(event);
+        if (!event.propagationStopped())
+            application.openLink(event.target, &source, stamp);
     }
 
     DrawTextResult ExpanderHeader::drawText(PaintEvent& event, const FloatRect& textBounds,

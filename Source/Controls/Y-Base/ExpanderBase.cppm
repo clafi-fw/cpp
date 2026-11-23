@@ -151,6 +151,7 @@ namespace ClaFi::Controls
         void expandIntoView();
         void toggleIntoView();   // closes an open section, opens a closed one into view
         void scrollSectionIntoView() const;
+        void followLink(std::wstring target, InputStamp);
         [[nodiscard]] bool squaresBottomCorners() const;
         // The link under the point, as the label is drawn; nothing where none stands.
         [[nodiscard]] std::optional<LabelLink> linkAt(PointInForm) const;

@@ -2,6 +2,18 @@
 
 The words that do not fit above a declaration.
 
+## AppContext registerLinkHandler
+
+**A scheme has one handler per application.** Register a scheme without its colon. Letter case
+does not affect the registration. A duplicate, an invalid scheme, or an empty handler returns
+false.
+
+## AppContext openLink
+
+**The handler receives the URL, the originating form, and the input stamp.** A call without a
+form passes a null pointer. The result is true when the registered handler accepts the URL.
+An unregistered scheme, a scheme-less target, or an invalid spelling returns false.
+
 ## FrameMargins
 
 WindowFrame holds two: the `margins` around the window, where the border and the shadow are drawn

@@ -24,6 +24,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
@@ -34,6 +35,8 @@ import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -77,11 +80,30 @@ namespace ClaFi
 
     // connectAppMenu
 
-    void connectAppMenu()
+    void connectAppMenu(AppContext& context, const std::wstring_view linkScheme,
+        LinkHandler linkHandler)
     {
         appMenuAction().onClick([](ActionClickEvent& event) {
             openAppMenu(event);
         });
+        if (linkScheme.empty())
+            return;
+
+        const bool registered = context.registerLinkHandler(linkScheme,
+            [applicationLinks = std::move(linkHandler)](const Url& url, IForm* source, InputStamp stamp) {
+                if (url.authority() == L"settings" && url.path().empty()
+                    && url.query().empty() && url.fragment().empty())
+                {
+                    if (!source)
+                        return false;
+                    FormBase& form = static_cast<FormBase&>(*source);
+                    openAppMenuPage(form.rootForm(), AppMenu::k_settingsPageCaption, stamp);
+                    return true;
+                }
+                return applicationLinks && applicationLinks(url, source, stamp);
+            });
+        if (!registered)
+            noReach("Application link scheme is invalid or already registered");
     }
 
     // connectAppCommand
@@ -119,6 +141,10 @@ namespace ClaFi
 
     void openAppMenu(ActionClickEvent& event)
     {
+        event.form.closeActivePopup();
+        if (event.form.activePopup())
+            return;
+
         Form menu{ event.form.createPopup<AppMenu>(event.presenter) };
         // Under the button that opened it; a shortcut has none, so the menu takes the middle.
         menu.setPlacement(event.presenter ? FormPlacement::BottomLeft : FormPlacement::Default);

@@ -2,7 +2,6 @@ module SeeDocs_App.Ui.ExternalEditors;
 
 import SeeDocs_App.Surface;
 
-import ClaFi.App.AppMenu;
 import ClaFi.App.Notices;
 import ClaFi.App.Settings;
 
@@ -442,7 +441,7 @@ namespace SeeDocs_App::Ui
                 NoticeAnswer{
                     .caption = L"Settings",
                     .run = [](ClickEvent& event) {
-                        openAppMenuPage(event.form, AppMenu::k_settingsPageCaption, event.stamp);
+                        event.appContext().openLink(L"seedocs://settings", &event.form, event.stamp);
                     }
                 }
             }

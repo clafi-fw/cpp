@@ -489,7 +489,8 @@ An article is a list of blocks, each of one kind:
 **The words are a Text**: a paragraph's, a heading's, a list item's, a cell's, a summary's and the
 lead. They are set in bold, italic, the code style and theme inks with their grades, and they hold
 links: to an anchor (`#name`), to an article by its sidebar path, to a page outside (`https://`),
-or to the reference by a qualified name (`ClaFi::Control::form`), found when the page is shown so
+  to Settings (`seedocs://settings`), or to the reference by a qualified name
+  (`ClaFi::Control::form`), found when the page is shown so
 that it holds while folders move. Names in code link by the rule the footnotes follow, and the
 article stores no such link. A style an article names is found among the text's own styles, then
 in the project's - see [Styles](#styles).

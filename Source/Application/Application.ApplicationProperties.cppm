@@ -1,6 +1,7 @@
 export module ClaFi.App.ApplicationProperties;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
@@ -32,5 +33,7 @@ namespace ClaFi
         // A theme file's text stating its own styles, which join the built-in theme at start.
         std::wstring_view builtInTheme{};
         ThemesOffered themesOffered{ ThemesOffered::StatingEveryElement };
+        std::wstring_view linkScheme{}; // the scheme the framework registers for this application
+        LinkHandler linkHandler{}; // handles application links outside the framework's routes
     };
 }

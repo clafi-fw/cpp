@@ -177,6 +177,7 @@
                 </div>
                 <ul>
                     <li><a href="#links-following">Following a link</a></li>
+                    <li><a href="#links-schemes">Registering a URL scheme</a></li>
                     <li><a href="#links-history">Back and forward</a></li>
                     <li><a href="#links-tooltips">Link tooltips</a></li>
                     <li><a href="#links-layout">Links on a held layout</a></li>
@@ -751,28 +752,45 @@ anchor. The anchor's text is selected, and its line is brought to the top of the
 does for a fragment. No event is raised.</li>
 <li><strong>Any other target</strong> raises <code>OnLinkClick</code> with that target. A handler
 that acts on the target stops the event.</li>
-<li><strong>A target that no handler stopped</strong> is opened through the shell when it starts with
-<code>http:</code>, <code>https:</code> or <code>mailto:</code>, whatever its letter case. Every
-other target goes nowhere.</li>
+<li><strong>A target that no handler stopped</strong> goes to
+<code>AppContext::openLink</code> with the form and input stamp that opened it.</li>
 </ol>
-
-<pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {
-    <span class="kw">if</span> (!event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
-        <span class="kw">return</span>;
-    <span class="fn">openPage</span>(event.target.<span class="fn">substr</span>(6));
-    event.<span class="fn">stopPropagation</span>();
-    });</code></pre>
 
 <p><code>LinkClickEvent</code> carries <code>target</code>, as the text states it, and
 <code>stamp</code>, the press that followed the link. A <code>#name</code> that the box's text does
 not hold is raised like any other target, which is how a link reaches an anchor on another page: the
 handler opens that page and calls <code>goToAnchor</code> on its box.</p>
 
-<div class="warning">
-<strong>The shell opens three schemes only.</strong> A text read from a file or from the clipboard
-can hold any target, and the shell runs any program it is handed. A <code>file:</code> link, a path
-or a scheme of the application's own does nothing until a handler acts on it.
-</div>
+<h3 id="links-schemes">Registering a URL scheme</h3>
+
+<p>The application context keeps a handler for each scheme. ClaFi registers <code>http</code>,
+<code>https</code> and <code>mailto</code> to open in the system's browser or mail client.
+A grid cell or expander header also hands an unhandled link to the application context.</p>
+
+<p>An application declares its own scheme through <code>ApplicationProperties::linkScheme</code>.
+ClaFi reserves <code>://settings</code> on that scheme and opens the current application's
+Settings. For example, SeeDocs declares <code>seedocs</code>, so its Settings link is
+<code>seedocs://settings</code>. The optional <code>ApplicationProperties::linkHandler</code>
+receives the other destinations on the scheme.</p>
+
+<pre><code>context.<span class="fn">registerLinkHandler</span>(<span class="st">L"guide"</span>, [&amp;](
+    <span class="kw">const</span> <span class="tp">Url</span>&amp; url, <span class="tp">IForm</span>* source, <span class="tp">InputStamp</span> stamp) {
+    <span class="kw">return</span> <span class="fn">openGuidePage</span>(url.<span class="fn">path</span>(), url.<span class="fn">fragment</span>(), source, stamp);
+});
+<span class="kw">const</span> <span class="tp">Url</span> url = <span class="tp">Url</span>::<span class="fn">Build</span>(
+    <span class="st">L"guide"</span>, <span class="st">L"/getting started"</span>, <span class="st">L"setup"</span>);
+text &lt;&lt; <span class="tp">LinkText</span>{ url.<span class="fn">str</span>(), <span class="st">L"Setup"</span> };</code></pre>
+
+<p>A scheme is registered without its colon. Registration is case-insensitive and returns
+false when the scheme is already registered or the registration is invalid. A handler returns
+true when it accepts the URL. The source form may be null for a programmatic call. Other schemes
+become active when the application registers a handler for them.</p>
+
+<p><code>Url::Build</code> escapes the path, query parameters and fragment. It keeps slashes as
+path separators and accepts an optional authority in URL spelling. <code>Url::Parse</code>
+returns an optional URL. Its <code>str()</code> gives back the address as supplied, while
+<code>path()</code>, <code>query()</code> and <code>fragment()</code> give decoded values.
+Query parameters keep their order and repeated names.</p>
 
 <h3 id="links-history">Back and forward</h3>
 

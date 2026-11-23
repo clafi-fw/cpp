@@ -24,6 +24,7 @@ import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 import ClaFi.StdLib;
 
 namespace ClaFi
@@ -101,6 +102,7 @@ namespace ClaFi
 #endif
 
     export using InformationParagraphs = std::vector<std::wstring>;
+    export using LinkHandler = std::function<bool(const Url&, IForm*, InputStamp)>;
 
     export class AppContext
     {
@@ -133,6 +135,9 @@ namespace ClaFi
         // Whether a newer release is published - asked only when the user asks.
         [[nodiscard]] UpdateCheck& updateCheck() { return m_updateCheck; }
         [[nodiscard]] const UpdateCheck& updateCheck() const { return m_updateCheck; }
+        bool registerLinkHandler(std::wstring_view scheme, LinkHandler);
+        bool openLink(std::wstring_view target, IForm* source = nullptr, InputStamp stamp = {}) const;
+        bool openLink(const Url&, IForm* source = nullptr, InputStamp stamp = {}) const;
 
         // **One answer for the process**, and the only place a form can ask for a backend: the kind
         // the application is on at that moment, so no two windows can disagree.
@@ -239,6 +244,7 @@ namespace ClaFi
         static constexpr std::wstring_view k_mainFormName = L"MainForm";
         //
     private:
+        void connectStandardLinks();
         // What the two factors make of the two sets, and every window told to repaint in it.
         void stateBakedColors();
         // Whether either of the two slots is still running.
@@ -290,6 +296,7 @@ namespace ClaFi
         std::wstring_view m_site;
         AppElementNames m_appElements;
         InformationParagraphs m_information{};
+        std::map<std::wstring, LinkHandler, std::less<>> m_linkHandlers{};
         UpdateCheck m_updateCheck;
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
         // backend needs no factory here: the core owns that type.
@@ -389,6 +396,7 @@ namespace ClaFi
             Dom::WriteDefaults::No
         }
     {
+        connectStandardLinks();
         connectBackendChoice();
         connectScale();
         connectUpdateCheck();
@@ -422,6 +430,7 @@ namespace ClaFi
             Dom::WriteDefaults::No
         }
     {
+        connectStandardLinks();
         connectBackendChoice();
         connectScale();
         connectUpdateCheck();
@@ -436,6 +445,49 @@ namespace ClaFi
         // A crossing outlives nothing: its callback reaches back into this context.
         m_animator.stop(this);
         m_animator.clearTickEndListener(this);
+    }
+
+    bool AppContext::registerLinkHandler(const std::wstring_view scheme, LinkHandler handler)
+    {
+        std::wstring spelling{ scheme };
+        spelling.push_back(L':');
+        if (!handler || Url::schemeOf(spelling) != scheme || scheme.empty())
+            return false;
+        const Url url = Url::Build(scheme, {});
+        return m_linkHandlers.try_emplace(url.scheme(), std::move(handler)).second;
+    }
+
+    bool AppContext::openLink(const std::wstring_view target, IForm* source,
+        const InputStamp stamp) const
+    {
+        if (Url::schemeOf(target).empty())
+            return false;
+        const std::optional<Url> url = Url::Parse(target);
+        return url && openLink(*url, source, stamp);
+    }
+
+    bool AppContext::openLink(const Url& url, IForm* source, const InputStamp stamp) const
+    {
+        const auto handler = m_linkHandlers.find(url.scheme());
+        return handler != m_linkHandlers.end() && handler->second(url, source, stamp);
+    }
+
+    void AppContext::connectStandardLinks()
+    {
+        const auto openWeb = [](const Url& url, IForm* source, InputStamp) {
+            if (!url.authority() || url.authority()->empty())
+                return false;
+            Platform::shellExecute(source, url.str());
+            return true;
+        };
+        registerLinkHandler(L"http", openWeb);
+        registerLinkHandler(L"https", openWeb);
+        registerLinkHandler(L"mailto", [](const Url& url, IForm* source, InputStamp) {
+            if (url.authority())
+                return false;
+            Platform::shellExecute(source, url.str());
+            return true;
+        });
     }
 
     // **No handler on the theme nodes.** A path is resolved against the themes on the disk as well

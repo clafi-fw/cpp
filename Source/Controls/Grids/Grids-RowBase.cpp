@@ -17,6 +17,7 @@ import ClaFi.Core.Foundation.Fit;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 
 import ClaFi.StdLib;
@@ -256,9 +257,13 @@ namespace ClaFi::Controls::Grids
 
     void RowBase::cellLinkClick(CellLinkClickEvent& event)
     {
+        FormBase& source = form();
+        const AppContext& application = source.appContext();
         emitEvent(event);
         if (!event.propagationStopped())
             m_descriptor.m_owner.cellLinkClick(event);
+        if (!event.propagationStopped())
+            application.openLink(event.target, &source, event.stamp);
     }
 
     void RowBase::cellLinkContextPopup(CellLinkContextPopupEvent& event)

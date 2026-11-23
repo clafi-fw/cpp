@@ -311,6 +311,8 @@ namespace SeeDocs_App::Ui
         // Opens what a link on the page names, or drops the pages it names over the source to
         // pick one from. See README#namesakes
         void followLink(const PageData& from, std::wstring_view target, Control& source);
+        bool openPageLink(const Url&);
+        static constexpr std::wstring_view k_pageLinkScheme{ L"seedocs" };
         // Asks for the project a recent row's link names to be opened, its home as the tab says.
         void openRecent(std::wstring_view target, HomeTab);
         // Drops the pages a link names over the owner once the press that asked has unwound -

@@ -382,8 +382,9 @@ namespace SeeDocs_App::Ui
     {
         if (target.starts_with(k_anchorPrefix))
         {
-            const Url url{ pageData().path(), target.substr(k_anchorPrefix.size()) };
-            browser().goTo(url, HistoryEntry::Replace);
+            const std::optional<Url> fragment = Url::Parse(target);
+            if (fragment)
+                browser().goTo(Url{ pageData().path(), fragment->fragment() }, HistoryEntry::Replace);
             return;
         }
         browser().followLink(pageData(), target, source);
@@ -439,7 +440,7 @@ namespace SeeDocs_App::Ui
 
     void SurfacePage::arrive(const Url& url, const std::optional<float> position)
     {
-        const Control& opening = m_view.showAnchor(url.anchor(), position);
+        const Control& opening = m_view.showAnchor(url.fragment(), position);
         browser().pageArrived(*this, opening);
     }
 
@@ -921,11 +922,29 @@ namespace SeeDocs_App::Ui
             openRecent(target, HomeTab::Here);
             return;
         }
+        const std::wstring_view scheme = Url::schemeOf(target);
+        if (!scheme.empty() && !target.substr(scheme.size()).starts_with(L"::"))
+            return;
         const LinkedPlaces places = placesOf(target, from);
         if (places.size() == 1)
             openLinked(from, places.front().url);
         else if (places.size() > 1)
             showPicks(from, places, source, SelectTab::Yes);
+    }
+
+    bool SurfaceBrowser::openPageLink(const Url& url)
+    {
+        if (url.authority() || !url.query().empty() || !url.path().starts_with(L'/'))
+            return false;
+        const std::wstring_view path = url.path() == L"/" ? std::wstring_view{} : url.path();
+        BrowserPage* page = currentPage();
+        if (!page)
+            return false;
+        PageData* destination = findPageData(path);
+        if (!destination || resolve(*destination).isGone())
+            return false;
+        openLinked(page->pageData(), Url{ path, url.fragment() });
+        return true;
     }
 
     void SurfaceBrowser::openRecent(const std::wstring_view target, const HomeTab homeTab)
@@ -979,9 +998,10 @@ namespace SeeDocs_App::Ui
         std::vector<OpenProject*> projects{};
         for (const std::wstring& target : targets)
         {
-            if (!target.starts_with(ConfigNames::PathSeparator))
+            const std::optional<Url> url = Url::Parse(target);
+            if (!url || url->scheme() != k_pageLinkScheme || !url->path().starts_with(L'/'))
                 continue;
-            if (ShownProject* shown = projectOf(std::wstring_view{ target }.substr(1)))
+            if (ShownProject* shown = projectOf(std::wstring_view{ url->path() }.substr(1)))
                 projects.push_back(&shown->open);
         }
         if (projects.empty())
@@ -1775,12 +1795,12 @@ namespace SeeDocs_App::Ui
         Page page = itemsPageOf(project, nullptr, {});
         page.titleCommands.push_back({
             .text = std::wstring{ k_optionsCaption },
-            .link = pathOf(project, OwnPage::Options),
+            .link = Url::Build(k_pageLinkScheme, pathOf(project, OwnPage::Options)).str(),
             .pageKind = PageKind::Options
         });
         page.titleCommands.push_back({
             .text = std::wstring{ k_sidebarCaption },
-            .link = pathOf(project, OwnPage::Sidebar),
+            .link = Url::Build(k_pageLinkScheme, pathOf(project, OwnPage::Sidebar)).str(),
             .pageKind = PageKind::Sidebar
         });
         page.commands.push_back(closeCommand(project, std::wstring{ k_closeProjectCaption }));
@@ -1850,9 +1870,10 @@ namespace SeeDocs_App::Ui
                 case SidebarKind::Divider:
                     break;
             }
-            const std::wstring link = itemPathOf(project, joinFolder(itemPath, item.name));
+            const Url link = Url::Build(k_pageLinkScheme,
+                itemPathOf(project, joinFolder(itemPath, item.name)));
             rows.push_back({
-                .cells = { { Run{ .text = item.name, .link = link } } },
+                .cells = { { Run{ .text = item.name, .link = link.str() } } },
                 .pageKind = kind
             });
         }
@@ -1937,7 +1958,10 @@ namespace SeeDocs_App::Ui
             TableRow row;
             row.pageKind = PageKind::Project;
             row.cells.push_back({
-                Run{ .text = shown->open.project.name, .link = homePath(*shown) }
+                Run{
+                    .text = shown->open.project.name,
+                    .link = Url::Build(k_pageLinkScheme, homePath(*shown)).str()
+                }
             });
             row.cells.push_back({
                 Run{ .text = shown->open.project.folder.wstring(), .style = RunStyle::Muted }
@@ -2231,13 +2255,21 @@ namespace SeeDocs_App::Ui
         return places.front().url;
     }
 
-    // A target starting with the path separator is a url already, an anchor and all - the root's
-    // links are; anything else is looked up in the page's own project.
     SurfaceBrowser::LinkedPlaces SurfaceBrowser::placesOf(const std::wstring_view target,
         const PageData& from) const
     {
-        if (target.starts_with(ConfigNames::PathSeparator))
-            return { { .url = Url::Parse(target) } };
+        const std::wstring_view scheme = Url::schemeOf(target);
+        if (!scheme.empty() && !target.substr(scheme.size()).starts_with(L"::"))
+        {
+            std::optional<Url> url = Url::Parse(target);
+            if (!url || url->authority() || !url->query().empty()
+                || url->scheme() != k_pageLinkScheme
+                || !url->path().starts_with(ConfigNames::PathSeparator))
+            {
+                return {};
+            }
+            return { { .url = std::move(*url) } };
+        }
         const Target page = resolve(from);
         if (!page.project)
             return {};

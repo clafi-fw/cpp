@@ -795,10 +795,15 @@ namespace ClaFi
     template<ClassOfFormControl ControlClass, typename... Args>
     Form<ControlClass> FormBase::createPopup(Control* ownerButton, Args&&... args)
     {
-        // A popup takes the pointer without taking the activation from the form that opened it,
-        // which is what WindowRole::Menu is. Named here rather than left to the caller, since
-        // being a popup is what this function is for - and the pack goes to the root untouched,
-        // whatever arguments that root happens to take.
+        // A popup without an anchor still needs an owner to forward input and dismiss it.
+        if (!ownerButton)
+            return Form<ControlClass>{
+                appContext(),
+                WindowRole::Menu,
+                *this,
+                std::forward<Args>(args)...
+            };
+
         return Form<ControlClass>{
             appContext(),
             WindowRole::Menu,

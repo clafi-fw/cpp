@@ -8,6 +8,7 @@ import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
@@ -17,38 +18,11 @@ import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    namespace
-    {
-        // What a link is opened for when no handler answers it: a page, or a message to write. A
-        // text can come out of a file or off the clipboard and name anything, and the shell runs
-        // a program it is handed, so every other target is left to the application.
-        constexpr std::array<std::wstring_view, 3> k_openedSchemes{
-            L"http:",
-            L"https:",
-            L"mailto:",
-        };
-
-        [[nodiscard]] bool opensByDefault(std::wstring_view target)
-        {
-            const auto sameLetter = [](wchar_t left, wchar_t right){
-                return std::towlower(left) == std::towlower(right);
-            };
-            for (const std::wstring_view scheme : k_openedSchemes)
-            {
-                if (target.size() >= scheme.size()
-                    && std::ranges::equal(target.substr(0, scheme.size()), scheme, sameLetter))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
     LinkClickEvent::LinkClickEvent(TextBox& box, std::wstring target, InputStamp stamp)
         :
         EventOf<TextBox>{ box },
@@ -807,17 +781,20 @@ namespace ClaFi::Controls
     // OnLinkClick like any other target - a link to another page's anchor, say.
     void TextBox::followLink(const LinkSpan& link, const InputStamp stamp)
     {
-        if (link.value.starts_with(L'#') && goToAnchor(link.value.substr(1)))
-            return;
+        if (link.value.starts_with(L'#'))
+        {
+            const std::optional<Url> url = Url::Parse(link.value);
+            if (url && goToAnchor(url->fragment()))
+                return;
+        }
 
-        // Copied out before anyone is told: a handler is free to rewrite the text the target
-        // stands in, or to take the box down, and nothing below reaches the box or its form. No
-        // form is named to the shell for that reason - it would only own the shell's own message
-        // if the target cannot be opened.
+        // A handler can replace the text or take down the control during dispatch.
+        FormBase& source = form();
+        const AppContext& application = source.appContext();
         LinkClickEvent linkEvent{ *this, std::wstring{ link.value }, stamp };
         emitEvent(linkEvent);
-        if (!linkEvent.propagationStopped() && opensByDefault(linkEvent.target))
-            Platform::shellExecute(nullptr, linkEvent.target);
+        if (!linkEvent.propagationStopped())
+            application.openLink(linkEvent.target, &source, stamp);
     }
 
     void TextBox::hoverLink(TextRange link)

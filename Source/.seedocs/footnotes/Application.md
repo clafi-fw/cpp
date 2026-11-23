@@ -54,8 +54,14 @@ under the pointer. Its floor fits the Settings page with every section open.
 
 ## connectAppMenu
 
-ApplicationBase::initialize calls it. Until then appMenuAction has no handler, and a button
-presenting it shows as disabled.
+WindowApplicationBase calls it during initialization. It connects the menu action and registers
+the app's declared link scheme.
+
+## ApplicationProperties
+
+**The app may declare a link scheme.** Set `linkScheme` to a scheme name without its colon.
+The framework opens Settings for `scheme://settings`. The optional `linkHandler` answers the
+other destinations on that scheme.
 
 ## OptionsPage
 

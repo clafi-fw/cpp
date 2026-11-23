@@ -72,8 +72,11 @@ namespace ClaFi::Browser
             BrowserTab::Visits result{};
             for (const Dom::Section& entry : (tabConfig / key).as<VisitEntries>())
             {
+                std::optional<Url> url = Url::Parse((entry / ConfigNames::Url).get<std::wstring>());
+                if (!url)
+                    continue;
                 result.push_back({
-                    .url = Url::Parse((entry / ConfigNames::Url).get<std::wstring>()),
+                    .url = std::move(*url),
                     .position = (entry / ConfigNames::Position).get<float>()
                 });
             }
@@ -110,7 +113,7 @@ namespace ClaFi::Browser
 
                 std::wstring movedPath{ newPath };
                 movedPath.append(path, oldPath.size());
-                url = Url{ movedPath, url.anchor() };
+                url = Url{ movedPath, url.fragment() };
                 renamed = true;
             }
             return renamed;
@@ -376,8 +379,11 @@ namespace ClaFi::Browser
         for (const Dom::Section& tabEntry : settings.openTabs())
         {
             const std::wstring tabId = (tabEntry / ConfigNames::Id).get<std::wstring>();
+            std::optional<Url> url = Url::Parse((tabEntry / ConfigNames::Path).get<std::wstring>());
+            if (!url)
+                continue;
             const Visit visit{
-                .url = Url::Parse((tabEntry / ConfigNames::Path).get<std::wstring>()),
+                .url = std::move(*url),
                 .position = (tabEntry / ConfigNames::Position).get<float>()
             };
             BrowserTab* newTab = restoreTab(tabId, visit);
@@ -450,7 +456,7 @@ namespace ClaFi::Browser
     {
         // The same assumption goTo(const Url&) makes: a path handed to the browser names a page
         // the tree can reach, and findOrAdd builds the ones it has not been asked for yet.
-        addTab(*findPageData(url.path()), url.anchor(), select);
+        addTab(*findPageData(url.path()), url.fragment(), select);
     }
 
     BrowserTab* BrowserControl::restoreTab(const std::wstring_view id, const Visit& visit)
@@ -461,7 +467,7 @@ namespace ClaFi::Browser
         BrowserTab& tab = m_tabs.add<BrowserTab>();
         tab.setId(*this, id);
         tab.setPageData(pageData);
-        tab.m_anchor = visit.url.anchor();
+        tab.m_anchor = visit.url.fragment();
         tab.m_position = visit.position;
         // The view state under this tab was written for this very page by the run that stored it,
         // so the first page shown here reads it rather than being handed the page's own source.
@@ -485,7 +491,7 @@ namespace ClaFi::Browser
     {
         // The tab stands in for a caller that cannot name what was pressed - it is what the
         // question would be about in any case.
-        goTo(*findPageData(url.path()), url.anchor(), *m_tabs.currentItem(), entry);
+        goTo(*findPageData(url.path()), url.fragment(), *m_tabs.currentItem(), entry);
     }
 
     void BrowserControl::goTo(PageData& pageData)
@@ -873,7 +879,7 @@ namespace ClaFi::Browser
         const Visit destination = *target;
         const Visit left = visitOf(*tab);
         PageData& pageData = *findPageData(destination.url.path());
-        const TabMove move = moveTab(*tab, pageData, destination.url.anchor(), initiator,
+        const TabMove move = moveTab(*tab, pageData, destination.url.fragment(), initiator,
             destination.position);
         if (move == TabMove::Refused)
             return;
@@ -905,9 +911,9 @@ namespace ClaFi::Browser
         {
             PageData& pageData = *findPageData(visit->url.path());
             Text line{ pageData.displayTitle() };
-            if (!visit->url.anchor().empty())
+            if (!visit->url.fragment().empty())
             {
-                line << ColoredText{ InkGrade::Muted, L" - ", visit->url.anchor() };
+                line << ColoredText{ InkGrade::Muted, L" - ", visit->url.fragment() };
             }
             menu.add(
                 line,

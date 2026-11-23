@@ -28,6 +28,7 @@ import ClaFi.Controls.Base.WithEditMode;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
@@ -39,6 +40,7 @@ import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
 
@@ -1208,7 +1210,7 @@ namespace SeeDocs_App::Ui
                         if (anchor.has_value())
                         {
                             event.text() << LinkText{
-                                std::wstring{ k_anchorPrefix } + *anchor,
+                                Url{ {}, *anchor }.str(),
                                 ColoredText{ InkColor::Spot, k_mark }
                             };
                         }
@@ -1379,7 +1381,7 @@ namespace SeeDocs_App::Ui
         button.onClick([this, &button, &command](ClickEvent& event) {
             if (command.link.empty())
                 ask(command.target, event.stamp);
-            else
+            else if (!event.appContext().openLink(command.link, &event.form, event.stamp))
                 open(command.link, button);
         });
         m_renders.push_back([&button, &command]() {
@@ -1535,7 +1537,7 @@ namespace SeeDocs_App::Ui
                 const std::wstring holder = shownAnchorOf(excerpt.from);
                 const std::wstring link = holder.empty()
                     ? std::wstring{}
-                    : std::wstring{ k_anchorPrefix } + holder;
+                    : Url{ {}, holder }.str();
                 writeShownAt(text, entry.anchor, k_mark, name, *excerpt.shownAt, link);
             }
             else if (entry.row)

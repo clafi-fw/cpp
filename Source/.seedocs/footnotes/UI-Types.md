@@ -476,12 +476,22 @@ raised. Start it again from the handler to repeat, or use EventRepeater.
 
 ## Url
 
-The place a browser tab is on, spelled `path#anchor`, or `path` alone. **`%23` is the one
-escape** - str() writes a `#` inside either part as `%23`, so a theme file named `C#.clafitheme`
-survives a round trip.
+**A URL can name an application page or a destination outside the application.** A browser tab
+can also use a scheme-less URL for its own path and fragment.
 
-Url::Parse reads back that escape alone. A web address's `%20` passes through as written, and a
-name holding `%23` reads back with a `#` there.
+Url::Build accepts decoded path, fragment, and query parameters. It writes escapes from UTF-8
+bytes and keeps slashes as path separators. The optional authority is supplied in URL spelling,
+including any port.
+
+Url::Parse gives back the path, fragment, and query parameters with their escapes decoded.
+Query parameters keep their order and repeated names. A missing value is distinct from an
+empty value, and `+` is a literal plus. The scheme is lowercased. The authority and str() keep
+the spelling given to the parser.
+
+## UrlParameter
+
+**A query parameter can carry a name alone.** The value is absent for `?flag` and present but
+empty for `?flag=`.
 
 ## NoInitAllocator
 
