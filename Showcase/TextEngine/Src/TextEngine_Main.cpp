@@ -23,6 +23,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Base.StackBase;
 
+import ClaFi.App.ApplicationProperties;
 import ClaFi.App.WindowApplication;
 import ClaFi.App.Themes;
 
@@ -42,6 +43,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Events;
 import ClaFi.StdLib;
 
 namespace TextEngine_App
@@ -141,156 +143,160 @@ namespace TextEngine_App
                 return newlines;
             return newlines + 1;
         }
-
-        // The search in the title over the page shown: one searcher, and a result per page.
-        class PageSearch
-        {
-        public:
-            // Takes the box's requests, the page control's switches and the keys under the root.
-            void attach(Control& root, SearchBox&, PageControl& pages);
-            // The box is where Ctrl+F takes a selection from and where Escape goes back to.
-            void addPage(Control& page, TextBox& box);
-        private:
-            struct PageBox
-            {
-                const Control* page{ nullptr };
-                TextBox* box{ nullptr };
-                SearchResult* found{ nullptr };
-            };
-        private:
-            [[nodiscard]] const PageBox* shownPage() const;
-            void startSearch();
-            void requested(SearchRequest);
-            void step(FindTarget);
-            void writeResult();
-        private:
-            Searcher m_searcher{};
-            std::deque<SearchResult> m_found{};   // one per page, each staying where it was made
-            SearchBox* m_box{ nullptr };
-            PageControl* m_pages{ nullptr };
-            std::vector<PageBox> m_pageBoxes{};
-        };
     }
 
-    // PageSearch
-
-    namespace
+    // The search in the title over the page shown: one searcher, and a result per page.
+    class MainForm::PageSearch
     {
-        void PageSearch::attach(Control& root, SearchBox& box, PageControl& pages)
+    public:
+        // Takes the box's requests, the page control's switches and the keys under the root.
+        void attach(Control& root, SearchBox&, PageControl& pages);
+        // The box is where Ctrl+F takes a selection from and where Escape goes back to.
+        void addPage(Control& page, TextBox& box);
+    private:
+        struct PageBox
         {
-            m_box = &box;
-            m_pages = &pages;
-            box.onSearch([this](SearchEvent& event) {
-                requested(event.request);
-            });
-            // Another page holds another text, so the count is read again.
-            pages.onCurrentItemChange([this](CurrentItemChangeEvent&) {
-                writeResult();
-            });
-            root.onGetActionState([this](GetActionStateEvent& event) {
-                if (&event.action == &StdActions::find)
-                    event.claim({});
-                else if (&event.action == &StdActions::findNext
-                    || &event.action == &StdActions::findPrevious)
-                {
-                    const PageBox* shown = shownPage();
-                    event.claim({ .enabled = shown && shown->found->count() != 0 });
-                }
-            });
-            root.onActionClick([this](ActionClickEvent& event) {
-                if (&event.action == &StdActions::find)
-                    startSearch();
-                else if (&event.action == &StdActions::findNext)
-                    step(FindTarget::Next);
-                else if (&event.action == &StdActions::findPrevious)
-                    step(FindTarget::Previous);
-            });
-        }
+            const Control* page{ nullptr };
+            TextBox* box{ nullptr };
+            SearchResult* found{ nullptr };
+            ScopedEventConnection caretMoved{};
+        };
+    private:
+        [[nodiscard]] const PageBox* shownPage() const;
+        void startSearch();
+        void requested(SearchRequest);
+        void step(FindTarget);
+        void writeResult();
+    private:
+        Searcher m_searcher{};
+        std::deque<SearchResult> m_found{};   // one per page, each staying where it was made
+        SearchBox* m_box{ nullptr };
+        PageControl* m_pages{ nullptr };
+        std::vector<PageBox> m_pageBoxes{};
+        ScopedEventConnection m_searchRequested{};
+        ScopedEventConnection m_pageChanged{};
+        ScopedEventConnection m_actionStateRequested{};
+        ScopedEventConnection m_actionClicked{};
+    };
 
-        // The count follows the caret, wherever a step lands it or a click puts it.
-        void PageSearch::addPage(Control& page, TextBox& box)
-        {
-            SearchResult& found = m_found.emplace_back(m_searcher, page);
-            m_pageBoxes.push_back({ .page = &page, .box = &box, .found = &found });
-            box.onCaretMove([this](CaretMoveEvent&) {
-                writeResult();
-            });
-        }
-
-        auto PageSearch::shownPage() const -> const PageBox*
-        {
-            const Control* shown = m_pages ? m_pages->currentItem() : nullptr;
-            for (const PageBox& pageBox : m_pageBoxes)
-            {
-                if (pageBox.page == shown)
-                    return &pageBox;
-            }
-            return nullptr;
-        }
-
-        // Ctrl+F: the box takes the page's selection where the page holds the focus and the
-        // selection is one line - a longer one is not a search.
-        void PageSearch::startSearch()
-        {
-            std::wstring_view selected{};
-            const PageBox* shown = shownPage();
-            if (shown && shown->box->isFocused())
-            {
-                const TextRange range = shown->box->selection();
-                selected = std::wstring_view{ shown->box->text().plainText() }.substr(range.start,
-                    range.length);
-                if (selected.find(L'\n') != std::wstring_view::npos)
-                    selected = {};
-            }
-            m_box->startSearch(selected);
-        }
-
-        void PageSearch::requested(const SearchRequest request)
-        {
-            switch (request)
-            {
-                case SearchRequest::Search:
-                    // The searcher knows none of the pages, so the one shown is repainted here;
-                    // the rest are painted anew as they are shown.
-                    if (m_searcher.setText(m_box->searchText(), SearchSplit::Phrase))
-                        m_pages->invalidate();
-                    step(FindTarget::AtSelection);
-                    break;
-                case SearchRequest::Next:
-                    step(FindTarget::Next);
-                    break;
-                case SearchRequest::Previous:
-                    step(FindTarget::Previous);
-                    break;
-                case SearchRequest::End:
-                    if (const PageBox* shown = shownPage())
-                        shown->box->setFocus();
-                    break;
-                // The box is given no lines, so nothing is picked from a list.
-                case SearchRequest::Pick:
-                    break;
-            }
+    void MainForm::PageSearch::attach(Control& root, SearchBox& box, PageControl& pages)
+    {
+        m_box = &box;
+        m_pages = &pages;
+        m_searchRequested = box.onSearch([this](SearchEvent& event) {
+            requested(event.request);
+        });
+        // Another page holds another text, so the count is read again.
+        m_pageChanged = pages.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             writeResult();
-        }
+        });
+        m_actionStateRequested = root.onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &StdActions::find)
+                event.claim({});
+            else if (&event.action == &StdActions::findNext
+                || &event.action == &StdActions::findPrevious)
+            {
+                const PageBox* shown = shownPage();
+                event.claim({ .enabled = shown && shown->found->count() != 0 });
+            }
+        });
+        m_actionClicked = root.onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &StdActions::find)
+                startSearch();
+            else if (&event.action == &StdActions::findNext)
+                step(FindTarget::Next);
+            else if (&event.action == &StdActions::findPrevious)
+                step(FindTarget::Previous);
+        });
+    }
 
-        void PageSearch::step(const FindTarget target)
-        {
-            if (const PageBox* shown = shownPage())
-                shown->found->step(target);
-        }
+    // The count follows the caret, wherever a step lands it or a click puts it.
+    void MainForm::PageSearch::addPage(Control& page, TextBox& box)
+    {
+        SearchResult& found = m_found.emplace_back(m_searcher, page);
+        m_pageBoxes.push_back({
+            .page = &page,
+            .box = &box,
+            .found = &found,
+            .caretMoved = box.onCaretMove([this](CaretMoveEvent&) {
+                writeResult();
+            })
+        });
+    }
 
-        void PageSearch::writeResult()
+    auto MainForm::PageSearch::shownPage() const -> const PageBox*
+    {
+        const Control* shown = m_pages ? m_pages->currentItem() : nullptr;
+        for (const PageBox& pageBox : m_pageBoxes)
         {
-            if (!m_box)
-                return;
-            if (const PageBox* shown = shownPage())
-                m_box->setResult(shown->found->currentIndex(), shown->found->count());
-            else
-                m_box->setResult(std::nullopt, 0);
-            // A presenter keeps the answer it was last given until it is asked again.
-            StdActions::findNext.invalidateState();
-            StdActions::findPrevious.invalidateState();
+            if (pageBox.page == shown)
+                return &pageBox;
         }
+        return nullptr;
+    }
+
+    // Ctrl+F: the box takes the page's selection where the page holds the focus and the
+    // selection is one line - a longer one is not a search.
+    void MainForm::PageSearch::startSearch()
+    {
+        std::wstring_view selected{};
+        const PageBox* shown = shownPage();
+        if (shown && shown->box->isFocused())
+        {
+            const TextRange range = shown->box->selection();
+            selected = std::wstring_view{ shown->box->text().plainText() }.substr(range.start,
+                range.length);
+            if (selected.find(L'\n') != std::wstring_view::npos)
+                selected = {};
+        }
+        m_box->startSearch(selected);
+    }
+
+    void MainForm::PageSearch::requested(const SearchRequest request)
+    {
+        switch (request)
+        {
+            case SearchRequest::Search:
+                // The searcher knows none of the pages, so the one shown is repainted here;
+                // the rest are painted anew as they are shown.
+                if (m_searcher.setText(m_box->searchText(), SearchSplit::Phrase))
+                    m_pages->invalidate();
+                step(FindTarget::AtSelection);
+                break;
+            case SearchRequest::Next:
+                step(FindTarget::Next);
+                break;
+            case SearchRequest::Previous:
+                step(FindTarget::Previous);
+                break;
+            case SearchRequest::End:
+                if (const PageBox* shown = shownPage())
+                    shown->box->setFocus();
+                break;
+            // The box is given no lines, so nothing is picked from a list.
+            case SearchRequest::Pick:
+                break;
+        }
+        writeResult();
+    }
+
+    void MainForm::PageSearch::step(const FindTarget target)
+    {
+        if (const PageBox* shown = shownPage())
+            shown->found->step(target);
+    }
+
+    void MainForm::PageSearch::writeResult()
+    {
+        if (!m_box)
+            return;
+        if (const PageBox* shown = shownPage())
+            m_box->setResult(shown->found->currentIndex(), shown->found->count());
+        else
+            m_box->setResult(std::nullopt, 0);
+        // A presenter keeps the answer it was last given until it is asked again.
+        StdActions::findNext.invalidateState();
+        StdActions::findPrevious.invalidateState();
     }
 
     ApplicationProperties textEngineAppParams()
@@ -311,37 +317,29 @@ namespace TextEngine_App
         };
     }
 
-    int runTextEngineShowcase(WindowApplicationBase& application)
+    void applyTextEngineDefaults(WindowApplicationBase& application)
     {
-        // **The application states its own default, not the user's choice.** Where a config
-        // folder stands the mode has just been loaded out of it, and writing over it here
-        // would undo the Settings page on every start.
+        // The settings folder supplies the saved color mode when it exists.
         if (!application.configFolderExists())
+        {
             applyColorMode(application.context(), ColorModeSetting::Light);
+        }
+    }
 
-        // Ahead of the form, which it outlives: the pages point at its searcher, and its handlers
-        // stand on the form's controls.
-        PageSearch search;
-        const auto form = application.createDialog<MainForm>(
+    MainForm::MainForm(const CreateParams& params)
+        :
+        WithBody{
+            params,
             HostProps{
-                FormPlacement::Default,
                 MinSize{ k_windowWidth, k_windowHeight },
                 PreferredSize{ k_windowWidth * 1.2, k_windowHeight * 1.5 },
-                // A section colored root in the primary window's frame.
                 UiElement::Section,
-                Radius{ application.styleMetrics(UiElement::Dialog).radius },
-                application.styleMetrics(UiElement::Dialog).shadow,
+                Radius{ params.styleMetrics(UiElement::Dialog).radius },
+                params.styleMetrics(UiElement::Dialog).shadow,
             },
-            BodyProps{
-                TabsOrientation::VerticalLeft,
-            }
-        );
-        form->setConfigName(AppContext::k_mainFormName);
-
-        TabbedBox& tabs = form->body();
-
-        // Every case is a box of two pages: the text, and what a document would say of it.
-        ScrollBoxWith<TextBox>& featuresPage = tabs.pageControl().add<ScrollBoxWith<TextBox>>(
+            BodyProps{ TabsOrientation::VerticalLeft }
+        },
+        m_featuresPage{ body().pageControl().add<ScrollBoxWith<TextBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -350,9 +348,8 @@ namespace TextEngine_App
                 ReadOnly::Yes,
                 Padding{ 16.0f },
             }
-        );
-
-        ScrollBoxWith<CodeBox>& codePage = tabs.pageControl().add<ScrollBoxWith<CodeBox>>(
+        ) },
+        m_codePage{ body().pageControl().add<ScrollBoxWith<CodeBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -361,9 +358,8 @@ namespace TextEngine_App
                 Syntax::Languages::Cpp,
                 Padding{ 16.0f },
             }
-        );
-
-        ScrollBoxWith<TextBox>& ledgerPage = tabs.pageControl().add<ScrollBoxWith<TextBox>>(
+        ) },
+        m_ledgerPage{ body().pageControl().add<ScrollBoxWith<TextBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -372,9 +368,8 @@ namespace TextEngine_App
                 ReadOnly::Yes,
                 Padding{ 16.0f },
             }
-        );
-
-        ScrollBoxWith<TextBox>& emojiPage = tabs.pageControl().add<ScrollBoxWith<TextBox>>(
+        ) },
+        m_emojiPage{ body().pageControl().add<ScrollBoxWith<TextBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -382,12 +377,11 @@ namespace TextEngine_App
                 buildEmojiShowcase(),
                 Padding{ 16.0f },
             }
-        );
-
+        ) },
         // Fifty-six writing systems, read only: what is asked is whether the machine has a face
         // for each, and no key press changes the answer. Wrapping is left on, so a row too wide
         // for the box folds rather than running under the scroll bar.
-        ScrollBoxWith<TextBox>& scriptsPage = tabs.pageControl().add<ScrollBoxWith<TextBox>>(
+        m_scriptsPage{ body().pageControl().add<ScrollBoxWith<TextBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -396,12 +390,11 @@ namespace TextEngine_App
                 ReadOnly::Yes,
                 Padding{ 16.0f },
             }
-        );
-
+        ) },
         // Notation instead of prose. Written once and read only, like the showcase page beside
         // it: what a formula costs to shape is the Rich page's question, and this one is about
         // what can be said at all.
-        ScrollBoxWith<TextBox>& formulasPage = tabs.pageControl().add<ScrollBoxWith<TextBox>>(
+        m_formulasPage{ body().pageControl().add<ScrollBoxWith<TextBox>>(
             HostProps{
                 ScrollBars::Both,
             },
@@ -410,87 +403,85 @@ namespace TextEngine_App
                 ReadOnly::Yes,
                 Padding{ 16.0f },
             }
-        );
+        ) },
+        m_titleBar{ createTopBar<DialogTitle>(
+            appContext().appName(),
+            Padding{ 0.0f },
+            HorizontalTextAnchor::Left
+        ) },
+        m_appButton{ m_titleBar.createLeftBar<AppButton>(
+            VerticalAlign::Center,
+            AppButton::OnDrawIcon{ AppIcon::drawIcon }
+        ) },
+        m_searchBox{ m_titleBar.createBody<SearchBox>(
+            HorizontalAlign::Right,
+            VerticalAlign::Center,
+            MinSize{ k_searchWidth, 0.0f },
+            MaxSize{ k_searchWidth, k_maxFloat }
+        ) },
+        m_search{ std::make_unique<PageSearch>() }
+    {
+        showCaretPosition(m_featuresPage, m_featuresPage.body());
+        showCaretPosition(m_codePage, m_codePage.body());
+        showCaretPosition(m_ledgerPage, m_ledgerPage.body());
+        showCaretPosition(m_formulasPage, m_formulasPage.body());
+        showCaretPosition(m_emojiPage, m_emojiPage.body());
+        showCaretPosition(m_scriptsPage, m_scriptsPage.body());
 
-        showCaretPosition(featuresPage, featuresPage.body());
-        showCaretPosition(codePage, codePage.body());
-        showCaretPosition(ledgerPage, ledgerPage.body());
-        showCaretPosition(formulasPage, formulasPage.body());
-        showCaretPosition(emojiPage, emojiPage.body());
-        showCaretPosition(scriptsPage, scriptsPage.body());
-
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ FamilyText{ L"Gabriola", L"The Ledger" } },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ ledgerPage }
+            Page{ m_ledgerPage }
         )
         .select();
 
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ StyledText{ TextStyles::Code, L"Syntax" } },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ codePage }
+            Page{ m_codePage }
         );
 
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ FamilyText{ L"Cambria", ItalicText{ L"Formulas" } } },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ formulasPage }
+            Page{ m_formulasPage }
         );
 
         // The emoji stands **inside** the word, so the label is one run broken into three by a face
         // change and closed up again. A tab measures and draws through the same path a page does,
         // over a MinSize of 32 and a centered anchor - so a label taller than the strip allows for,
         // or a gap where the faces meet, shows here and nowhere else on the form.
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ L"Em😮ji" },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ emojiPage }
+            Page{ m_emojiPage }
         );
 
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ L"Scripts" },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ scriptsPage }
+            Page{ m_scriptsPage }
         );
 
-        tabs.strip().add<Controls::Divider>(
+        body().strip().add<Controls::Divider>(
             Thickness::Heavy,
             Padding{ 48.0f, 8.0f }
         );
 
-        tabs.strip().addTab(
+        body().strip().addTab(
             Text{ L"Features reference" },
             k_tabPadding, k_tabSize, k_tabAnchor,
-            Page{ featuresPage }
+            Page{ m_featuresPage }
         );
 
-        // The title is the app button's container, and its padding is what stands between
-        // the mark and the corner of the window. The name stands at its left, beside the button,
-        // so the search can take the right end of the middle.
-        auto& title = form->createTopBar<DialogTitle>(
-            application.name(),
-            Padding{ 0.0f },
-            HorizontalTextAnchor::Left
-        );
-        title.createLeftBar<AppButton>(
-            VerticalAlign::Center,
-            AppButton::OnDrawIcon{ AppIcon::drawIcon }
-        );
-        SearchBox& searchBox = title.createBody<SearchBox>(
-            HorizontalAlign::Right,
-            VerticalAlign::Center,
-            MinSize{ k_searchWidth, 0.0f },
-            MaxSize{ k_searchWidth, k_maxFloat }
-        );
-        search.attach(*form, searchBox, tabs.pageControl());
-        search.addPage(featuresPage, featuresPage.body());
-        search.addPage(codePage, codePage.body());
-        search.addPage(ledgerPage, ledgerPage.body());
-        search.addPage(formulasPage, formulasPage.body());
-        search.addPage(emojiPage, emojiPage.body());
-        search.addPage(scriptsPage, scriptsPage.body());
-
-        return form->execute();
+        m_search->attach(*this, m_searchBox, body().pageControl());
+        m_search->addPage(m_featuresPage, m_featuresPage.body());
+        m_search->addPage(m_codePage, m_codePage.body());
+        m_search->addPage(m_ledgerPage, m_ledgerPage.body());
+        m_search->addPage(m_formulasPage, m_formulasPage.body());
+        m_search->addPage(m_emojiPage, m_emojiPage.body());
+        m_search->addPage(m_scriptsPage, m_scriptsPage.body());
     }
+
+    MainForm::~MainForm() = default;
 }

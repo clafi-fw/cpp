@@ -194,12 +194,13 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MillScene_Icon.cppm" />
-    <ClCompile Include="MillScene_Main.cppm" />
-    <ClCompile Include="MillScene_App.Options.cppm" />
-    <ClCompile Include="MillScene_App.Options.cpp" />
-    <ClCompile Include="MillScene_Icon.cpp" />
-    <ClCompile Include="MillScene_Win32.cpp" />
+    <ClCompile Include="Src\MillScene_Icon.cppm" />
+    <ClCompile Include="Src\MillScene_Main.cppm" />
+    <ClCompile Include="Src\MillScene_Main.cpp" />
+    <ClCompile Include="Src\MillScene_App.Options.cppm" />
+    <ClCompile Include="Src\MillScene_App.Options.cpp" />
+    <ClCompile Include="Src\MillScene_Icon.cpp" />
+    <ClCompile Include="Src\MillScene_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />

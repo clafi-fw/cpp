@@ -5,6 +5,8 @@ export module MillScene_App.Main;
 import MillScene_App.Icon;
 import MillScene_App.Options;
 
+import ClaFi.App.ApplicationProperties;
+import ClaFi.App.CommandLine;
 import ClaFi.App.WindowApplication;
 import ClaFi.App.AppMenu;
 import ClaFi.App.Settings;
@@ -42,6 +44,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.DomEngine;
@@ -191,8 +194,7 @@ namespace MillScene_App
     export class MillSceneForm : public Panel
     {
     public:
-        template<typename... Args>
-        MillSceneForm(const CreateParams&, const LaunchOptions&, Args...);
+        MillSceneForm(const CreateParams& params, const LaunchOptions& launch);
     private:
         // Draw time and frame rate over the span the chart shows
         struct WindowReadings
@@ -337,24 +339,13 @@ namespace MillScene_App
         Slider* m_speedSlider{ nullptr };
 
         AppButton& m_appButton{ m_titleBar.createLeftBar<AppButton>(
-            VerticalAlign::Center
-            ,      OnEvent{ AppIcon::drawIcon }
+            VerticalAlign::Center,
+            AppButton::OnDrawIcon{ AppIcon::drawIcon }
         ) };
         ScenePanel& m_scenePanel{ createBody<ScenePanel>(
-            Padding{ 8.0f },
-            Events{
-                [this](MouseMoveEvent&) {
-                    sceneAt(m_shownScene).animationTick();
-                },
-                [this](PaintEvent& event) {
-                    paintScene(event);
-                }
-            }
+            Padding{ 8.0f }
         ) };
-        EventRepeater m_paintTimer{ [this](RepeatEvent&) {
-                writeMetrics();
-                m_scenePanel.invalidate();
-            }, MilliSeconds{ 0 } };
+        EventRepeater m_paintTimer;
 
         StackPanel& m_infoBar{ m_scenePanel.createRightBar<StackPanel>(
             Orientation::Vertical
@@ -363,12 +354,7 @@ namespace MillScene_App
         // around them is as tall as the panel, so a tooltip anchored to it would open at the
         // frame's foot instead of under what it explains.
         StackPanel& m_readoutBlock{ m_infoBar.add<StackPanel>(
-            Orientation::Vertical,
-            Events{
-                [this](AdjustTooltipEvent& event) {
-                    writeMetricsTooltip(event);
-                }
-            }
+            Orientation::Vertical
         ) };
         using MetricsReadout = WithTextLayout<Label>;
         MetricsReadout& m_metricsReadout{ m_readoutBlock.add<MetricsReadout>(
@@ -390,41 +376,6 @@ namespace MillScene_App
         ) };
     };
 
-    template <typename ... Args>
-    MillSceneForm::MillSceneForm(const CreateParams& params, const LaunchOptions& launch,
-        Args... args)
-        :
-        Panel{ params, std::forward<Args>(args)... },
-        m_launch{ launch }
-    {
-        // **Before anything reads the scene.** The info bar takes its colors from the theme, so
-        // the stored one has to be the scene's by now.
-        restoreSceneTheme();
-        restoreScene();
-        m_sceneTime = sceneTimeAt(m_launch.at, sceneAt(m_shownScene).cycleDuration());
-        restoreSceneViews();
-        restoreLook();
-        // Written as the window closes, while every scene still stands.
-        form().onClose([this](FormCloseEvent&) {
-            storeSceneViews();
-        });
-
-
-        connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
-            buildScenePicker(page);
-            });
-        Action& fullscreenToggle = connectFullscreen();
-        m_scenePanel.onContextPopup([this, &fullscreenToggle](ContextPopupEvent& event) {
-            showSceneMenu(event, fullscreenToggle);
-        });
-        form().setKeepsScreenOn(true);
-        applySceneColors();
-
-        // The readout has its lines before the first layout, so the first frame moves nothing.
-        writeMetrics();
-        m_paintTimer.start();
-    }
-
     // What the application is called, wherever its name is shown and wherever its config is kept.
     export [[nodiscard]] ApplicationProperties millSceneApplicationProperties();
 
@@ -435,9 +386,56 @@ namespace MillScene_App
     // starts with.
     export [[nodiscard]] Dom::Dt::Section createMillSceneConfigSchema();
 
-    /// @brief Builds the showcase into a form of the given application, runs it, and answers what
-    /// the form answered.
-    export int runMillSceneShowcase(WindowApplicationBase&);
+    export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend = void>
+    class MillSceneApplication : public WindowApplication<PlatformType, GpuBackend>
+    {
+    public:
+        using Base = WindowApplication<PlatformType, GpuBackend>;
+    public:
+        MillSceneApplication(PlatformType::Params&& platformParams,
+            std::vector<std::wstring> arguments);
+    public:
+        [[nodiscard]] int run();
+    };
+
+    template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
+    MillSceneApplication<PlatformType, GpuBackend>::MillSceneApplication(
+        typename PlatformType::Params&& platformParams, std::vector<std::wstring> arguments)
+        :
+        Base{
+            std::move(platformParams),
+            millSceneApplicationProperties(),
+            createMillSceneConfigSchema(),
+            k_windowOptions,
+            std::move(arguments)
+        }
+    {
+    }
+
+    template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
+    int MillSceneApplication<PlatformType, GpuBackend>::run()
+    {
+        const CommandLine& commandLine = this->commandLine();
+        if (const std::optional<int> answer = answerCommandLine(commandLine))
+        {
+            return *answer;
+        }
+
+        std::wstring error{};
+        const std::optional<LaunchOptions> options = launchOptionsOf(commandLine, error);
+        if (!options)
+        {
+            writeErrorToConsole(error);
+            writeErrorToConsole(L"\n");
+            writeErrorToConsole(commandLine.usage());
+            return ExitCode::Misused;
+        }
+
+        const std::unique_ptr<Form<MillSceneForm>> form =
+            this->template createDialog<MillSceneForm>(*options);
+        form->setConfigName(AppContext::k_mainFormName);
+        return form->execute();
+    }
 
 
 //-----------------------------------------------------------------------------
@@ -1799,42 +1797,5 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
             Dom::Dt::Value{ k_lightningNodeName, L"" },
             Dom::Dt::Section{ k_sceneViewsNodeName, PathArt::createSceneViewsSchema() }
         };
-    }
-
-    // Said of the Earth scene, so it is not taken for a map.
-    constexpr std::wstring_view k_earthSceneIsArt{
-        L"The Earth scene is a piece of art and does not claim to be accurate."
-    };
-    // Natural Earth's own credit, for the Earth scene's coastlines and sea depths.
-    constexpr std::wstring_view k_naturalEarthCredit{
-        L"Made with Natural Earth. Free vector and raster map data @ https://naturalearthdata.com."
-    };
-
-    int runMillSceneShowcase(WindowApplicationBase& application)
-    {
-        const CommandLine& commandLine = application.commandLine();
-        if (const std::optional<int> answer = answerCommandLine(commandLine))
-            return *answer;
-
-        std::wstring error{};
-        const std::optional<LaunchOptions> options = launchOptionsOf(commandLine, error);
-        if (!options)
-        {
-            writeErrorToConsole(error);
-            writeErrorToConsole(L"\n");
-            writeErrorToConsole(commandLine.usage());
-            return ExitCode::Misused;
-        }
-
-        application.context().addInformation(k_earthSceneIsArt);
-        application.context().addInformation(k_naturalEarthCredit);
-        const auto form = application.createDialog<MillSceneForm>(
-            *options,
-            UiElement::Dialog,
-            MinSize{ 320.0f, 240.0f },
-            PreferredSize{ 840.0f, 680.0f }
-        );
-        form->setConfigName(AppContext::k_mainFormName);
-        return form->execute();
     }
 }

@@ -20,6 +20,8 @@ import ClaFi.Platform.Windows;
 
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.StdLib;
 import ClaFi.Core.Graphics.Cpu.Canvas;
@@ -228,11 +230,14 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t*, int)
         Dom::Dt::Section{}
     };
 
-    Tools::WhatsClip::PickLists picks{
+    Tools::WhatsClip::PickLists picks = {
         windowsEncodings(),
         Tools::WhatsClip::defaultLanguages(),
         &readLocale
     };
 
-    return Tools::WhatsClip::runWhatsClip(app, picks);
+    const std::unique_ptr<Form<Tools::WhatsClip::MainForm>> form =
+        app.createDialog<Tools::WhatsClip::MainForm>(std::move(picks));
+    form->setConfigName(AppContext::k_mainFormName);
+    return form->execute();
 }

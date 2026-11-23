@@ -2,41 +2,35 @@ export module ClaFi.Tools.WhatsClip.Main;
 
 import ClaFi.Tools.WhatsClip.Page;
 
-import ClaFi.Controls.TabbedBox;
+import ClaFi.Controls.AppButton;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.Base.PanelBase;
 
-import ClaFi.App.WindowApplication;
+import ClaFi.App.ApplicationProperties;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.System.InkWell;
-
+import ClaFi.Core.System.Events;
 import ClaFi.StdLib;
-import ClaFi.Core.TextEngine.Text;
 
-// **Nothing here names a platform or a backend.** What an entry point keeps is what its operating
-// system asks for and the two types the application is built out of; the form, its pages and
-// everything they read stand here and run over any platform the framework has.
 namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
 
-    // What the application is called, wherever its name is shown and wherever its config is kept.
     export [[nodiscard]] ApplicationProperties applicationParams();
-    //ApplicationProperties whatsClipAppParams2
-    //{
-    //    .name = Text{
-    //        L"What",
-    //        InkWell::textInk(InkGrade::Muted), L"s", PopColor{},
-    //        InkWell::spotInk(), L"Clip", PopColor{}
-    //    },
-    //    .publisher = L"ClaFi Framework"
-    //};
 
-    // Builds the viewer into a form of the given application, runs it, and answers what the form
-    // answered. The lists are what its text pages pick an encoding and a language from - see
-    // defaultEncodings and defaultLanguages for the framework's own, and an application built over
-    // this adds what it reads.
-    export int runWhatsClip(WindowApplicationBase&, const PickLists&);
+    export class MainForm : public WithBody<Panel, TabbedBox>
+    {
+    public:
+        MainForm(const CreateParams& params, PickLists picks);
+        ~MainForm() override;
+    private:
+        class Viewer;
+    private:
+        DialogTitle& m_titleBar;
+        AppButton& m_appButton;
+        std::unique_ptr<Viewer> m_viewer{};
+        ScopedEventConnection m_clipboardChanged{};
+    };
 }

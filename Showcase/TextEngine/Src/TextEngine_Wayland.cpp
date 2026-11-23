@@ -13,7 +13,11 @@ import TextEngine_App.Main;
 import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Wayland;
 
+import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
+
+import ClaFi.StdLib;
 
 int main()
 {
@@ -25,5 +29,9 @@ int main()
         Dom::Dt::Section{}
     };
 
-    return TextEngine_App::runTextEngineShowcase(app);
+    TextEngine_App::applyTextEngineDefaults(app);
+    const std::unique_ptr<Form<TextEngine_App::MainForm>> form =
+        app.createDialog<TextEngine_App::MainForm>();
+    form->setConfigName(AppContext::k_mainFormName);
+    return form->execute();
 }

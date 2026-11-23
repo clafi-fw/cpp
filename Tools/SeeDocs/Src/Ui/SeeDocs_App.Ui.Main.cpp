@@ -8,11 +8,14 @@ import SeeDocs_App.Ui.ProjectOptions;
 import SeeDocs_App.Ui.Workspace;
 
 import ClaFi.App.AppMenu;
+import ClaFi.App.ApplicationProperties;
 import ClaFi.App.Settings;
 
 import ClaFi.App.WindowApplication;
 
-import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
@@ -67,27 +70,49 @@ namespace SeeDocs_App::Ui
         return SurfaceBrowser::createTabConfigSchema();
     }
 
-    // A question the workspace asks drops under the browser's app button. The Open page it fills
-    // and its New project command stand in the menu that button opens, with the External editors
-    // group on its Settings page, and each project's options page in the browser.
-    int runSeeDocs(WindowApplicationBase& application, Form<SurfaceBrowser>& form,
-        const std::filesystem::path& stated)
+    MainForm::MainForm(const CreateParams& params)
+        :
+        SurfaceBrowser{
+            params,
+            UiElement::ToolBar,
+            Radius{ params.styleMetrics(UiElement::Dialog).radius },
+            params.styleMetrics(UiElement::Dialog).shadow,
+            Border{ Thickness::Thin },
+            Padding{ 0.0f },
+            Spacing{ 0.0f },
+            MinSize{ 820.0f, 520.0f },
+            PreferredSize{ 1360.0f, 880.0f }
+        }
     {
-        Workspace workspace{ application, form, form.content() };
-        connectAppPage(k_openPageCaption, drawOpenIcon, [&workspace](AppMenuPage& page) {
-            buildOpenPage(page, workspace);
+    }
+
+    void MainForm::connectMenus()
+    {
+        connectAppPage(k_openPageCaption, drawOpenIcon, [](AppMenuPage& page) {
+            MainForm* mainForm = dynamic_cast<MainForm*>(&page.form().rootForm());
+            if (mainForm && mainForm->m_workspace)
+            {
+                buildOpenPage(page, *mainForm->m_workspace);
+            }
         });
         connectAppCommand(k_newProjectCaption, drawNewProjectIcon, EndIcon::OpensWindow,
-            [&workspace](ClickEvent& event) {
-                event.closeForm();
-                workspace.createNew({}, event.stamp);
+            [](ClickEvent& event) {
+                MainForm* mainForm = dynamic_cast<MainForm*>(&event.form.rootForm());
+                if (mainForm && mainForm->m_workspace)
+                {
+                    event.closeForm();
+                    mainForm->m_workspace->createNew({}, event.stamp);
+                }
             });
         connectAppSettings(buildExternalEditors);
-        form.content().connectProjectPage([&workspace](AppMenuPage& page, OpenProject& project) {
-            buildProjectOptions(page, workspace, project);
-        });
-        workspace.start(stated);
+    }
 
-        return form.execute();
+    void MainForm::start(WindowApplicationBase& application, const std::filesystem::path& stated)
+    {
+        m_workspace.emplace(application, form(), *this);
+        connectProjectPage([this](AppMenuPage& page, OpenProject& project) {
+            buildProjectOptions(page, *m_workspace, project);
+        });
+        m_workspace->start(stated);
     }
 }

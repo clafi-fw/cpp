@@ -409,14 +409,16 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # here instead. The option table, the renderer and the console application know nothing of any
     # platform; the entries are one file per platform.
     set(millscene_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/MillScene")
+    set(millscene_src "${millscene_dir}/Src")
     add_executable(MillScene
-        "${millscene_dir}/MillScene_Icon.cpp"
-        "${millscene_dir}/MillScene_App.Options.cpp"
-        "${millscene_dir}/MillScene_Wayland.cpp")
+        "${millscene_src}/MillScene_Main.cpp"
+        "${millscene_src}/MillScene_Icon.cpp"
+        "${millscene_src}/MillScene_App.Options.cpp"
+        "${millscene_src}/MillScene_Wayland.cpp")
     target_sources(MillScene PRIVATE FILE_SET CXX_MODULES FILES
-        "${millscene_dir}/MillScene_Icon.cppm"
-        "${millscene_dir}/MillScene_Main.cppm"
-        "${millscene_dir}/MillScene_App.Options.cppm")
+        "${millscene_src}/MillScene_Icon.cppm"
+        "${millscene_src}/MillScene_Main.cppm"
+        "${millscene_src}/MillScene_App.Options.cppm")
     target_link_libraries(MillScene PRIVATE ClaFi)
     target_compile_options(MillScene PRIVATE ${clafi_compile_options})
     clafi_app_version(MillScene "${millscene_dir}/version.txt")
@@ -424,12 +426,12 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # **The console application**: the same options and the same renderer, no window and no
     # display-server connection.
     add_executable(MillSceneCli
-        "${millscene_dir}/MillScene_App.Options.cpp"
-        "${millscene_dir}/MillSceneCli_Linux.cpp")
+        "${millscene_src}/MillScene_App.Options.cpp"
+        "${millscene_src}/MillSceneCli_Linux.cpp")
     target_sources(MillSceneCli PRIVATE FILE_SET CXX_MODULES FILES
-        "${millscene_dir}/MillScene_App.Options.cppm"
-        "${millscene_dir}/MillScene_App.Render.cppm"
-        "${millscene_dir}/MillScene_App.Cli.cppm")
+        "${millscene_src}/MillScene_App.Options.cppm"
+        "${millscene_src}/MillScene_App.Render.cppm"
+        "${millscene_src}/MillScene_App.Cli.cppm")
     target_link_libraries(MillSceneCli PRIVATE ClaFi)
     target_compile_options(MillSceneCli PRIVATE ${clafi_compile_options})
     clafi_app_version(MillSceneCli "${millscene_dir}/version.txt")

@@ -9,12 +9,9 @@
 //   ./build/MillScene
 
 import MillScene_App.Main;
-import MillScene_App.Options;
 
-import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Wayland;
 
-import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -28,13 +25,10 @@ int main(int argumentCount, char** argumentList)
     for (int index = 1; index < argumentCount; ++index)
         arguments.push_back(fromUtf8(argumentList[index]));
 
-    WaylandApplication app{
+    MillScene_App::MillSceneApplication<WaylandPlatform> app{
         WaylandPlatform::Params{},
-        MillScene_App::millSceneApplicationProperties(),
-        MillScene_App::createMillSceneConfigSchema(),
-        MillScene_App::k_windowOptions,
         std::move(arguments)
     };
 
-    return MillScene_App::runMillSceneShowcase(app);
+    return app.run();
 }

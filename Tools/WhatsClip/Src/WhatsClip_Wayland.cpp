@@ -16,7 +16,11 @@ import ClaFi.Tools.WhatsClip.Page;
 import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Wayland;
 
+import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
+
+import ClaFi.StdLib;
 
 int main()
 {
@@ -34,10 +38,13 @@ int main()
     // What the text pages read bytes in and color text in. An application built over this
     // viewer appends its own here: an encoding with the claim that tells its bytes apart, a
     // language with its own detector.
-    const Tools::WhatsClip::PickLists picks{
+    Tools::WhatsClip::PickLists picks = {
         Tools::WhatsClip::defaultEncodings(),
         Tools::WhatsClip::defaultLanguages()
     };
 
-    return Tools::WhatsClip::runWhatsClip(app, picks);
+    const std::unique_ptr<Form<Tools::WhatsClip::MainForm>> form =
+        app.createDialog<Tools::WhatsClip::MainForm>(std::move(picks));
+    form->setConfigName(AppContext::k_mainFormName);
+    return form->execute();
 }

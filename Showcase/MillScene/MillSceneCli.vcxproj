@@ -182,11 +182,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="MillScene_App.Options.cppm" />
-    <ClCompile Include="MillScene_App.Options.cpp" />
-    <ClCompile Include="MillScene_App.Render.cppm" />
-    <ClCompile Include="MillScene_App.Cli.cppm" />
-    <ClCompile Include="MillSceneCli_Win32.cpp" />
+    <ClCompile Include="Src\MillScene_App.Options.cppm" />
+    <ClCompile Include="Src\MillScene_App.Options.cpp" />
+    <ClCompile Include="Src\MillScene_App.Render.cppm" />
+    <ClCompile Include="Src\MillScene_App.Cli.cppm" />
+    <ClCompile Include="Src\MillSceneCli_Win32.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

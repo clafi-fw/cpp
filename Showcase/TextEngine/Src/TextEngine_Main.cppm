@@ -1,32 +1,46 @@
 export module TextEngine_App.Main;
 
-import ClaFi.Controls.TabbedBox;
+import ClaFi.Controls.AppButton;
+import ClaFi.Controls.CodeBox;
+import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.ScrollBox;
+import ClaFi.Controls.SearchBox;
+import ClaFi.Controls.TabbedBox;
+import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Base.PanelBase;
 
+import ClaFi.App.ApplicationProperties;
 import ClaFi.App.WindowApplication;
 
+import ClaFi.Core.Foundation;
 import ClaFi.StdLib;
 
-// **Nothing here names a platform or a backend.** What an entry point keeps is what its operating
-// system asks for and the two types the application is built out of; everything else - the form,
-// its pages, its tabs and the caret readout in each corner - stands here and runs over any platform
-// the framework has.
 namespace TextEngine_App
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
+    export [[nodiscard]] ApplicationProperties textEngineAppParams();
+    export void applyTextEngineDefaults(WindowApplicationBase&);
+
     export class MainForm : public WithBody<Panel, TabbedBox>
     {
     public:
-        using WithBody::WithBody;
+        explicit MainForm(const CreateParams& params);
+        ~MainForm() override;
+    private:
+        class PageSearch;
+    private:
+        ScrollBoxWith<TextBox>& m_featuresPage;
+        ScrollBoxWith<CodeBox>& m_codePage;
+        ScrollBoxWith<TextBox>& m_ledgerPage;
+        ScrollBoxWith<TextBox>& m_emojiPage;
+        ScrollBoxWith<TextBox>& m_scriptsPage;
+        ScrollBoxWith<TextBox>& m_formulasPage;
+        DialogTitle& m_titleBar;
+        AppButton& m_appButton;
+        SearchBox& m_searchBox;
+        std::unique_ptr<PageSearch> m_search;
     };
-
-    // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] ApplicationProperties textEngineAppParams();
-
-    // Builds the showcase into a form of the given application, runs it, and answers what the form
-    // answered.
-    export int runTextEngineShowcase(WindowApplicationBase&);
 }

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -10,12 +10,10 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <!--
-    The viewer without its entry points. A project importing this alongside ClaFi.vcxitems
-    adds one file - the entry point for its platform, which builds the pick lists and calls
-    runWhatsClip - and is a clipboard viewer of its own, with whatever encodings and
-    languages it added.
-    WhatsClip_Win32.cpp and WhatsClip_Wayland.cpp beside these are the two this tree
-    ships, and are not listed here so that an importing project can carry its own.
+    Import these items alongside ClaFi.vcxitems and supply a platform entry point.
+    Pass the encoding and language pick lists to createDialog<ClaFi::Tools::WhatsClip::MainForm>,
+    set the form's config name, and call execute on the form.
+    See WhatsClip_Win32.cpp and WhatsClip_Wayland.cpp for the entry points shipped with the viewer.
   -->
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cppm" />

@@ -9,12 +9,8 @@
 #pragma comment(lib, "shell32.lib")
 
 import MillScene_App.Main;
-import MillScene_App.Options;
 
-import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Windows;
-
-import ClaFi.Core.Foundation;
 
 import ClaFi.StdLib;
 
@@ -35,13 +31,10 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, wchar_t
     if (argumentList)
         ::LocalFree(argumentList);
 
-    Win32Application app{
+    MillScene_App::MillSceneApplication<Win32Platform, Direct2DBackend> app{
         { .appInstance = hInstance },
-        MillScene_App::millSceneApplicationProperties(),
-        MillScene_App::createMillSceneConfigSchema(),
-        MillScene_App::k_windowOptions,
         std::move(arguments)
     };
 
-    return MillScene_App::runMillSceneShowcase(app);
+    return app.run();
 }

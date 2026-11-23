@@ -16,12 +16,13 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.PageControl;
+import ClaFi.Controls.Panel;
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Base.StackBase;
 
-import ClaFi.App.WindowApplication;
+import ClaFi.App.ApplicationProperties;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -271,79 +272,6 @@ namespace ClaFi::Tools::WhatsClip
             bool m_openBeforePress{ false };   // whether the tab was open when the press came
         };
 
-        // **What is on screen against what is on the clipboard.** A tab per format ever seen,
-        // hidden while its format is absent and shown again when it comes back - so the strip
-        // settles rather than being rebuilt. **Which presentation is open is not the view's to
-        // keep**: it is held here and every view reads and writes it, so walking the formats reads
-        // them all the same way. Above them stand the previews, made once and belonging to the
-        // clipboard rather than to any one format.
-        //
-        // **A tab is reached by the keys, and a press on it moves no focus**, so the focus stays in
-        // the page being read and goes on into the page a press opens - see PageControl.
-        class Viewer
-        {
-        public:
-            Viewer(TabbedBox&, const PickLists&);
-
-            // Brings the strip in line with the clipboard, and reads whichever page is open.
-            void refresh();
-        private:
-            struct FormatTab
-            {
-                Transfer::Format format;
-                ReaderTab* tab;
-                FormatView* view;
-                // Whether the view has read the clipboard as it now stands. A view reads when it
-                // is opened and not before: reading is a transfer out of another process on one of
-                // the two platforms, and the formats nobody is looking at would pay for it too.
-                // Which of its representations reads is the view's own affair.
-                bool current;
-            };
-
-            struct PreviewTab
-            {
-                Transfer::StandardFormat kind;
-                std::wstring_view name;
-                ReaderTab* tab;
-                RepresentationPage* page;
-                // What this clipboard serves the kind from, and nothing where it cannot serve it
-                // at all - which is what hides the tab.
-                std::optional<PreviewSource> source;
-                // Whether the page has read the clipboard as it now stands - see FormatTab.
-                bool current;
-            };
-
-            using FormatTabList = std::vector<FormatTab>;
-            using PreviewTabList = std::vector<PreviewTab>;
-
-            [[nodiscard]] FormatTab* entryFor(const Control*);
-            [[nodiscard]] PreviewTab* previewFor(const Control*);
-            void addPreviewTab(const Preview&);
-            void addTabFor(const Transfer::Format&);
-            void showPreviews(const Transfer::Offer*);
-            void orderTabs(const Transfer::FormatList&);
-            void selectFirstVisible();
-            void showCurrentPage();
-        private:
-            TabbedBox& m_box;
-            const PickLists& m_picks;
-            PreviewTabList m_previewTabs;
-            FormatTabList m_formatTabs;
-            // Between the readings of the clipboard and the formats it is made of, and down with
-            // them where there is no reading to show. Set once, by the constructor.
-            Divider* m_divider{ nullptr };
-            // The presentation being browsed in - Bytes or As Text - which every format view both
-            // reads and writes. Empty until the first view with a choice in it settles one.
-            std::wstring_view m_openRepresentation{};
-            // **Scoped**, because the page control outlives this class. A handler left connected to
-            // a live control after the object it captured is gone is called with a dangling this.
-            ScopedEventConnection m_pageChanged;
-            // The clipboard the strip was last brought in line with. **A generation rather than the
-            // offer**: two copies made here in a row are one static object at one address, and an
-            // offer this side does not own can be freed and its address handed to the next one.
-            std::uint64_t m_generation{ 0 };
-        };
-
         void ReaderTab::setCaption(const std::wstring_view title, const std::wstring_view note)
         {
             Text caption{};
@@ -373,265 +301,338 @@ namespace ClaFi::Tools::WhatsClip
                 m_openBeforePress = selected();
             WithInPlaceEdit::nestedPressDown(event);
         }
+    }
 
-        Viewer::Viewer(TabbedBox& box, const PickLists& picks)
-            :
-            m_box{ box },
-            m_picks{ picks }
+    // **What is on screen against what is on the clipboard.** A tab per format ever seen,
+    // hidden while its format is absent and shown again when it comes back - so the strip
+    // settles rather than being rebuilt. **Which presentation is open is not the view's to
+    // keep**: it is held here and every view reads and writes it, so walking the formats reads
+    // them all the same way. Above them stand the previews, made once and belonging to the
+    // clipboard rather than to any one format.
+    //
+    // **A tab is reached by the keys, and a press on it moves no focus**, so the focus stays in
+    // the page being read and goes on into the page a press opens - see PageControl.
+    class MainForm::Viewer
+    {
+    public:
+        Viewer(TabbedBox& box, PickLists picks);
+
+        // Brings the strip in line with the clipboard, and reads whichever page is open.
+        void refresh();
+    private:
+        struct FormatTab
         {
-            m_box.pageControl().setPlaceHolderText(Text{ L"The clipboard is empty." });
-            for (const Preview& preview : k_previews)
-                addPreviewTab(preview);
+            Transfer::Format format;
+            ReaderTab* tab;
+            FormatView* view;
+            // Whether the view has read the clipboard as it now stands. A view reads when it
+            // is opened and not before: reading is a transfer out of another process on one of
+            // the two platforms, and the formats nobody is looking at would pay for it too.
+            // Which of its representations reads is the view's own affair.
+            bool current;
+        };
 
-            // **A strip takes a control that is not a tab**: its paint order draws those before the
-            // tabs and its focus test answers for tabs alone, so the line is drawn and can never
-            // become the current item. Added here, which puts it after every preview tab and
-            // before every format tab - a container lays its children out in the order it holds
-            // them.
-            m_divider = &m_box.strip().add<Divider>(Thickness::Heavy, k_dividerPadding);
-
-            m_pageChanged = m_box.pageControl().connectEvent([this](CurrentItemChangeEvent&) {
-                showCurrentPage();
-            });
-            refresh();
-        }
-
-        void Viewer::refresh()
+        struct PreviewTab
         {
-            const std::uint64_t generation = m_box.formContext().clipboard().generation();
-            if (generation == m_generation)
-                return;
+            Transfer::StandardFormat kind;
+            std::wstring_view name;
+            ReaderTab* tab;
+            RepresentationPage* page;
+            // What this clipboard serves the kind from, and nothing where it cannot serve it
+            // at all - which is what hides the tab.
+            std::optional<PreviewSource> source;
+            // Whether the page has read the clipboard as it now stands - see FormatTab.
+            bool current;
+        };
 
-            m_generation = generation;
-            const Transfer::Offer* offer = m_box.formContext().clipboard().offer();
-            const Transfer::FormatList formats = offer
-                ? offer->advertisedFormats()
-                : Transfer::FormatList{};
+        using FormatTabList = std::vector<FormatTab>;
+        using PreviewTabList = std::vector<PreviewTab>;
 
-            showPreviews(offer);
+        [[nodiscard]] FormatTab* entryFor(const Control*);
+        [[nodiscard]] PreviewTab* previewFor(const Control*);
+        void addPreviewTab(const Preview&);
+        void addTabFor(const Transfer::Format&);
+        void showPreviews(const Transfer::Offer*);
+        void orderTabs(const Transfer::FormatList&);
+        void selectFirstVisible();
+        void showCurrentPage();
+    private:
+        TabbedBox& m_box;
+        const PickLists m_picks;
+        PreviewTabList m_previewTabs;
+        FormatTabList m_formatTabs;
+        // Between the readings of the clipboard and the formats it is made of, and down with
+        // them where there is no reading to show. Set once, by the constructor.
+        Divider* m_divider{ nullptr };
+        // The presentation being browsed in - Bytes or As Text - which every format view both
+        // reads and writes. Empty until the first view with a choice in it settles one.
+        std::wstring_view m_openRepresentation{};
+        // **Scoped**, because the page control outlives this class. A handler left connected to
+        // a live control after the object it captured is gone is called with a dangling this.
+        ScopedEventConnection m_pageChanged;
+        // The clipboard the strip was last brought in line with. **A generation rather than the
+        // offer**: two copies made here in a row are one static object at one address, and an
+        // offer this side does not own can be freed and its address handed to the next one.
+        std::uint64_t m_generation{ 0 };
+    };
 
-            // **A tab is never taken away**, only hidden. One whose format comes back is the same
-            // tab in the place it was, showing the page it always was.
-            for (FormatTab& entry : m_formatTabs)
-            {
-                const bool onClipboard = std::ranges::find(formats, entry.format) != formats.end();
-                entry.tab->setVisible(onClipboard);
-                entry.current = false;
-            }
+    MainForm::Viewer::Viewer(TabbedBox& box, PickLists picks)
+        :
+        m_box{ box },
+        m_picks{ std::move(picks) }
+    {
+        m_box.pageControl().setPlaceHolderText(Text{ L"The clipboard is empty." });
+        for (const Preview& preview : k_previews)
+            addPreviewTab(preview);
 
-            for (const Transfer::Format& format : formats)
-            {
-                const bool seen = std::ranges::any_of(m_formatTabs,
-                    [&format](const FormatTab& entry) {
-                        return entry.format == format;
-                    });
-                if (!seen)
-                    addTabFor(format);
-            }
+        // **A strip takes a control that is not a tab**: its paint order draws those before the
+        // tabs and its focus test answers for tabs alone, so the line is drawn and can never
+        // become the current item. Added here, which puts it after every preview tab and
+        // before every format tab - a container lays its children out in the order it holds
+        // them.
+        m_divider = &m_box.strip().add<Divider>(Thickness::Heavy, k_dividerPadding);
 
-            // The synthesized note follows the clipboard as it now stands - a format placed on one
-            // copy can be derived on the next - so it is set on every refresh, not once when the
-            // tab is made. A hidden tab stands for a format this clipboard does not carry.
-            for (const FormatTab& entry : m_formatTabs)
-            {
-                if (!entry.tab->visible())
-                    continue;
-
-                const std::wstring name = displayName(entry.format);
-                const bool derived = isSynthesized(entry.format, formats);
-                entry.tab->setCaption(name, derived ? k_synthesizedNote : std::wstring_view{});
-            }
-
-            orderTabs(formats);
-
-            // **The open tab can be the one that went.** Leaving it selected would leave its page
-            // on screen reading a clipboard that has moved on, so the first tab still standing is
-            // opened instead, and with none left the strip is cleared. It is also what opens the
-            // first tab of all.
-            const Control* open = m_box.pageControl().currentItem();
-            const PreviewTab* preview = previewFor(open);
-            const FormatTab* entry = entryFor(open);
-            const bool stands = (preview && preview->tab->visible())
-                || (entry && entry->tab->visible());
-            if (!stands)
-                selectFirstVisible();
-
+        m_pageChanged = m_box.pageControl().connectEvent([this](CurrentItemChangeEvent&) {
             showCurrentPage();
-        }
+        });
+        refresh();
+    }
 
-        Viewer::FormatTab* Viewer::entryFor(const Control* page)
+    void MainForm::Viewer::refresh()
+    {
+        const std::uint64_t generation = m_box.formContext().clipboard().generation();
+        if (generation == m_generation)
+            return;
+
+        m_generation = generation;
+        const Transfer::Offer* offer = m_box.formContext().clipboard().offer();
+        const Transfer::FormatList formats = offer
+            ? offer->advertisedFormats()
+            : Transfer::FormatList{};
+
+        showPreviews(offer);
+
+        // **A tab is never taken away**, only hidden. One whose format comes back is the same
+        // tab in the place it was, showing the page it always was.
+        for (FormatTab& entry : m_formatTabs)
         {
-            for (FormatTab& entry : m_formatTabs)
-            {
-                if (entry.view == page)
-                    return &entry;
-            }
-
-            return nullptr;
+            const bool onClipboard = std::ranges::find(formats, entry.format) != formats.end();
+            entry.tab->setVisible(onClipboard);
+            entry.current = false;
         }
 
-        Viewer::PreviewTab* Viewer::previewFor(const Control* page)
+        for (const Transfer::Format& format : formats)
         {
-            for (PreviewTab& entry : m_previewTabs)
-            {
-                if (entry.page == page)
-                    return &entry;
-            }
-
-            return nullptr;
+            const bool seen = std::ranges::any_of(m_formatTabs,
+                [&format](const FormatTab& entry) {
+                    return entry.format == format;
+                });
+            if (!seen)
+                addTabFor(format);
         }
 
-        void Viewer::addPreviewTab(const Preview& preview)
+        // The synthesized note follows the clipboard as it now stands - a format placed on one
+        // copy can be derived on the next - so it is set on every refresh, not once when the
+        // tab is made. A hidden tab stands for a format this clipboard does not carry.
+        for (const FormatTab& entry : m_formatTabs)
         {
-            RepresentationPage& page = preview.createPage(m_box.pageControl(), m_picks);
-            ReaderTab& tab = m_box.strip().add<ReaderTab>(
-                Text{ preview.name },
-                WordWrap::Yes,
-                Padding{ k_tabPaddingX, k_tabPaddingY },
-                MinSize{ k_stripWidth, 0.0f },
-                MaxSize{ k_stripWidth, k_maxFloat },
-                MouseFocus::Keep,
-                Page{ page }
-            );
-            m_previewTabs.push_back(
-                PreviewTab{ preview.kind, preview.name, &tab, &page, std::nullopt, false });
+            if (!entry.tab->visible())
+                continue;
+
+            const std::wstring name = displayName(entry.format);
+            const bool derived = isSynthesized(entry.format, formats);
+            entry.tab->setCaption(name, derived ? k_synthesizedNote : std::wstring_view{});
         }
 
-        void Viewer::addTabFor(const Transfer::Format& format)
+        orderTabs(formats);
+
+        // **The open tab can be the one that went.** Leaving it selected would leave its page
+        // on screen reading a clipboard that has moved on, so the first tab still standing is
+        // opened instead, and with none left the strip is cleared. It is also what opens the
+        // first tab of all.
+        const Control* open = m_box.pageControl().currentItem();
+        const PreviewTab* preview = previewFor(open);
+        const FormatTab* entry = entryFor(open);
+        const bool stands = (preview && preview->tab->visible())
+            || (entry && entry->tab->visible());
+        if (!stands)
+            selectFirstVisible();
+
+        showCurrentPage();
+    }
+
+    auto MainForm::Viewer::entryFor(const Control* page) -> FormatTab*
+    {
+        for (FormatTab& entry : m_formatTabs)
         {
-            FormatView& view = m_box.pageControl().add<FormatView>();
-            // **Before the representations**, which is what opens one of them.
-            view.setPreference(m_openRepresentation);
-            view.setRepresentations(representationsOf(format), m_picks);
-            ReaderTab& tab = m_box.strip().add<ReaderTab>(
-                Text{ displayName(format) },
-                WordWrap::Yes,
-                Padding{ k_tabPaddingX, k_tabPaddingY },
-                MinSize{ k_stripWidth, 0.0f },
-                MaxSize{ k_stripWidth, k_maxFloat },
-                MouseFocus::Keep,
-                Page{ view }
-            );
-            // The reader copies this name alone; the caption may also carry the synthesized note.
-            tab.setFormatName(displayName(format));
-            m_formatTabs.push_back(FormatTab{ format, &tab, &view, false });
+            if (entry.view == page)
+                return &entry;
         }
 
-        // **What the clipboard is worth looking at**, asked of the offer rather than of its format
-        // list: a kind is served by whichever spelling the platform ranks first, and the tab says
-        // which that was. A kind this clipboard cannot serve takes its tab down, and with every
-        // preview down the divider goes with them.
-        void Viewer::showPreviews(const Transfer::Offer* offer)
+        return nullptr;
+    }
+
+    auto MainForm::Viewer::previewFor(const Control* page) -> PreviewTab*
+    {
+        for (PreviewTab& entry : m_previewTabs)
         {
-            bool anyShown = false;
-            for (PreviewTab& entry : m_previewTabs)
-            {
-                entry.source = offer ? previewSourceOf(*offer, entry.kind) : std::nullopt;
-                entry.current = false;
-                entry.tab->setVisible(entry.source.has_value());
-                if (!entry.source)
-                    continue;
-
-                anyShown = true;
-                const std::wstring note = std::wstring{ k_previewNote } + entry.source->name;
-                entry.tab->setFormatName(entry.source->name);
-                entry.tab->setCaption(entry.name, note);
-            }
-
-            m_divider->setVisible(anyShown);
+            if (entry.page == page)
+                return &entry;
         }
 
-        // **The order the platform gave them in**, which a strip made a tab at a time does not keep
-        // on its own: a tab is added when its format is first seen and stays for good, so the strip
-        // would stand in the order this viewer met the formats rather than the order this
-        // clipboard lists them. The list is ordered, and an application that copies names its
-        // best format first - so where a tab stands says something its name does not.
-        //
-        // **A format this clipboard does not carry has no place in that order**, its tab being
-        // hidden. Those trail after the listed ones, keeping the order they had between them.
-        //
-        // **The previews and their divider are not in this walk.** They stand where they were made,
-        // which is what k_leadingStripControls counts.
-        void Viewer::orderTabs(const Transfer::FormatList& formats)
+        return nullptr;
+    }
+
+    void MainForm::Viewer::addPreviewTab(const Preview& preview)
+    {
+        RepresentationPage& page = preview.createPage(m_box.pageControl(), m_picks);
+        ReaderTab& tab = m_box.strip().add<ReaderTab>(
+            Text{ preview.name },
+            WordWrap::Yes,
+            Padding{ k_tabPaddingX, k_tabPaddingY },
+            MinSize{ k_stripWidth, 0.0f },
+            MaxSize{ k_stripWidth, k_maxFloat },
+            MouseFocus::Keep,
+            Page{ page }
+        );
+        m_previewTabs.push_back(
+            PreviewTab{ preview.kind, preview.name, &tab, &page, std::nullopt, false });
+    }
+
+    void MainForm::Viewer::addTabFor(const Transfer::Format& format)
+    {
+        FormatView& view = m_box.pageControl().add<FormatView>();
+        // **Before the representations**, which is what opens one of them.
+        view.setPreference(m_openRepresentation);
+        view.setRepresentations(representationsOf(format), m_picks);
+        ReaderTab& tab = m_box.strip().add<ReaderTab>(
+            Text{ displayName(format) },
+            WordWrap::Yes,
+            Padding{ k_tabPaddingX, k_tabPaddingY },
+            MinSize{ k_stripWidth, 0.0f },
+            MaxSize{ k_stripWidth, k_maxFloat },
+            MouseFocus::Keep,
+            Page{ view }
+        );
+        // The reader copies this name alone; the caption may also carry the synthesized note.
+        tab.setFormatName(displayName(format));
+        m_formatTabs.push_back(FormatTab{ format, &tab, &view, false });
+    }
+
+    // **What the clipboard is worth looking at**, asked of the offer rather than of its format
+    // list: a kind is served by whichever spelling the platform ranks first, and the tab says
+    // which that was. A kind this clipboard cannot serve takes its tab down, and with every
+    // preview down the divider goes with them.
+    void MainForm::Viewer::showPreviews(const Transfer::Offer* offer)
+    {
+        bool anyShown = false;
+        for (PreviewTab& entry : m_previewTabs)
         {
-            const auto placeOf = [&formats](const FormatTab& entry) {
-                const Transfer::FormatList::const_iterator found
-                    = std::ranges::find(formats, entry.format);
-                return found - formats.begin();
-            };
+            entry.source = offer ? previewSourceOf(*offer, entry.kind) : std::nullopt;
+            entry.current = false;
+            entry.tab->setVisible(entry.source.has_value());
+            if (!entry.source)
+                continue;
 
-            std::ranges::stable_sort(m_formatTabs, std::ranges::less{}, placeOf);
-
-            std::size_t place = k_leadingStripControls;
-            for (const FormatTab& entry : m_formatTabs)
-            {
-                m_box.strip().moveControl(*entry.tab, place);
-                ++place;
-            }
+            anyShown = true;
+            const std::wstring note = std::wstring{ k_previewNote } + entry.source->name;
+            entry.tab->setFormatName(entry.source->name);
+            entry.tab->setCaption(entry.name, note);
         }
 
-        // A preview opens where the clipboard has one, the picture ahead of the text, and the
-        // clipboard's own first format where it has none.
-        void Viewer::selectFirstVisible()
+        m_divider->setVisible(anyShown);
+    }
+
+    // **The order the platform gave them in**, which a strip made a tab at a time does not keep
+    // on its own: a tab is added when its format is first seen and stays for good, so the strip
+    // would stand in the order this viewer met the formats rather than the order this
+    // clipboard lists them. The list is ordered, and an application that copies names its
+    // best format first - so where a tab stands says something its name does not.
+    //
+    // **A format this clipboard does not carry has no place in that order**, its tab being
+    // hidden. Those trail after the listed ones, keeping the order they had between them.
+    //
+    // **The previews and their divider are not in this walk.** They stand where they were made,
+    // which is what k_leadingStripControls counts.
+    void MainForm::Viewer::orderTabs(const Transfer::FormatList& formats)
+    {
+        const auto placeOf = [&formats](const FormatTab& entry) {
+            const Transfer::FormatList::const_iterator found
+                = std::ranges::find(formats, entry.format);
+            return found - formats.begin();
+        };
+
+        std::ranges::stable_sort(m_formatTabs, std::ranges::less{}, placeOf);
+
+        std::size_t place = k_leadingStripControls;
+        for (const FormatTab& entry : m_formatTabs)
         {
-            for (const PreviewTab& entry : m_previewTabs)
-            {
-                if (!entry.tab->visible())
-                    continue;
-
-                entry.tab->select();
-                return;
-            }
-
-            for (const FormatTab& entry : m_formatTabs)
-            {
-                if (!entry.tab->visible())
-                    continue;
-
-                entry.tab->select();
-                return;
-            }
-
-            // Nothing to open. Clearing the strip takes the page of the tab that went down with
-            // it, and the page control says why in its place.
-            m_box.strip().setCurrentItem(nullptr);
+            m_box.strip().moveControl(*entry.tab, place);
+            ++place;
         }
+    }
 
-        void Viewer::showCurrentPage()
+    // A preview opens where the clipboard has one, the picture ahead of the text, and the
+    // clipboard's own first format where it has none.
+    void MainForm::Viewer::selectFirstVisible()
+    {
+        for (const PreviewTab& entry : m_previewTabs)
         {
-            const Control* open = m_box.pageControl().currentItem();
-            PreviewTab* preview = previewFor(open);
-            FormatTab* entry = entryFor(open);
-            if (!preview && !entry)
-                return;
+            if (!entry.tab->visible())
+                continue;
 
-            // **A format opens on the presentation being browsed in** rather than on the one it was
-            // last left showing, which may have been picked before the presentation moved on.
-            if (entry)
-                entry->view->openPreferred();
-
-            if (preview && (preview->current || !preview->source))
-                return;
-            if (entry && entry->current)
-                return;
-
-            // **Asked for again rather than kept.** An offer belongs to Transfer and is freed the
-            // moment anything else reads a clipboard that has moved on - the paste action polls
-            // for its state far more often than this page is opened.
-            Transfer::Offer* offer = m_box.formContext().clipboard().offer();
-            if (!offer)
-                return;
-
-            if (preview)
-            {
-                preview->page->show(*offer, preview->source->read);
-                preview->current = true;
-                return;
-            }
-
-            entry->view->show(*offer, entry->format);
-            entry->current = true;
+            entry.tab->select();
+            return;
         }
+
+        for (const FormatTab& entry : m_formatTabs)
+        {
+            if (!entry.tab->visible())
+                continue;
+
+            entry.tab->select();
+            return;
+        }
+
+        // Nothing to open. Clearing the strip takes the page of the tab that went down with
+        // it, and the page control says why in its place.
+        m_box.strip().setCurrentItem(nullptr);
+    }
+
+    void MainForm::Viewer::showCurrentPage()
+    {
+        const Control* open = m_box.pageControl().currentItem();
+        PreviewTab* preview = previewFor(open);
+        FormatTab* entry = entryFor(open);
+        if (!preview && !entry)
+            return;
+
+        // **A format opens on the presentation being browsed in** rather than on the one it was
+        // last left showing, which may have been picked before the presentation moved on.
+        if (entry)
+            entry->view->openPreferred();
+
+        if (preview && (preview->current || !preview->source))
+            return;
+        if (entry && entry->current)
+            return;
+
+        // **Asked for again rather than kept.** An offer belongs to Transfer and is freed the
+        // moment anything else reads a clipboard that has moved on - the paste action polls
+        // for its state far more often than this page is opened.
+        Transfer::Offer* offer = m_box.formContext().clipboard().offer();
+        if (!offer)
+            return;
+
+        if (preview)
+        {
+            preview->page->show(*offer, preview->source->read);
+            preview->current = true;
+            return;
+        }
+
+        entry->view->show(*offer, entry->format);
+        entry->current = true;
     }
 
     ApplicationProperties applicationParams()
@@ -654,87 +655,42 @@ namespace ClaFi::Tools::WhatsClip
         };
     }
 
-    namespace
-    {
-        class MainForm : public WithBody<Panel, TabbedBox>
-        {
-        public:
-            explicit MainForm(const CreateParams& params);
-        };
-
-        // The formats down the left, whichever one is open on the right. A clipboard is a list of
-        // formats and one of them at a time is worth looking at, which is what a tabbed box is.
-        //class MainForm : public WithBody<Panel, TabbedBox>
-        //{
-        //public:
-        //    using WithBody::WithBody;
-        //};
-
-        MainForm::MainForm(const CreateParams& params)
-            :
-            WithBody{
-                params,
-                HostProps{ // Root Panel
-                    FormPlacement::Default,
-                    UiElement::Dialog, // Root window color, visible behind the formats bar
-                    // In the primary window's frame.
-                    // Radius{ params.styleMetrics(UiElement::Dialog).radius },
-                    // params.styleMetrics(UiElement::Dialog).shadow,
-                    // Border{ Thickness::Thin },
-                    Padding{ 0.0f },
-                    // Spacing{ 0.0f },
-                    MinSize{ 422.0f, 280.0f },
-                    
-                    // Width tuned to ensure the HexView on Bytes doesn't show horizontal scroll + a small slack for Linux
-                    PreferredSize{ 860.0f, 560.0f },
-                },
-                BodyProps{ // TabbedBox
-                    TabsOrientation::VerticalLeft,
-                    StripPadding{ 8.0f, 12.0f }
-                    //TabLineThickness{ Thickness::Hairline }
-                }
+    MainForm::MainForm(const CreateParams& params, PickLists picks)
+        :
+        WithBody{
+            params,
+            HostProps{
+                UiElement::Dialog,
+                Padding{ 0.0f },
+                MinSize{ 422.0f, 280.0f },
+                PreferredSize{ 860.0f, 560.0f },
+            },
+            BodyProps{
+                TabsOrientation::VerticalLeft,
+                StripPadding{ 8.0f, 12.0f }
             }
-        {
-            body().pageControl().setBorder(Thickness::None);
-            body().pageControl().setStyle(UiElement::Page);
-            // The window opens in the page that shows, at the control it is read in.
-            setCurrentItem(body().pageControl());
-        }
-    }
-
-    int runWhatsClip(WindowApplicationBase& application, const PickLists& picks)
-    {
-        const std::unique_ptr<Form<MainForm>> form = application.createDialog<MainForm>();
-        form->setConfigName(AppContext::k_mainFormName);
-
-        Viewer viewer{ form->body(), picks };
-
-        // **Nothing polls.** Transfer raises this when the display server says the selection moved
-        // on. Under Wayland that is the clipboard manager's channel this application asks for at
-        // startup, or, on a compositor offering none, the moment this window takes the keyboard
-        // focus - see the Wayland entry point.
-        //
-        // Declared after the viewer so that it is destroyed before it: the dispatcher is the
-        // clipboard's, which the platform keeps up past every window, so the connection is the
-        // shorter-lived half and is the half that has to be scoped.
-        const ScopedEventConnection watchClipboard = form->context().clipboard().events()
-            .connect<Transfer::ClipboardChangeEvent>([&viewer](Transfer::ClipboardChangeEvent&) {
-                viewer.refresh();
-            });
-
-        // The title is the app button's container, and its padding is what stands between the
-        // mark and the corner of the window.
-        auto& title = form->createTopBar<DialogTitle>(
+        },
+        m_titleBar{ createTopBar<DialogTitle>(
             HorizontalTextAnchor::Left,
-            application.name(),
+            appContext().appName(),
             Padding{ 0.0f },
             Spacing{ 4.0f }
-        );
-        title.createLeftBar<AppButton>(
+        ) },
+        m_appButton{ m_titleBar.createLeftBar<AppButton>(
             VerticalAlign::Center,
             AppButton::OnDrawIcon{ AppIcon::drawIcon }
-        );
+        ) }
+    {
+        body().pageControl().setBorder(Thickness::None);
+        body().pageControl().setStyle(UiElement::Page);
+        setCurrentItem(body().pageControl());
 
-        return form->execute();
+        m_viewer = std::make_unique<Viewer>(body(), std::move(picks));
+        m_clipboardChanged = formContext().clipboard().events()
+            .connect<Transfer::ClipboardChangeEvent>([this](Transfer::ClipboardChangeEvent&) {
+                m_viewer->refresh();
+            });
     }
+
+    MainForm::~MainForm() = default;
 }
