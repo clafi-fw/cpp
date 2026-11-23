@@ -10,7 +10,6 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -30,11 +29,9 @@ namespace ClaFi
 
     namespace
     {
-        // The name, and the version at the far end of its line.
         [[nodiscard]] Text titleText(const AppContext&);
         // What the check found.
         [[nodiscard]] Text statusText(const UpdateCheck&);
-        // How long ago the last answer arrived - empty until one has.
         [[nodiscard]] Text lastCheckText(const UpdateCheck&, std::chrono::sys_seconds now);
         // The rest of the page - publisher, site, description, framework.
         [[nodiscard]] Text aboutText(const AppContext&);
@@ -51,8 +48,8 @@ namespace ClaFi
         constexpr float k_pageSpacing{ 10.0f };
         // The longest a line runs - a description wraps at it rather than widening the backstage.
         constexpr float k_lineWidth{ 400.0f };
-        // The least room between the name and the version, on a line with nothing to spare.
-        constexpr float k_versionGap{ 24.0f };
+        constexpr float k_versionGap{ 8.0f };
+        constexpr float k_updateControlMinWidth{ 136.0f };
     }
 
     // InformationPage
@@ -82,9 +79,6 @@ namespace ClaFi
         );
     }
 
-    // **The rows span the page**, so the button and the age stand at the end of the line the
-    // version ends. The status and the age are hidden until there is something to say - see
-    // stateUpdateRows.
     void InformationPage::addUpdateRows()
     {
         StackPanel& statusRow = add<StackPanel>(
@@ -98,24 +92,23 @@ namespace ClaFi
         );
         statusRow.add<FlexSpacer>();
         m_checkButton = &statusRow.add<Button>(
-            L"Check for updates",
+            MinSize{ k_updateControlMinWidth, 0.0f },
             VerticalAlign::Center
         );
-        StackPanel& automaticRow = add<StackPanel>(
+        StackPanel& lastCheckRow = add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_pageSpacing }
         );
-        // No padding at the sides, so the box lines up with the status text above it.
-        m_checkAutomaticallyBox = &automaticRow.add<CheckBox>(
-            L"Check automatically",
-            TooltipText{ L"Check for updates on start, at most once in 24 hours" },
-            Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y },
-            VerticalAlign::Center
-        );
-        automaticRow.add<FlexSpacer>();
-        m_lastCheckLine = &automaticRow.add<TextBox>(
+        m_lastCheckLine = &lastCheckRow.add<TextBox>(
             ReadOnly::Yes,
             Padding{ 0.0f },
+            VerticalAlign::Center
+        );
+        lastCheckRow.add<FlexSpacer>();
+        m_checkAutomaticallyBox = &lastCheckRow.add<CheckBox>(
+            L"Check automatically",
+            TooltipText{ L"Check for updates on start, at most once in 24 hours" },
+            MinSize{ k_updateControlMinWidth, 0.0f },
             VerticalAlign::Center
         );
         add<Divider>();
@@ -157,11 +150,10 @@ namespace ClaFi
         const UpdateCheck& updates = appContext().updateCheck();
         const std::chrono::sys_seconds now =
             std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
-        m_status->setVisible(updates.state() != UpdateState::Unchecked);
         m_status->text() = statusText(updates);
-        m_lastCheckLine->setVisible(updates.answeredAt().has_value());
         m_lastCheckLine->text() = lastCheckText(updates, now);
         m_checkButton->text() = Text{
+            TextAlign::Center,
             updates.state() == UpdateState::Failed ? L"Try again" : L"Check for updates"
         };
         m_checkButton->invalidateState();
@@ -176,7 +168,7 @@ namespace ClaFi
             Text text{ StyledText{ TextStyles::Title, context.appName() } };
             if (!context.version().empty())
             {
-                text << FlexSpace{ k_versionGap };
+                text << Space{ k_versionGap };
                 text << ColoredText{ InkGrade::Muted, L"Version ", context.version() };
             }
             return text;
@@ -190,6 +182,7 @@ namespace ClaFi
             switch (updates.state())
             {
                 case UpdateState::Unchecked:
+                    words << L"Updates haven't been checked";
                     break;
                 case UpdateState::Checking:
                     words << L"Checking for updates\u2026";
@@ -214,12 +207,11 @@ namespace ClaFi
 
         Text lastCheckText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
         {
-            Text words{};
-            if (updates.answeredAt())
-            {
-                words << L"last check: ";
-                words << ageSpelling(updates.answeredAt().value(), now);
-            }
+            Text words{ L"last check: " };
+            if (const UpdateCheck::AnswerTime answeredAt = updates.answeredAt())
+                words << ageSpelling(answeredAt.value(), now);
+            else
+                words << L"never";
             return Text{ StyledText{ TextStyles::SubBody, words } };
         }
 
@@ -246,9 +238,7 @@ namespace ClaFi
                 text << k_endLine;
                 text << k_endLine;
             }
-            text << L"Built with ClaFi - Clarity First the Framework";
-            text << k_endLine;
-            text << LinkText{ L"https://github.com/clafi-fw/cpp", L"github.com/clafi-fw/cpp" };
+            text << L"Built with " << LinkText{ L"https://github.com/clafi-fw/cpp", L"ClaFi Framework" };
             return text;
         }
 

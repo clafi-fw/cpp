@@ -20,6 +20,12 @@ namespace MillScene_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
+    FloatRect ScenePanel::contextMenuAnchor() const
+    {
+        const FloatPoint anchor = visibleRectInForm().topLeft() + scaledPadding();
+        return FloatRect::FromDimensions(anchor, { 1.0f, 1.0f });
+    }
+
     MillSceneForm::MillSceneForm(const CreateParams& params, const LaunchOptions& launch)
         :
         Panel{

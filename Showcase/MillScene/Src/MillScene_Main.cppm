@@ -79,6 +79,8 @@ namespace MillScene_App
     constexpr float k_sceneTilePadding{ 6.0f };
     // The units and the chart's readings are written at this share of the readout's ink.
     constexpr float k_mutedInkOpacity{ 0.67f };
+    constexpr float k_sceneOptionsPadding{ 8.0f };
+    constexpr float k_sceneOptionsGroupSpacing{ 12.0f };
     constexpr float k_pickerCaptionSpacing{ 4.0f }; // between a picker's caption and its options
     constexpr float k_pickerSpacing{ 12.0f }; // between two controls standing side by side
     // A scene taken up fades in over the one before it, as long as a theme's crossfade.
@@ -114,7 +116,6 @@ namespace MillScene_App
     // The corner the swatch was drawn with, as a fraction of it rather than the 4 design pixels
     // it was: what paints the icon here is handed a rect and no scaler.
     constexpr float k_themeIconRadiusRatio{ 4.0f / k_themeIconSize };
-    constexpr float k_themeLaneSpacing{ 12.0f };
 
     // What the metrics tooltip says draws the scene. See writeMetricsTooltip
     constexpr std::wstring_view k_drawnOnGpu{
@@ -153,6 +154,7 @@ namespace MillScene_App
         void advanceView();
         [[nodiscard]] CursorShape cursor() const override;
     protected:
+        [[nodiscard]] FloatRect contextMenuAnchor() const override;
         void paintSurface(PaintEvent&) override;
         void mouseMove(MouseMoveEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
@@ -253,7 +255,6 @@ namespace MillScene_App
         // Theme buttons in `column`, with a preview of the theme under the pointer.
         void buildThemeLanes(StackPanel& column, PickerLanes&, Menu* sceneOptions = nullptr);
         void buildWeatherControls(StackPanel& column, std::size_t sceneIndex);
-        // A column captioned in the strong ink, holding what is added to it.
         [[nodiscard]] static StackPanel& addCaptionedColumn(StackPanel& column,
             std::wstring_view caption);
 
@@ -343,6 +344,8 @@ namespace MillScene_App
             AppButton::OnDrawIcon{ AppIcon::drawIcon }
         ) };
         ScenePanel& m_scenePanel{ createBody<ScenePanel>(
+            NavigationReach::Yes,
+            MouseFocus::Self,
             Padding{ 8.0f }
         ) };
         EventRepeater m_paintTimer;
@@ -1056,7 +1059,7 @@ void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
-        Spacing{ k_themeLaneSpacing, 0.0f },
+        Spacing{ 0.0f },
         VerticalAlign::Top
     );
 
@@ -1191,10 +1194,7 @@ StackPanel& MillSceneForm::addCaptionedColumn(StackPanel& column,
         Orientation::Vertical,
         Spacing{ k_pickerCaptionSpacing }
     );
-    captionedColumn.add<Label>(
-        Text{ caption },
-        TextFormat{ InkGrade::Strong }
-    );
+    captionedColumn.add<Label>(Text{ StyledText{ TextStyles::SubHeading, caption } });
     return captionedColumn;
 }
 
@@ -1562,8 +1562,12 @@ void MillSceneForm::showSceneOptionsMenu(SplitButton& button, const std::size_t 
 
     if (scene.offersThemes())
     {
-        StackPanel& column = options.addControl<StackPanel>(Orientation::Vertical);
-        buildThemeLanes(column, themePicker, &options);
+        options.setPadding(k_sceneOptionsPadding);
+        StackPanel& column = options.addControl<StackPanel>(
+            Orientation::Vertical,
+            Spacing{ k_sceneOptionsGroupSpacing }
+        );
+        buildThemeLanes(addCaptionedColumn(column, L"Theme"), themePicker, &options);
         for (Control* themeButton : themePicker.buttons)
         {
             themeButton->onClick(pickSceneInMenu);

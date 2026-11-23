@@ -114,8 +114,8 @@ buttons take no hold: each is a step, so the form grows a percent at a time.
 
 The Information page of the application menu, top down:
 
-- the name, and the version at the far end of its line;
-- the update row, where AppContext::updateCheck is available - a major.minor.patch version and a
+- the name, with the version beside it;
+- the update rows, where AppContext::updateCheck is available - a major.minor.patch version and a
   repository in AppParams::updates;
 - the publisher, AppParams::site, AppParams::description, the paragraphs from
   AppContext::addInformation, and the framework.
@@ -128,16 +128,17 @@ from https:// to the next blank in one becomes a link.
 
 **Every text is a read-only TextBox**, so its links work and it can be selected and copied.
 
-**The first update row** shows what the check found:
+**The first update row shows the status on the left** and the check button on the right.
 
-- Unchecked - only the button.
+- Unchecked - "Updates haven't been checked".
 - Checking - "Checking for updates…", the button dimmed.
 - Latest - "You're up to date".
 - Newer - "Version 0.2.0 is available", a link to the release page.
 - Failed - "Could not check for updates", and the button reads Try again.
 
-**The second row holds Check automatically**, and at its end "last check:" with the age of the
-last answer that arrived. The age is worked out when the page is built and when the check moves.
+**The second row shows the last-check age on the left** and Check automatically on the right.
+It reads "last check: never" until a check returns a result. The age is worked out when the page
+is built and when the check moves.
 The answer is kept in the config, so a new run shows an earlier run's - see UpdateCheck::keepIn.
 
 **Check automatically asks at the application's start**, at most once in 24 hours - see

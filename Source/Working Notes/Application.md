@@ -97,10 +97,9 @@ page.
 PageSizing::WidestPage - and a text with no maximum is measured one line per paragraph, so an
 unbounded description would widen the menu to fit it on one line. The text under the line is
 Left-aligned beside that maximum, because a maximum on a Fill axis is a caller error - see
-Control::align. The name's line and the update row are one line each and state no maximum: they
-Fill, so they span the page whatever its width. The name and the version are one paragraph, the
-version after a FlexSpace, so they share a baseline and the version stands at the line's far end,
-over the update button.
+Control::align. The title and update rows Fill, so they span the page whatever its width. The name
+and version share a paragraph and a baseline. The check button and automatic check box have the
+same minimum width, which keeps their column in place when the button reads Try again.
 
 ## ThemesList
 

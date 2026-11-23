@@ -338,8 +338,9 @@ that control's. The pointer shows a hand wherever a drag moves the view.
 the scene answers that it took nothing, and on the readings over the scene, the showcase enters
 fullscreen or leaves it.
 
-**A right click on the showcase opens the scene's context menu**, on the scene and on the readings
-over it alike. Its Scene line wears the picked scene's icon and opens the scene picker beside it. On
+**The scene's context menu opens at the pointer** on a right click in the scene or its readings.
+Tab or a click focuses the scene. Its keyboard context menu opens at the padded top-left corner.
+The Scene line wears the picked scene's icon and opens the scene picker beside it. On
 a scene that offers themes, the Theme line under it wears the picked theme's swatch and opens a
 theme picker. The pointer resting on a scene or a theme crossfades to it, and leaving the picker or
 closing the menu brings back the pick. A click on a scene picks it and leaves the menu up; a click
