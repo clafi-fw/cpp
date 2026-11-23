@@ -6,13 +6,15 @@ The words that do not fit above a declaration.
 
 A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
 cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
-as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
-under that name. A double click on a tile, or on a theme, picks it and closes the menu. A scene it
-takes up fades in over a still of the frame before it.
+as tiles in the Scene group of its Scene page and in the scene's context menu - drawIcon() over
+name() - and stores the one picked under that name. A click on a tile picks it; in the app menu a
+double click on one closes the menu. A scene it takes up fades in over a still of the frame before
+it.
 
-**Under the tiles, a section named after the picked scene shows its page of options** - Mill
-Options, Earth Options: the themes, a scene's look and choices, or a line saying the scene has none.
-The pages share one room as large as the largest of them, so a pick never asks the menu for more.
+**A tile whose scene offers options carries a dropdown**, opened under the tile: the scene's theme
+picker, its weather, its look, its choices and its switches. Opening the dropdown picks the scene,
+as pressing the tile's face does. The tiles of the app menu and of the scene's context menu carry
+it alike.
 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
@@ -95,9 +97,8 @@ when the two differ for it - today EarthScene, whose clouds, land and sea they c
 the look setLook() last named from its next frame on. A scene that offers no looks keeps the value
 and draws as it always does.
 
-The MillScene showcase offers the looks as radio buttons captioned Look on the scene's page of
-options. The `Earth` section of `SceneViews` keeps the choice under `GlobeLook`. The default is
-`Realistic`.
+The MillScene showcase offers the looks as radio lines of the options its tile opens. The `Earth`
+section of `SceneViews` keeps the choice under `GlobeLook`. The default is `Realistic`.
 
 ## Scene offersThemes
 
@@ -105,8 +106,8 @@ options. The `Earth` section of `SceneViews` keeps the choice under `GlobeLook`.
 one setTheme() last named - see ThemeBlend. MillScene and ChaseScene offer them. A scene that offers
 none ignores the call.
 
-**One pick for every scene that offers themes.** The MillScene showcase shows the theme picker on
-the page of options of each of them, every picker showing the one pick, and a pick or a hover
+**One pick for every scene that offers themes.** The MillScene showcase shows the theme picker in
+the options each such scene's tile opens, every picker showing the one pick, and a pick or a hover
 crossfades them all. It keeps the pick under SceneTheme, by the theme's name. With no pick kept,
 they open in the first theme of the list, Clear Day.
 
@@ -338,12 +339,12 @@ the scene answers that it took nothing, and on the readings over the scene, the 
 fullscreen or leaves it.
 
 **A right click on the showcase opens the scene's context menu**, on the scene and on the readings
-over it alike. Its Scene line wears the picked scene's icon and opens the scene picker of the Scene
-page beside it. On a scene that offers themes, the Theme line under it wears the picked theme's
-swatch and opens the theme picker of the scene's page of options. The pointer resting on a scene or
-a theme crossfades to it, and leaving the picker or closing the menu brings back the pick. A click
-picks and closes the menu. Full screen follows, the F11 toggle, its line selected while fullscreen,
-and the menu ends on the application's Exit.
+over it alike. Its Scene line wears the picked scene's icon and opens the scene picker beside it. On
+a scene that offers themes, the Theme line under it wears the picked theme's swatch and opens a
+theme picker. The pointer resting on a scene or a theme crossfades to it, and leaving the picker or
+closing the menu brings back the pick. A click on a scene picks it and leaves the menu up; a click
+on a theme picks it and closes the menu. Full screen follows, the F11 toggle, its line selected
+while fullscreen, and the menu ends on the application's Exit.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
@@ -392,29 +393,28 @@ is what a scene that overrides nothing answers, hands it to the host - see Scene
 ## SceneChoice
 
 **A scene states what else it lets the viewer pick, beside its look**: each choice has a name and
-its options' names, and the host shows each as radio buttons captioned with the choice's name, on
-the scene's page of options. The names are shown as they are written, and they are also what the
+its options' names, and the host shows it as a caption over a radio line for every option, in the
+options the scene's tile opens. The names are shown as they are written, and they are also what the
 scene keeps its pick under.
 
 ## Scene choices
 
 **The host asks for the choices and leaves the picks to the scene.** It reads chosenOption() to
-show what is picked and calls chooseOption() when an option is picked or hovered over, putting the
-pick back when the hover leaves. The scene keeps its picks with its view - see Scene storeView -
-and an index past the choices it states is a mistake it may refuse.
+show what is picked and calls chooseOption() when an option is picked. The scene keeps its picks
+with its view - see Scene storeView - and an index past the choices it states is a mistake it may
+refuse.
 
 ## Scene switches
 
-**A scene states the on-off settings it offers by name**, and the host shows each as a check box
-with that name on the scene's page of options, under its pickers. The host reads isSwitchOn() to
-show the box and calls setSwitch() on a click. The scene keeps its switches with its view - see
-Scene storeView - and an index past the switches it states is a mistake it may refuse.
+**A scene states the on-off settings it offers by name**, and the host shows each as a check line
+with that name in the options the scene's tile opens. The host reads isSwitchOn() to show the line
+and calls setSwitch() on a click. The scene keeps its switches with its view - see Scene storeView
+- and an index past the switches it states is a mistake it may refuse.
 
 ## SceneGesture
 
 **A scene states the gestures it answers, for the viewer to read**: each has a name and its effect,
-and the host writes them a line each, the name in bold and the effect after it. The MillScene
-showcase shows them captioned Controls on the scene's page of options, under its pickers.
+and a host that shows them writes a line each, the name in bold and the effect after it.
 
 ## Scene gestures
 
