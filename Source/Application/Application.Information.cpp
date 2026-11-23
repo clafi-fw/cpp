@@ -40,16 +40,12 @@ namespace ClaFi
         // The address as the page shows it - the scheme left out.
         [[nodiscard]] std::wstring_view shownAddress(std::wstring_view address);
 
-        // The scheme every address the page links starts with.
-        constexpr std::wstring_view k_scheme{ L"https://" };
-        // The room a page of options keeps around its column, so the name starts where options do.
-        constexpr float k_pagePadding{ 12.0f };
-        // Between the rows of the page, as between the groups of a page of options.
-        constexpr float k_pageSpacing{ 10.0f };
-        // The longest a line runs - a description wraps at it rather than widening the backstage.
-        constexpr float k_lineWidth{ 400.0f };
+        constexpr std::wstring_view k_webLinkProtocolPrefix{ L"https://" };
+        constexpr Padding k_pagePadding{ 12.0f };
+        constexpr Spacing k_pageSpacing{ 10.0f };
+        constexpr MaxSize k_maxDescriptionBoxSize{ 400.0f, k_maxFloat };
         constexpr float k_versionGap{ 8.0f };
-        constexpr float k_updateControlMinWidth{ 136.0f };
+        constexpr MinSize k_updateControlMinSize{ 136.0f, 0.0f };
     }
 
     // InformationPage
@@ -59,8 +55,8 @@ namespace ClaFi
         StackPanel{
             params,
             Orientation::Vertical,
-            Padding{ k_pagePadding },
-            Spacing{ k_pageSpacing }
+            k_pagePadding,
+            k_pageSpacing
         }
     {
         add<TextBox>(
@@ -74,7 +70,7 @@ namespace ClaFi
             ReadOnly::Yes,
             Padding{ 0.0f },
             HorizontalAlign::Left,
-            MaxSize{ k_lineWidth, k_maxFloat },
+            k_maxDescriptionBoxSize,
             aboutText(params.appContext())
         );
     }
@@ -83,7 +79,7 @@ namespace ClaFi
     {
         StackPanel& statusRow = add<StackPanel>(
             Orientation::Horizontal,
-            Spacing{ k_pageSpacing }
+            k_pageSpacing
         );
         m_status = &statusRow.add<TextBox>(
             ReadOnly::Yes,
@@ -92,12 +88,12 @@ namespace ClaFi
         );
         statusRow.add<FlexSpacer>();
         m_checkButton = &statusRow.add<Button>(
-            MinSize{ k_updateControlMinWidth, 0.0f },
+            k_updateControlMinSize,
             VerticalAlign::Center
         );
         StackPanel& lastCheckRow = add<StackPanel>(
             Orientation::Horizontal,
-            Spacing{ k_pageSpacing }
+            k_pageSpacing
         );
         m_lastCheckLine = &lastCheckRow.add<TextBox>(
             ReadOnly::Yes,
@@ -108,7 +104,7 @@ namespace ClaFi
         m_checkAutomaticallyBox = &lastCheckRow.add<CheckBox>(
             L"Check automatically",
             TooltipText{ L"Check for updates on start, at most once in 24 hours" },
-            MinSize{ k_updateControlMinWidth, 0.0f },
+            k_updateControlMinSize,
             VerticalAlign::Center
         );
         add<Divider>();
@@ -251,7 +247,7 @@ namespace ClaFi
             std::size_t pos = 0;
             while (pos < paragraph.size())
             {
-                const std::size_t start = paragraph.find(k_scheme, pos);
+                const std::size_t start = paragraph.find(k_webLinkProtocolPrefix, pos);
                 if (start == std::wstring_view::npos)
                     break;
                 std::size_t end = paragraph.find(L' ', start);
@@ -269,8 +265,8 @@ namespace ClaFi
 
         std::wstring_view shownAddress(const std::wstring_view address)
         {
-            if (address.starts_with(k_scheme))
-                return address.substr(k_scheme.size());
+            if (address.starts_with(k_webLinkProtocolPrefix))
+                return address.substr(k_webLinkProtocolPrefix.size());
             return address;
         }
     }
