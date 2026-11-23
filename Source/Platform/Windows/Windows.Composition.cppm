@@ -43,6 +43,8 @@ namespace ClaFi::PlatformImplementation::Windows
         // The same from the frame texture.
         [[nodiscard]] bool presentSurface(const IntRect& sourceRect, IntPoint destination);
         void setOpacity(float);
+        void stageNextFrame() { m_stageFrame = true; }
+        [[nodiscard]] bool publishStagedFrame() { return !m_stageFrame || commit(); }
     private:
         [[nodiscard]] bool ensureDevice();
         void discardDevice();
@@ -69,9 +71,11 @@ namespace ClaFi::PlatformImplementation::Windows
         // how many buffers still hold nothing at all, after a resize or a rebuild.
         IntRect m_stale{};
         UINT m_wholeUploadsLeft{ k_bufferCount };
+        bool m_stageFrame{ false };
         ComPtr<ID3D11Device> m_d3dDevice;
         ComPtr<ID3D11DeviceContext> m_d3dContext;
         ComPtr<IDXGISwapChain1> m_swapChain;
+        ComPtr<IDXGISwapChain1> m_stagedSwapChain;
         ComPtr<ID3D11Texture2D> m_frameTexture;
         ComPtr<IDXGISurface> m_frameSurface;
         ComPtr<IDCompositionDevice> m_device;
@@ -186,9 +190,14 @@ namespace ClaFi::PlatformImplementation::Windows
     {
         m_opacity = value;
         if (!m_effect)
+        {
             return;
+        }
         checkHr(m_effect->SetOpacity(value));
-        std::ignore = commit();
+        if (!m_stageFrame)
+        {
+            std::ignore = commit();
+        }
     }
 
     // **Hardware first, warp second.** A session without a usable GPU - a remote desktop, a virtual
@@ -242,6 +251,7 @@ namespace ClaFi::PlatformImplementation::Windows
         m_frameTexture.Reset();
         m_frameSize = {};
         m_swapChain.Reset();
+        m_stagedSwapChain.Reset();
         m_chainSize = {};
         m_wholeUploadsLeft = k_bufferCount;
         m_effect.Reset();
@@ -256,12 +266,17 @@ namespace ClaFi::PlatformImplementation::Windows
     bool CompositionPresenter::ensureSwapChain()
     {
         if (m_size.x <= 0 || m_size.y <= 0)
+        {
             return false;
-        if (m_swapChain && m_chainSize == m_size)
+        }
+        ComPtr<IDXGISwapChain1>& swapChain = m_stageFrame ? m_stagedSwapChain : m_swapChain;
+        if (swapChain && m_chainSize == m_size)
+        {
             return true;
+        }
 
         HRESULT hr;
-        if (!m_swapChain)
+        if (!swapChain)
         {
             ComPtr<IDXGIDevice> dxgiDevice;
             ComPtr<IDXGIAdapter> adapter;
@@ -284,17 +299,23 @@ namespace ClaFi::PlatformImplementation::Windows
             description.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
             description.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
             if (SUCCEEDED(hr))
+            {
                 hr = factory->CreateSwapChainForComposition(m_d3dDevice.Get(), &description,
-                    nullptr, &m_swapChain);
-            if (SUCCEEDED(hr))
-                hr = m_visual->SetContent(m_swapChain.Get());
-            if (SUCCEEDED(hr))
-                hr = m_device->Commit();
+                    nullptr, &swapChain);
+            }
+            if (SUCCEEDED(hr) && !m_stageFrame)
+            {
+                hr = m_visual->SetContent(swapChain.Get());
+                if (SUCCEEDED(hr))
+                {
+                    hr = m_device->Commit();
+                }
+            }
         }
         else
         {
-            hr = timedCall(L"ResizeBuffers", m_window, [this]() {
-                return m_swapChain->ResizeBuffers(0, static_cast<UINT>(m_size.x),
+            hr = timedCall(L"ResizeBuffers", m_window, [this, &swapChain]() {
+                return swapChain->ResizeBuffers(0, static_cast<UINT>(m_size.x),
                     static_cast<UINT>(m_size.y), DXGI_FORMAT_UNKNOWN, 0);
             });
         }
@@ -311,12 +332,47 @@ namespace ClaFi::PlatformImplementation::Windows
 
     bool CompositionPresenter::commit()
     {
+        m_stageFrame = false;
         if (!m_device)
+        {
             return false;
+        }
+        if (m_stagedSwapChain)
+        {
+            // Wait for the uploads before exposing the chain, then align the visual swap and
+            // the caller's move to the start of the next composition interval.
+            ComPtr<IDXGIDevice2> dxgiDevice;
+            HANDLE uploaded = ::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+            bool ready = false;
+            if (uploaded)
+            {
+                if (SUCCEEDED(m_d3dDevice.As(&dxgiDevice))
+                    && SUCCEEDED(dxgiDevice->EnqueueSetEvent(uploaded)))
+                {
+                    ready = ::WaitForSingleObject(uploaded, INFINITE) == WAIT_OBJECT_0;
+                }
+                ::CloseHandle(uploaded);
+            }
+            if (!ready)
+            {
+                discardDevice();
+                return false;
+            }
+            ::DwmFlush();
+            if (FAILED(m_visual->SetContent(m_stagedSwapChain.Get())))
+            {
+                discardDevice();
+                return false;
+            }
+        }
         if (FAILED(m_device->Commit()))
         {
             discardDevice();
             return false;
+        }
+        if (m_stagedSwapChain)
+        {
+            m_swapChain = std::move(m_stagedSwapChain);
         }
         return true;
     }
@@ -333,15 +389,6 @@ namespace ClaFi::PlatformImplementation::Windows
         if (chainTarget.empty())
             return true;
 
-        ComPtr<ID3D11Texture2D> backBuffer;
-        HRESULT hr = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D),
-            reinterpret_cast<void**>(backBuffer.GetAddressOf()));
-        if (FAILED(hr))
-        {
-            discardDevice();
-            return false;
-        }
-
         // **The new frame's rect and what this buffer missed**, both from the source, which holds
         // the whole current frame; the runtime is told the same rect, since that is what changed in
         // this buffer.
@@ -349,33 +396,59 @@ namespace ClaFi::PlatformImplementation::Windows
         if (m_wholeUploadsLeft > 0)
         {
             copyTarget = { 0, 0, m_chainSize.x, m_chainSize.y };
-            --m_wholeUploadsLeft;
         }
         else
+        {
             copyTarget.unionWith(m_stale);
+        }
         IntRect copySource = copyTarget;
         copySource.offset(-shift.x, -shift.y);
         copySource.intersectWith({ 0, 0, sourceSize.x, sourceSize.y });
         copyTarget = copySource;
         copyTarget.offset(shift);
         if (copyTarget.empty())
+        {
             return true;
-        if (bitmap)
-            upload(*backBuffer.Get(), *bitmap, copySource, copyTarget.topLeft());
-        else
-            copy(*backBuffer.Get(), *m_frameTexture.Get(), copySource, copyTarget.topLeft());
+        }
 
-        RECT dirty{ copyTarget.left, copyTarget.top, copyTarget.right, copyTarget.bottom };
+        RECT dirty = { copyTarget.left, copyTarget.top, copyTarget.right, copyTarget.bottom };
         DXGI_PRESENT_PARAMETERS parameters{};
         parameters.DirtyRectsCount = 1;
         parameters.pDirtyRects = &dirty;
-        hr = timedCall(L"Present1", m_window, [&]() {
-            return m_swapChain->Present1(1, 0, &parameters);
-        });
-        if (FAILED(hr))
+        IDXGISwapChain1* swapChain = m_stageFrame ? m_stagedSwapChain.Get() : m_swapChain.Get();
+        // Both buffers on an unattached chain need pixels. DirectComposition can read either one
+        // when it first takes the chain.
+        const UINT presents = m_stageFrame && m_wholeUploadsLeft == k_bufferCount ? k_bufferCount : 1;
+        for (UINT i = 0; i < presents; ++i)
         {
-            discardDevice();
-            return false;
+            ComPtr<ID3D11Texture2D> backBuffer;
+            HRESULT result = swapChain->GetBuffer(0, IID_PPV_ARGS(backBuffer.GetAddressOf()));
+            if (FAILED(result))
+            {
+                discardDevice();
+                return false;
+            }
+            if (bitmap)
+            {
+                upload(*backBuffer.Get(), *bitmap, copySource, copyTarget.topLeft());
+            }
+            else
+            {
+                copy(*backBuffer.Get(), *m_frameTexture.Get(), copySource, copyTarget.topLeft());
+            }
+            const UINT syncInterval = i + 1 == presents ? 1 : 0;
+            result = timedCall(L"Present1", m_window, [&]() {
+                return swapChain->Present1(syncInterval, 0, &parameters);
+            });
+            if (FAILED(result))
+            {
+                discardDevice();
+                return false;
+            }
+            if (m_wholeUploadsLeft > 0)
+            {
+                --m_wholeUploadsLeft;
+            }
         }
         m_stale = chainTarget;
         return true;

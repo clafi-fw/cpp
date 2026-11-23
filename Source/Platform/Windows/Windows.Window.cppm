@@ -1129,8 +1129,7 @@ namespace ClaFi::PlatformImplementation::Windows
     // **The window keeps the state it has, maximized or not, and only its rect changes**: its
     // monitor's whole rect on the way in, the rect it stood at on the way out. One move each way,
     // with the styles read again in it, so the system shows no state change of its own between.
-    // What is laid out and shown for the next rect is made before the move - see
-    // fullscreenChanged.
+    // The form stages its next frame before the move - see fullscreenChanged.
     void Window::setFullscreen(const bool value)
     {
         if (m_Role != WindowRole::Dialog || value == isFullscreen())

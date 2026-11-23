@@ -717,14 +717,19 @@ namespace ClaFi
         m_form.wnd_focusChanged();
     }
 
-    // **The form is told first, and its frame for the next rect is shown before the window takes
-    // that rect** - see stateBounds. A window moved first is composed at the new rect with the
-    // picture it had: the windowed one in a corner of the screen, or a corner of the fullscreen
-    // one in the window.
     void FormWindow::fullscreenChanged(const IntRect& nextBounds)
     {
+        if (m_presenter)
+        {
+            m_presenter->stageNextFrame();
+        }
         m_form.wnd_fullscreenChanged();
+        invalidateRect(nullptr);
         stateBounds(nextBounds);
+        if (m_presenter && !m_presenter->publishStagedFrame())
+        {
+            invalidateRect(nullptr);
+        }
     }
 
     bool FormWindow::isSystemHitTest(WPARAM value)
