@@ -526,6 +526,11 @@ completion row taken finishes the word. It happens once, so a line moved by hand
 second what was typed. A step that moves lines lands the selection with them, and so does its
 redo - see TextHistory.
 
+**Toggle comment (Ctrl+/)** is available in an editable CodeBox whose language defines a line comment.
+It adds a marker after the indentation of every nonblank selected line, or of the caret line
+when there is no selection. If all those lines already start with the marker, it removes one
+marker and up to one following space from each. The change is one undo step.
+
 **The unit** of one level is indentUnit, four spaces unless stated - or, with detectIndent on, what
 the text says. See DetectIndent.
 

@@ -105,6 +105,11 @@ namespace ClaFi::StdActions
     Action reindent{
         Text{ L"Reindent" }
     };
+    constexpr KeyCode k_slashVirtualKey = 0xbf;  // OEM_2 on a US keyboard
+    Action toggleComment{
+        Text{ L"Toggle comment" },
+        Shortcut{ k_slashVirtualKey, { .ctrl = true } }
+    };
     // No icon: a search is typed where the subject's page shows one, and the command only takes
     // the user there.
     Action find{
@@ -146,6 +151,7 @@ namespace ClaFi::StdActions
         actions.add(saveAs);
         actions.add(rename);
         actions.add(reindent);
+        actions.add(toggleComment);
         actions.add(find);
         actions.add(findNext);
         actions.add(findPrevious);

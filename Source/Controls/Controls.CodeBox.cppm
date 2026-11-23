@@ -165,7 +165,6 @@ namespace ClaFi::Controls
         [[nodiscard]] std::size_t rowHome(CaretHit) const override;
         // A paste of several lines moved as one block to where the language places it.
         void textPasted(const TextRange&) override;
-        // Reindent joins the edit menu of a box that can be typed into.
         void adjustContextPopup(AdjustContextPopupEvent&) override;
         // The guides first, on the layout the text is drawn from, so a selection band covers them.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
@@ -227,9 +226,9 @@ namespace ClaFi::Controls
         // Makes the tooltip's window, on the first request.
         void ensureParameterTooltip();
         [[nodiscard]] CaretLine caretLine() const;
-        // Answers the reindent action. Defined in CodeBox.cpp, which keeps the standard actions
-        // out of the interface - see TextBox::connectEditActions.
-        void connectIndentActions();
+        void connectCodeActions();
+        [[nodiscard]] std::wstring_view lineCommentMarker() const;
+        void toggleComment();
         // The selection clamped to the text - select all states a length past its end.
         [[nodiscard]] TextRange selectedRange() const;
         // The lines as the indent is worked out over them, the line states in step with the text.
@@ -350,6 +349,6 @@ namespace ClaFi::Controls
             if (!form().window().isFocused())
                 hideParameterTooltip();
         });
-        connectIndentActions();
+        connectCodeActions();
     }
 }

@@ -666,9 +666,12 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
 <span class="tp">StdActions</span>::selectAll;
 <span class="tp">StdActions</span>::undo;         <span class="cm">// Ctrl+Z</span>
 <span class="tp">StdActions</span>::redo;         <span class="cm">// Ctrl+Y, Ctrl+Shift+Z</span></pre>
-            <p><code>ApplicationBase::initialize</code> calls <code>StdActions::registerAll()</code>, which puts
-            all seven in the application's scope. Every application gets the standard keys from that call; an
-            application that needs a key for itself clears that action's shortcut.</p>
+            <p><code>WindowApplicationBase::initialize</code> calls <code>StdActions::registerAll()</code>,
+            which puts the standard actions in the application's scope. An application that needs a
+            standard key for itself clears that action's shortcut.</p>
+            <p><code>StdActions::toggleComment</code> appears as <strong>Toggle comment</strong> in an
+            editable <code>CodeBox</code> whose language defines a line comment. It toggles line comments
+            on the selected lines or the caret line as one undo step. Its shortcut is <kbd>Ctrl+/</kbd>.</p>
             <div class="info"><strong>They are above Core because an action holds an icon.</strong>
             <code>AppActions</code> is the scope and stays in Core, which cannot see <code>Icons</code>. Delete
             holds <code>Icons::DeleteIcon</code>, so a button or a menu item that presents it draws that icon

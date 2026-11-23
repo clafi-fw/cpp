@@ -319,6 +319,7 @@ namespace ClaFi::Controls
         m_tabLeaves = false;
         // The focus arriving or leaving is a caret move, and it changes what Reindent is about.
         StdActions::reindent.invalidateState();
+        StdActions::toggleComment.invalidateState();
         // The caret has left the name the list was about - a click, an arrow key, the focus going.
         hideCompletion();
         // The tooltip follows the caret through the call and comes down where it leaves it - and
@@ -506,6 +507,8 @@ namespace ClaFi::Controls
         {
             event.actions.push_back(nullptr);
             event.actions.push_back(&StdActions::reindent);
+            if (!lineCommentMarker().empty())
+                event.actions.push_back(&StdActions::toggleComment);
         }
         TextBox::adjustContextPopup(event);
     }
@@ -1061,16 +1064,114 @@ namespace ClaFi::Controls
         };
     }
 
-    void CodeBox::connectIndentActions()
+    void CodeBox::connectCodeActions()
     {
         onGetActionState([this](GetActionStateEvent& event){
             if (&event.action == &StdActions::reindent)
                 event.claim({ .enabled = readOnly() == ReadOnly::No });
+            if (&event.action == &StdActions::toggleComment)
+                event.claim({ .enabled = readOnly() == ReadOnly::No
+                    && !lineCommentMarker().empty() });
         });
         onActionClick([this](ActionClickEvent& event){
             if (&event.action == &StdActions::reindent)
                 reindentLines();
+            if (&event.action == &StdActions::toggleComment)
+                toggleComment();
         });
+    }
+
+    std::wstring_view CodeBox::lineCommentMarker() const
+    {
+        for (const Syntax::CommentRule& rule : m_lines.language().comments)
+        {
+            if (rule.close.empty() && !rule.open.empty())
+                return rule.open;
+        }
+        return {};
+    }
+
+    void CodeBox::toggleComment()
+    {
+        const std::wstring_view marker = lineCommentMarker();
+        if (readOnly() == ReadOnly::Yes || marker.empty())
+            return;
+        ensureCaret();
+        const TextRange selection = selectedRange();
+        const Syntax::IndentLines lines = sourceLines();
+        const std::size_t first = lines.lineAt(selection.start);
+        std::size_t last = lines.lineAt(selection.end());
+        if (last > first && lines.start(last) == selection.end())
+            --last;
+
+        bool uncomment = true;
+        for (std::size_t line = first; line <= last; ++line)
+        {
+            const std::wstring_view lineText = lines.text(line);
+            const std::wstring_view content = lineText.substr(Syntax::leadingBlanks(lineText));
+            if (!content.empty() && !content.starts_with(marker))
+            {
+                uncomment = false;
+                break;
+            }
+        }
+
+        const std::wstring_view plain = lines.heldText();
+        std::size_t selectionStart = selection.start;
+        std::size_t selectionEnd = selection.end();
+        std::size_t replacementStart = std::wstring_view::npos;
+        std::size_t copiedThrough = 0;
+        std::wstring replacement;
+        std::size_t changedLines = 0;
+        for (std::size_t line = first; line <= last; ++line)
+        {
+            const std::wstring_view lineText = lines.text(line);
+            const std::size_t blanks = Syntax::leadingBlanks(lineText);
+            if (blanks == lineText.size())
+                continue;
+
+            const std::size_t markerPosition = lines.start(line) + blanks;
+            if (replacementStart == std::wstring_view::npos)
+            {
+                replacementStart = markerPosition;
+                copiedThrough = markerPosition;
+            }
+            replacement.append(plain.substr(copiedThrough, markerPosition - copiedThrough));
+            std::size_t removed = 0;
+            std::size_t added = 0;
+            if (uncomment)
+            {
+                removed = marker.size();
+                if (blanks + removed < lineText.size() && lineText[blanks + removed] == L' ')
+                    ++removed;
+            }
+            else
+            {
+                replacement.append(marker);
+                replacement.push_back(L' ');
+                added = marker.size() + 1;
+            }
+            copiedThrough = markerPosition + removed;
+            ++changedLines;
+
+            const auto moveEndpoint = [markerPosition, removed, added](
+                const std::size_t original, std::size_t& adjusted){
+                if (original > markerPosition)
+                    adjusted = adjusted - std::min(original - markerPosition, removed) + added;
+            };
+            moveEndpoint(selection.start, selectionStart);
+            moveEndpoint(selection.end(), selectionEnd);
+        }
+        if (!changedLines)
+            return;
+
+        const EditSelection landing = {
+            .range = { selectionStart, selectionEnd - selectionStart },
+            .caretOnLeft = editProps()->caretOnLeft,
+        };
+        applyEdit({ replacementStart, copiedThrough - replacementStart }, Text{ replacement },
+            EditKind::Replace, linesStepName(uncomment ? L"Uncomment" : L"Comment", changedLines),
+            landing);
     }
 
     TextRange CodeBox::selectedRange() const
