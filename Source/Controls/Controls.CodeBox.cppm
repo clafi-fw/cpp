@@ -148,6 +148,7 @@ namespace ClaFi::Controls
         void setIndentGuides(IndentGuides);
         // Past the end while it takes typing - the last line goes up to where the next is written.
         [[nodiscard]] ScrollMetrics scrollMetrics() const override;
+        [[nodiscard]] CursorShape cursor() const override;
         // What the box writes a level as: what the text says where it is read, else the property.
         [[nodiscard]] Syntax::IndentUnit indentUnitInUse() const;
         void indentLines(); // moves the lines the selection reaches, or the caret's, one stop on
@@ -159,6 +160,13 @@ namespace ClaFi::Controls
         void textTaken(const Text&, const TextEdit*) const override;
         void textEdited() override;
         void caretMoved() override;
+        void mouseMove(MouseMoveEvent&) override;
+        void hoverLeave() override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
+        void tripleClick(TripleClickEvent&) override;
+        void nestedDrag(DragEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
         // Past the blanks the line opens with, and to the line's start from there.
@@ -166,7 +174,9 @@ namespace ClaFi::Controls
         // A paste of several lines moved as one block to where the language places it.
         void textPasted(const TextRange&) override;
         void adjustContextPopup(AdjustContextPopupEvent&) override;
-        // The guides first, on the layout the text is drawn from, so a selection band covers them.
+        [[nodiscard]] FloatRect scrollHotspot() const override;
+        void adjustTextRect(AdjustTextRectEvent&) const override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         // The line the caret stands on, and where the caret stands in it.
@@ -250,7 +260,18 @@ namespace ClaFi::Controls
         void indentAfterBreak(); // what a line break just typed goes on to do
         // A line down each block in view, the caret's a grade stronger. See Controls#indentguides
         void paintIndentGuides(PaintEvent&, TextLayout&, FloatPoint origin);
+        [[nodiscard]] FloatRect gutterBounds() const;
+        [[nodiscard]] const Syntax::SourceBlock* blockAtGutterPoint(FloatPoint);
+        void paintGutter(PaintEvent&, TextLayout&, FloatPoint origin, const FloatRect& gutter);
+        void paintFoldEllipses(PaintEvent&, TextLayout&, FloatPoint origin) const;
+        void updateBlocks(std::wstring_view plain) const;
+        void updateHiddenLines() const;
+        [[nodiscard]] bool isLineHidden(std::size_t line) const;
+        void toggleBlock(Syntax::SourceBlock);
+        void revealCaretBlock();
     private:
+        static constexpr float k_gutterWidth{ 20.0f };
+        static constexpr float k_foldEllipsisWidth{ 17.0f };
         static constexpr float k_completionRows{ 10.0f };   // a longer list scrolls
         static constexpr float k_completionMinWidth{ 180.0f };
         // The state every line starts in, kept beside the layout's shaping and on the same terms
@@ -295,6 +316,10 @@ namespace ClaFi::Controls
         // The blocks the text opens, read again on the first paint after the text changes.
         mutable Syntax::SourceBlocks m_blocks{};
         mutable bool m_blocksStale{ true };
+        mutable Syntax::SourceBlocks m_collapsedBlocks{};
+        mutable std::vector<TextRange> m_hiddenLines{};
+        bool m_pointerInGutter{ false };
+        bool m_gutterPressed{ false };
         ScopedEventConnection m_formAligned{};
         ScopedEventConnection m_formMoved{};
         ScopedEventConnection m_formFocusChanged{};

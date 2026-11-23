@@ -570,6 +570,16 @@ format characters, combining marks, the right-to-left blocks, the scripts that r
 surrogates and everything past the basic plane. A refusal costs the paragraph its cells and
 nothing more, so the list errs toward refusing.
 
+## TextLayout setHiddenParagraphs
+
+Pass sorted, non-overlapping ranges of zero-based paragraph indices. The first paragraph
+stays visible. Pass an empty list to show all paragraphs. The caller updates the ranges
+when an edit changes their indices.
+
+Hidden paragraphs take no vertical space and are skipped by point hit tests. Their text
+positions and line numbers stay the same. A caret rectangle for a hidden position is returned
+at the end of the preceding visible paragraph.
+
 ## Mono paragraph
 
 **A paragraph on cells is one row of columns**, shaped in one pass over its characters with no

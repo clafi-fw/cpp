@@ -2,6 +2,7 @@ module ClaFi.Controls.CodeBox;
 
 import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextBox;
+import ClaFi.Icons.Chevron;
 
 import ClaFi.StdActions;
 
@@ -185,14 +186,14 @@ namespace ClaFi::Controls
         m_language = language;
         m_detectLanguage = DetectLanguage::No;
         readWhole(text().plainText());
-        invalidate();
+        invalidateFormAlign();
     }
 
     void CodeBox::setDetectLanguage(const DetectLanguage value)
     {
         m_detectLanguage = value;
         readWhole(text().plainText());
-        invalidate();
+        invalidateFormAlign();
     }
 
     void CodeBox::setCompletion(const Syntax::CompletionEntries* entries)
@@ -249,6 +250,11 @@ namespace ClaFi::Controls
         return result;
     }
 
+    CursorShape CodeBox::cursor() const
+    {
+        return m_pointerInGutter ? CursorShape::Arrow : TextBox::cursor();
+    }
+
     Syntax::IndentUnit CodeBox::indentUnitInUse() const
     {
         return m_detectedIndent.value_or(m_indentUnit);
@@ -294,10 +300,43 @@ namespace ClaFi::Controls
     {
         m_declarationsStale = true;
         m_blocksStale = true;
-        if (edit)
-            m_lines.applyEdit(text.plainText(), *edit);
-        else
+        if (!edit)
+        {
             readWhole(text.plainText());
+            return;
+        }
+
+        const std::size_t firstEditedLine = m_lines.lineAt(edit->replacedRange.start);
+        const std::size_t lastEditedLine = m_lines.lineAt(edit->replacedRange.end());
+        const std::size_t oldLineCount = m_lines.lineCount();
+        m_lines.applyEdit(text.plainText(), *edit);
+        if (m_collapsedBlocks.empty())
+            return;
+
+        // An edit that touches a collapsed block opens it. Later blocks move with their lines.
+        std::erase_if(m_collapsedBlocks, [&](const Syntax::SourceBlock& block){
+            return firstEditedLine <= block.closer && lastEditedLine >= block.opener;
+        });
+        const std::ptrdiff_t lineDelta = static_cast<std::ptrdiff_t>(m_lines.lineCount())
+            - static_cast<std::ptrdiff_t>(oldLineCount);
+        for (Syntax::SourceBlock& block : m_collapsedBlocks)
+        {
+            if (block.opener > lastEditedLine)
+            {
+                block.opener = static_cast<std::size_t>(
+                    static_cast<std::ptrdiff_t>(block.opener) + lineDelta);
+                block.closer = static_cast<std::size_t>(
+                    static_cast<std::ptrdiff_t>(block.closer) + lineDelta);
+            }
+        }
+
+        updateBlocks(text.plainText());
+        std::erase_if(m_collapsedBlocks, [&](const Syntax::SourceBlock& block){
+            const auto first = std::ranges::lower_bound(m_blocks, block.opener, {},
+                &Syntax::SourceBlock::opener);
+            return first == m_blocks.end() || *first != block;
+        });
+        updateHiddenLines();
     }
 
     void CodeBox::textEdited()
@@ -315,6 +354,7 @@ namespace ClaFi::Controls
 
     void CodeBox::caretMoved()
     {
+        revealCaretBlock();
         TextBox::caretMoved();
         m_tabLeaves = false;
         // The focus arriving or leaving is a caret move, and it changes what Reindent is about.
@@ -331,6 +371,61 @@ namespace ClaFi::Controls
             else
                 hideParameterTooltip();
         }
+    }
+
+    void CodeBox::mouseMove(MouseMoveEvent& event)
+    {
+        m_pointerInGutter = gutterBounds().contains(event.posOnForm);
+        TextBox::mouseMove(event);
+    }
+
+    void CodeBox::hoverLeave()
+    {
+        m_pointerInGutter = false;
+        TextBox::hoverLeave();
+    }
+
+    void CodeBox::nestedPressDown(PressDownEvent& event)
+    {
+        m_gutterPressed = gutterBounds().contains(event.clickPos());
+        if (!m_gutterPressed)
+        {
+            TextBox::nestedPressDown(event);
+            return;
+        }
+
+        event.stopPropagation();
+        if (const Syntax::SourceBlock* block = blockAtGutterPoint(event.clickPos()))
+            toggleBlock(*block);
+    }
+
+    void CodeBox::nestedPressUp(PressUpEvent& event)
+    {
+        if (!std::exchange(m_gutterPressed, false))
+            return;
+
+        event.handled.preventClick = true;
+        event.scrollIntoView = false;
+    }
+
+    void CodeBox::doubleClick(DoubleClickEvent& event)
+    {
+        if (!m_pointerInGutter)
+            TextBox::doubleClick(event);
+    }
+
+    void CodeBox::tripleClick(TripleClickEvent& event)
+    {
+        if (!m_pointerInGutter)
+            TextBox::tripleClick(event);
+    }
+
+    void CodeBox::nestedDrag(DragEvent& event)
+    {
+        if (m_gutterPressed)
+            event.stopPropagation();
+        else
+            TextBox::nestedDrag(event);
     }
 
     void CodeBox::nestedKeyDown(KeyDownEvent& event)
@@ -513,16 +608,56 @@ namespace ClaFi::Controls
         TextBox::adjustContextPopup(event);
     }
 
+    FloatRect CodeBox::scrollHotspot() const
+    {
+        FloatRect hotspot = TextBox::scrollHotspot();
+        if (editProps() && editProps()->selRange.start != k_maxSize)
+            hotspot.left -= scaler().scale(k_gutterWidth);
+        return hotspot;
+    }
+
+    void CodeBox::adjustTextRect(AdjustTextRectEvent& event) const
+    {
+        event.textBounds.left = std::min(event.textBounds.right,
+            event.textBounds.left + event.scale(k_gutterWidth));
+        if (!wordWrap() && !m_collapsedBlocks.empty())
+        {
+            event.textBounds.right = std::max(event.textBounds.left,
+                event.textBounds.right - event.scale(k_foldEllipsisWidth));
+        }
+    }
+
+    ScaledSize CodeBox::measureText(AlignEvent& event, ScaledSize maxDimensions, const Text& text)
+    {
+        const float gutterWidth = event.scale(k_gutterWidth);
+        maxDimensions.x = std::max(0.0f, maxDimensions.x - gutterWidth);
+        ScaledSize size = TextBox::measureText(event, maxDimensions, text);
+        size.x += gutterWidth;
+        if (!wordWrap() && !m_collapsedBlocks.empty())
+            size.x += event.scale(k_foldEllipsisWidth);
+        return size;
+    }
+
     DrawTextResult CodeBox::drawText(PaintEvent& event, const FloatRect& textBounds,
         const Text& text)
     {
+        TextLayout& layout = syncedLayout(event.formContext(), textBounds, text);
+        const FloatPoint origin = anchoredOrigin(textBounds, layout.calculatedDimensions(),
+            textAnchor());
+        const FloatRect gutter = gutterBounds();
+        updateBlocks(this->text().plainText());
+        paintGutter(event, layout, origin, gutter);
+
+        FloatRect textViewport = event.viewport();
+        textViewport.left = std::min(textViewport.right, std::max(textViewport.left, gutter.right));
+        Graphics::Canvas& canvas = event.canvas();
+        canvas.pushClip(textViewport);
         if (m_indentGuides == IndentGuides::Yes)
-        {
-            TextLayout& layout = syncedLayout(event.formContext(), textBounds, text);
-            paintIndentGuides(event, layout,
-                anchoredOrigin(textBounds, layout.calculatedDimensions(), textAnchor()));
-        }
-        return TextBox::drawText(event, textBounds, text);
+            paintIndentGuides(event, layout, origin);
+        const DrawTextResult result = TextBox::drawText(event, textBounds, text);
+        paintFoldEllipses(event, layout, origin);
+        canvas.popClip();
+        return result;
     }
 
     void CodeBox::readWhole(const std::wstring_view text) const
@@ -530,6 +665,9 @@ namespace ClaFi::Controls
         m_completionRowsStale = true;
         m_declarationsStale = true;
         m_blocksStale = true;
+        m_collapsedBlocks.clear();
+        if (!m_hiddenLines.empty())
+            updateHiddenLines();
         m_detectedIndent.reset();
         if (m_detectIndent == DetectIndent::Yes)
             m_detectedIndent = Syntax::detectIndentUnit(text);
@@ -1294,8 +1432,6 @@ namespace ClaFi::Controls
         if (plain.empty())
             return;
         const Syntax::IndentLines lines{ m_lines, plain };
-        if (std::exchange(m_blocksStale, false))
-            m_blocks = Syntax::sourceBlocks(m_lines.language(), lines);
         if (m_blocks.empty())
             return;
 
@@ -1309,10 +1445,11 @@ namespace ClaFi::Controls
         // The caret's block: of the blocks whose opener and closer lie either side of its line,
         // the last to open, since the blocks stand in the order they open.
         std::size_t caretBlock = m_blocks.size();
-        if (editProps()->selRange.start != k_maxSize)
+        const EditProps* edit = editProps();
+        if (edit && edit->selRange.start != k_maxSize)
         {
             const std::size_t caretLine =
-                m_lines.lineAt(std::min(editProps()->caretPos(), plain.size()));
+                m_lines.lineAt(std::min(edit->caretPos(), plain.size()));
             for (std::size_t index = 0; index != m_blocks.size(); ++index)
             {
                 const Syntax::SourceBlock& block = m_blocks[index];
@@ -1329,7 +1466,8 @@ namespace ClaFi::Controls
         for (std::size_t index = 0; index != m_blocks.size(); ++index)
         {
             const Syntax::SourceBlock& block = m_blocks[index];
-            if (block.closer <= firstShown || block.opener >= lastShown)
+            if (block.closer <= firstShown || block.opener >= lastShown
+                || isLineHidden(block.opener) || isLineHidden(block.closer))
                 continue;
 
             // At the opener line's first character, over the lines between the opener and the
@@ -1374,6 +1512,196 @@ namespace ClaFi::Controls
                 };
                 canvas.drawLine(top, bottom, ink, 1.0f);
             }
+        }
+    }
+
+    FloatRect CodeBox::gutterBounds() const
+    {
+        FloatRect gutter = visibleRectInForm();
+        gutter.right = std::min(gutter.right, gutter.left + scaler().scale(k_gutterWidth));
+        return gutter;
+    }
+
+    const Syntax::SourceBlock* CodeBox::blockAtGutterPoint(const FloatPoint point)
+    {
+        const FloatRect bounds = textBounds(formContext(), boundsInForm());
+        TextLayout& layout = syncedLayout(formContext(), bounds);
+        updateBlocks(text().plainText());
+        const FloatPoint origin = anchoredOrigin(bounds, layout.calculatedDimensions(),
+            textAnchor());
+        const std::size_t line = m_lines.lineAt(layout.caretPos({ 0.0f, point.y - origin.y }).pos);
+        const auto block = std::ranges::lower_bound(m_blocks, line, {}, &Syntax::SourceBlock::opener);
+        if (block == m_blocks.end() || block->opener != line)
+            return nullptr;
+
+        const FloatRect row = layout.getCaretRect({ m_lines.lineStart(line), false });
+        return point.y >= origin.y + row.top && point.y < origin.y + row.bottom
+            ? &*block
+            : nullptr;
+    }
+
+    void CodeBox::paintGutter(PaintEvent& event, TextLayout& layout, const FloatPoint origin,
+        const FloatRect& gutter)
+    {
+        const FloatRect visible = FloatRect::intersection(gutter, event.viewport());
+        if (visible.width() <= 0.0f || visible.height() <= 0.0f)
+            return;
+
+        Graphics::Canvas& canvas = event.canvas();
+        canvas.pushClip(visible);
+        const Color dividerInk = event.textRgb(InkGrade::Faint);
+        const float dividerX = std::floor(gutter.right) - 0.5f;
+        canvas.drawLine({ dividerX, visible.top }, { dividerX, visible.bottom }, dividerInk, 1.0f);
+
+        const Color ink = event.textRgb(InkGrade::Muted);
+        const float centerX = gutter.center().x;
+        const std::size_t firstLine = m_lines.lineAt(
+            layout.caretPos({ 0.0f, visible.top - origin.y }).pos);
+        const std::size_t lastLine = m_lines.lineAt(
+            layout.caretPos({ 0.0f, visible.bottom - origin.y }).pos);
+        const auto first = std::ranges::lower_bound(m_blocks, firstLine, {},
+            &Syntax::SourceBlock::opener);
+        std::size_t drawnLine = k_maxSize;
+        for (auto block = first; block != m_blocks.end() && block->opener <= lastLine; ++block)
+        {
+            const std::size_t line = block->opener;
+            if (line == drawnLine || isLineHidden(line))
+                continue;
+
+            drawnLine = line;
+            const FloatRect row = layout.getCaretRect({ m_lines.lineStart(line), false });
+            const float centerY = origin.y + row.center().y;
+            const bool collapsed = std::ranges::binary_search(m_collapsedBlocks, line, {},
+                &Syntax::SourceBlock::opener);
+            ChevronPainter::draw(canvas, { centerX, centerY }, ink, collapsed ? -0.25f : 0.0f,
+                event.scaleFactor());
+        }
+        canvas.popClip();
+    }
+
+    void CodeBox::paintFoldEllipses(PaintEvent& event, TextLayout& layout,
+        const FloatPoint origin) const
+    {
+        if (m_collapsedBlocks.empty())
+            return;
+
+        Graphics::Canvas& canvas = event.canvas();
+        const FloatRect clip = canvas.clipBox();
+        const std::size_t firstLine = m_lines.lineAt(
+            layout.caretPos({ 0.0f, clip.top - origin.y }).pos);
+        const std::size_t lastLine = m_lines.lineAt(
+            layout.caretPos({ 0.0f, clip.bottom - origin.y }).pos);
+        const auto first = std::ranges::lower_bound(m_collapsedBlocks, firstLine, {},
+            &Syntax::SourceBlock::opener);
+
+        const std::wstring_view plain = text().plainText();
+        const Color ink = event.textRgb(InkGrade::Muted);
+        const float gap = event.scale(5.0f);
+        const float dotStep = event.scale(4.0f);
+        const float dotRadius = event.scaleF(1.0f);
+        for (auto block = first; block != m_collapsedBlocks.end() && block->opener <= lastLine;
+            ++block)
+        {
+            const std::size_t line = block->opener;
+            if (isLineHidden(line))
+                continue;
+
+            const std::wstring_view openingText = m_lines.lineText(plain, line);
+            const std::size_t lastCharacter = openingText.find_last_not_of(L" \t\r");
+            const std::size_t length = lastCharacter == std::wstring_view::npos
+                ? 0
+                : lastCharacter + 1;
+            const FloatRect caret = layout.getCaretRect({ m_lines.lineStart(line) + length, true });
+            FloatPoint dot = {
+                origin.x + caret.left + gap,
+                origin.y + caret.bottom - caret.height() * 0.25f,
+            };
+            for (int index = 0; index != 3; ++index)
+            {
+                canvas.fillCircle(dot, dotRadius, ink);
+                dot.x += dotStep;
+            }
+        }
+    }
+
+    void CodeBox::updateBlocks(const std::wstring_view plain) const
+    {
+        if (!m_blocksStale)
+            return;
+
+        const Syntax::IndentLines lines{ m_lines, plain };
+        m_blocks = Syntax::sourceBlocks(m_lines.language(), lines);
+        m_blocksStale = false;
+    }
+
+    void CodeBox::updateHiddenLines() const
+    {
+        m_hiddenLines.clear();
+        for (const Syntax::SourceBlock& block : m_collapsedBlocks)
+        {
+            if (!m_hiddenLines.empty() && m_hiddenLines.back().end() > block.opener)
+            {
+                TextRange& last = m_hiddenLines.back();
+                last.length = std::max(last.end(), block.closer + 1) - last.start;
+            }
+            else
+            {
+                m_hiddenLines.push_back({ block.opener + 1, block.closer - block.opener });
+            }
+        }
+        m_layout.setHiddenParagraphs(m_hiddenLines);
+    }
+
+    bool CodeBox::isLineHidden(const std::size_t line) const
+    {
+        const auto after = std::ranges::upper_bound(m_hiddenLines, line, {}, &TextRange::start);
+        return after != m_hiddenLines.begin() && line < std::prev(after)->end();
+    }
+
+    void CodeBox::toggleBlock(const Syntax::SourceBlock block)
+    {
+        const auto at = std::ranges::lower_bound(m_collapsedBlocks, block.opener, {},
+            &Syntax::SourceBlock::opener);
+        if (at != m_collapsedBlocks.end() && at->opener == block.opener)
+        {
+            m_collapsedBlocks.erase(at);
+        }
+        else
+        {
+            m_collapsedBlocks.insert(at, block);
+            if (editProps() && editProps()->selRange.start != k_maxSize)
+            {
+                const std::size_t line = caretLineColumn().line - 1;
+                if (block.opener < line && line <= block.closer)
+                {
+                    setCaretPos(m_lines.lineStart(block.opener + 1) - 1);
+                    scrollIntoViewOnAlign();
+                }
+            }
+        }
+        hideCompletion();
+        hideParameterTooltip();
+        updateHiddenLines();
+        invalidateFormAlign();
+    }
+
+    void CodeBox::revealCaretBlock()
+    {
+        const EditProps* edit = editProps();
+        if (m_collapsedBlocks.empty() || !edit || edit->selRange.start == k_maxSize
+            || edit->selRange.length == k_maxSize)
+        {
+            return;
+        }
+
+        const std::size_t line = caretLineColumn().line - 1;
+        if (std::erase_if(m_collapsedBlocks, [line](const Syntax::SourceBlock& block){
+            return block.opener < line && line <= block.closer;
+        }) != 0)
+        {
+            updateHiddenLines();
+            invalidateFormAlign();
+            scrollIntoViewOnAlign();
         }
     }
 }

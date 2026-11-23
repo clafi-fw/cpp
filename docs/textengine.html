@@ -674,6 +674,20 @@ visit the paragraphs, which is the cost of a result that depends on where the li
 applies <code>anchoredOrigin</code> in both directions: subtracting it from a point passed in,
 adding it to a rect returned.</p>
 
+<h3 id="own-layout-folding">Folding paragraphs</h3>
+
+<p><code>TextLayout::setHiddenParagraphs</code> takes sorted, non-overlapping ranges of zero-based
+paragraph indices. The first paragraph stays visible. An empty list restores all paragraphs.
+Hidden paragraphs take no vertical space. Text positions and line numbers still refer to the
+full text. A caret rectangle for a hidden position is returned at the end of the preceding
+visible paragraph. Update the ranges when an edit changes their indices.
+<code>paragraphVisibilityRevision()</code> changes when the supplied ranges change, so a caller
+can include it in a measurement cache key.</p>
+
+<p><code>CodeBox</code> uses the language's block boundaries to show gutter chevrons. A collapsed
+block marks its opening line with an ellipsis and hides the lines through its closer.
+Searches and copies still use the full source.</p>
+
 <h2 id="editing">Editing a layout in place</h2>
 
 <p>A layout is normally given a whole text. A caller that tracks the change can report it

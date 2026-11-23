@@ -770,6 +770,9 @@ namespace ClaFi
         }
 
         m_shapedHeight += heightDelta;
+        m_lastVisibleParagraph = m_paragraphs.size() - 1;
+        if (!m_hiddenParagraphs.empty())
+            placeVisibleParagraphs();
         // The lines moved, so where they sit inside the box is read off them again. Nothing here
         // broke a line at a width the box has not already been told about.
         m_verticalValid = false;
@@ -849,6 +852,17 @@ namespace ClaFi
         m_hoveredLink = link;
     }
 
+    void TextLayout::setHiddenParagraphs(std::vector<TextRange> ranges)
+    {
+        if (m_hiddenParagraphs == ranges)
+            return;
+
+        m_hiddenParagraphs = std::move(ranges);
+        ++m_visibilityRevision;
+        if (m_layoutValid)
+            placeVisibleParagraphs();
+    }
+
     DrawTextResult TextLayout::draw(
         ControlPaintContext& controlContext,
         FloatPoint position,
@@ -901,6 +915,9 @@ namespace ClaFi
         for (auto& paragraph : m_paragraphs)
         {
             ++paragraphIndex;
+            if (paragraph.hidden)
+                continue;
+
             advanceSpanCursor(m_bakedText.colors(), colorCursor, paragraph.textStart);
             advanceSpanCursor(m_bakedText.scripts(), scriptCursor, paragraph.textStart);
 
@@ -1139,7 +1156,7 @@ namespace ClaFi
         ensureShaping();
         if (m_paragraphs.empty())
             return 0.0f;
-        const ParagraphLayoutState& last = m_paragraphs.back();
+        const ParagraphLayoutState& last = m_paragraphs[m_lastVisibleParagraph];
         const std::span<const NativeLineMetrics> lines = linesOf(last);
         return lines.empty() ? last.bounds.height() : lines.back().height;
     }
@@ -1155,6 +1172,9 @@ namespace ClaFi
         float bottom = 0.0f;
         for (const ParagraphLayoutState& paragraph : m_paragraphs)
         {
+            if (paragraph.hidden)
+                continue;
+
             float lineY = 0.0f;
             for (const NativeLineMetrics& line : linesOf(paragraph))
             {
@@ -1361,9 +1381,16 @@ namespace ClaFi
         // A whole-text selection names its end as k_maxSize, which stands for the end of the text -
         // the clamp TextBox::nestedKeyDown and caretLineColumn already make before measuring.
         caretHit.pos = std::min(caretHit.pos, m_bakedText.plainText().length());
-        const std::size_t index = paragraphAt(caretHit.pos);
+        std::size_t index = paragraphAt(caretHit.pos);
         if (index == k_maxSize)
             return { 0, 0, 0, 0 };
+
+        if (m_paragraphs[index].hidden)
+        {
+            index = paragraphAtY(std::nextafter(m_paragraphs[index].bounds.top, -k_maxFloat));
+            const ParagraphLayoutState& visible = m_paragraphs[index];
+            caretHit = { visible.textStart + visible.textLength, true };
+        }
 
         const ParagraphLayoutState& p = m_paragraphs[index];
         const std::size_t relPos = caretHit.pos - p.textStart;
@@ -1484,6 +1511,10 @@ namespace ClaFi
 
         m_shapedWidth = maxW;
         m_shapedHeight = currentY;
+        m_lastVisibleParagraph = m_paragraphs.empty() ? 0 : m_paragraphs.size() - 1;
+        if (!m_hiddenParagraphs.empty())
+            placeVisibleParagraphs();
+
         m_builtBoundsX = breakAt;
         // A wrapping text broken at its box in the paint phase is one the calculate pass measured
         // and the paint could not find - unless it carries flex space, which shapes differently
@@ -1504,6 +1535,34 @@ namespace ClaFi
         // Placed by ensurePlacement, which looks at every paragraph once after a shaping.
         m_placedWidth = -1.0f;
         m_layoutValid = true;
+        m_verticalValid = false;
+    }
+
+    void TextLayout::placeVisibleParagraphs()
+    {
+        float top = 0.0f;
+        std::size_t rangeIndex = 0;
+        m_lastVisibleParagraph = 0;
+        for (std::size_t index = 0; index < m_paragraphs.size(); ++index)
+        {
+            while (rangeIndex < m_hiddenParagraphs.size()
+                && m_hiddenParagraphs[rangeIndex].end() <= index)
+            {
+                ++rangeIndex;
+            }
+
+            ParagraphLayoutState& paragraph = m_paragraphs[index];
+            paragraph.hidden = index != 0 && rangeIndex < m_hiddenParagraphs.size()
+                && m_hiddenParagraphs[rangeIndex].start <= index;
+            paragraph.bounds.top = top;
+            if (!paragraph.hidden)
+            {
+                top += paragraph.shapedHeight;
+                m_lastVisibleParagraph = index;
+            }
+            paragraph.bounds.bottom = top;
+        }
+        m_shapedHeight = top;
         m_verticalValid = false;
     }
 
@@ -1545,6 +1604,9 @@ namespace ClaFi
 
         for (const auto& p : m_paragraphs)
         {
+            if (p.hidden)
+                continue;
+
             const std::span<const NativeLineMetrics> lines = linesOf(p);
             if (lines.empty())
                 continue;
@@ -1746,7 +1808,7 @@ namespace ClaFi
                 return position < paragraph.bounds.bottom;
             });
         if (below == m_paragraphs.end())
-            return m_paragraphs.size() - 1;
+            return m_lastVisibleParagraph;
         return static_cast<std::size_t>(below - m_paragraphs.begin());
     }
 
@@ -2071,6 +2133,7 @@ namespace ClaFi
                     .lineCount = 1,
                     .inkWidth = extent.inkWidth,
                     .alignedWidth = 0.0f,
+                    .shapedHeight = font->lineHeight(),
                 };
             }
         }
@@ -2255,6 +2318,7 @@ namespace ClaFi
             .lineCount = lineCount,
             .inkWidth = inkWidth,
             .alignedWidth = alignedWidth,
+            .shapedHeight = metrics.height,
         };
     }
 

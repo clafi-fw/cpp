@@ -60,6 +60,7 @@ namespace ClaFi
             CellFallback cellFallback{ CellFallback::Native };
             bool editable{ false };
             std::uint64_t layoutGeneration{ 0 };
+            std::size_t paragraphVisibilityRevision{ 0 };
             bool operator==(const Measurement&) const = default;
         };
     private:
@@ -150,6 +151,7 @@ namespace ClaFi
             .cellFallback = m_cellFallback,
             .editable = this->editProps() != nullptr,
             .layoutGeneration = Control::textEngine().layoutGeneration(),
+            .paragraphVisibilityRevision = m_layout.paragraphVisibilityRevision(),
         };
         const TextFormat* format = this->textFormat();
         if (measurement == m_measurement && m_measuredFormat.matches(format))

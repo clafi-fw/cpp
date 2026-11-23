@@ -165,6 +165,8 @@ namespace ClaFi
         float inkWidth; // the widest line, without its trailing whitespace
         // The width its layout aligns lines in, or zero. See TextEngine-Types#paragraph-placement
         float alignedWidth;
+        float shapedHeight;
+        bool hidden{ false };
     };
 
     // The paragraphs of a layout holding their native layout.
@@ -248,6 +250,9 @@ namespace ClaFi
         // overlay is: stating one invalidates nothing, and the caller repaints. A new text drops
         // it, since the range is stated in the text it was found in.
         void setHoveredLink(TextRange);
+        // Hides runs of paragraph indices while retaining their text positions. See TextEngine-Types
+        void setHiddenParagraphs(std::vector<TextRange>);
+        [[nodiscard]] std::size_t paragraphVisibilityRevision() const { return m_visibilityRevision; }
         [[nodiscard]] TextRange hoveredLink() const { return m_hoveredLink; }
 
 #if CLAFI_TEXT_MOVING
@@ -298,6 +303,7 @@ namespace ClaFi
         void ensureLayout();
         // The lines themselves, from the text, the width they are broken at and the scale.
         void ensureShaping();
+        void placeVisibleParagraphs();
         // Where those lines stand in the box: the collapse, the fades, and the size the text came
         // to. Runs on its own when only the height has moved.
         void ensureVerticalFit();
@@ -383,6 +389,9 @@ namespace ClaFi
         TextRange m_hoveredLink{};
 
         std::vector<ParagraphLayoutState> m_paragraphs;
+        std::vector<TextRange> m_hiddenParagraphs;
+        std::size_t m_visibilityRevision{ 0 };
+        std::size_t m_lastVisibleParagraph{ 0 };
         // Every paragraph's lines, each naming its own run of them, so a paragraph holds no
         // vector and a document of a hundred thousand rows allocates once for all of them.
         Lines m_lines;

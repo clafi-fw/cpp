@@ -489,6 +489,18 @@ Syntax::TitleBlock set through `titleBlock`, named the same way.
 The box also indents lines as they are typed, draws IndentGuides, and scrolls past its end - see
 ScrollMetrics.
 
+### Folding
+
+The gutter shows a chevron at the first line of each multi-line block. Click the chevron to
+hide the lines through the block's closing line. An ellipsis marks the opening line while
+the block is collapsed. Click the chevron again to show the hidden lines. The gutter stays
+at the left edge when the source scrolls sideways.
+
+The full source is available to search, select, and copy while folded. A caret moved into a
+fold opens it. Collapsing a block around the caret moves the caret to the end of the opening
+line. A nested fold keeps its state when its enclosing block opens again. An edit that touches
+a fold opens it. Replacing the source, including through undo and redo, clears the folds.
+
 ### Indents
 
 The box sets each line's indent as it is typed, at the column the language places it - see
