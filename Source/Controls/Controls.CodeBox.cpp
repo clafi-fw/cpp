@@ -1,6 +1,7 @@
 module ClaFi.Controls.CodeBox;
 
 import ClaFi.Controls.DropList;
+import ClaFi.Controls.Menu;
 import ClaFi.Controls.TextBox;
 import ClaFi.Icons.Chevron;
 
@@ -594,6 +595,33 @@ namespace ClaFi::Controls
     {
         Syntax::IndentLines lines = sourceLines();
         applyIndentEdit(Syntax::pasteEdit(lines, pasted, indentUnitInUse()), EditKind::Automatic);
+    }
+
+    void CodeBox::nestedContextPopup(ContextPopupEvent& event)
+    {
+        if (!event.mousePos || !gutterBounds().contains(*event.mousePos))
+        {
+            TextBox::nestedContextPopup(event);
+            return;
+        }
+
+        Control::nestedContextPopup(event);
+        if (event.propagationStopped())
+            return;
+
+        const std::optional<std::size_t> line = lineAtGutterPoint(*event.mousePos, false);
+        ActionList actions{ &m_expandAll, &m_collapseAll, &m_collapseOthers };
+        AdjustContextPopupEvent adjustEvent{ *this, event.form, actions, event.mousePos };
+        TextBox::adjustContextPopup(adjustEvent);
+        event.stopPropagation();
+        if (adjustEvent.propagationStopped() || actions.empty())
+            return;
+
+        m_gutterMenuLine = line;
+        Menu menu{ *this };
+        menu.addActions(actions);
+        menu.execute();
+        m_gutterMenuLine.reset();
     }
 
     void CodeBox::adjustContextPopup(AdjustContextPopupEvent& event)
@@ -1210,12 +1238,34 @@ namespace ClaFi::Controls
             if (&event.action == &StdActions::toggleComment)
                 event.claim({ .enabled = readOnly() == ReadOnly::No
                     && !lineCommentMarker().empty() });
+            if (&event.action == &m_expandAll)
+                event.claim({ .enabled = !m_collapsedBlocks.empty() });
+            if (&event.action == &m_collapseAll)
+            {
+                const bool hasExpandedBlock = std::ranges::any_of(m_blocks,
+                    [this](const Syntax::SourceBlock& block){
+                        return !std::ranges::binary_search(m_collapsedBlocks, block.opener, {},
+                            &Syntax::SourceBlock::opener);
+                    });
+                event.claim({ .enabled = hasExpandedBlock });
+            }
+            if (&event.action == &m_collapseOthers)
+                event.claim({ .enabled = m_gutterMenuLine.has_value() && !m_blocks.empty() });
         });
         onActionClick([this](ActionClickEvent& event){
             if (&event.action == &StdActions::reindent)
                 reindentLines();
             if (&event.action == &StdActions::toggleComment)
                 toggleComment();
+            if (&event.action == &m_expandAll)
+            {
+                m_collapsedBlocks.clear();
+                applyFoldChange();
+            }
+            if (&event.action == &m_collapseAll)
+                collapseBlocks(std::nullopt);
+            if (&event.action == &m_collapseOthers && m_gutterMenuLine.has_value())
+                collapseBlocks(m_gutterMenuLine);
         });
     }
 
@@ -1522,22 +1572,32 @@ namespace ClaFi::Controls
         return gutter;
     }
 
-    const Syntax::SourceBlock* CodeBox::blockAtGutterPoint(const FloatPoint point)
+    std::optional<std::size_t> CodeBox::lineAtGutterPoint(const FloatPoint point,
+        const bool firstRowOnly)
     {
         const FloatRect bounds = textBounds(formContext(), boundsInForm());
         TextLayout& layout = syncedLayout(formContext(), bounds);
         updateBlocks(text().plainText());
         const FloatPoint origin = anchoredOrigin(bounds, layout.calculatedDimensions(),
             textAnchor());
-        const std::size_t line = m_lines.lineAt(layout.caretPos({ 0.0f, point.y - origin.y }).pos);
-        const auto block = std::ranges::lower_bound(m_blocks, line, {}, &Syntax::SourceBlock::opener);
-        if (block == m_blocks.end() || block->opener != line)
+        const CaretHit hit = layout.caretPos({ 0.0f, point.y - origin.y });
+        const std::size_t line = m_lines.lineAt(hit.pos);
+        const FloatRect row = layout.getCaretRect(
+            firstRowOnly ? CaretHit{ m_lines.lineStart(line), false } : hit);
+        if (point.y >= origin.y + row.top && point.y < origin.y + row.bottom)
+            return line;
+        return std::nullopt;
+    }
+
+    const Syntax::SourceBlock* CodeBox::blockAtGutterPoint(const FloatPoint point)
+    {
+        const std::optional<std::size_t> line = lineAtGutterPoint(point, true);
+        if (!line.has_value())
             return nullptr;
 
-        const FloatRect row = layout.getCaretRect({ m_lines.lineStart(line), false });
-        return point.y >= origin.y + row.top && point.y < origin.y + row.bottom
-            ? &*block
-            : nullptr;
+        const auto block = std::ranges::lower_bound(m_blocks, *line, {},
+            &Syntax::SourceBlock::opener);
+        return block != m_blocks.end() && block->opener == *line ? &*block : nullptr;
     }
 
     void CodeBox::paintGutter(PaintEvent& event, TextLayout& layout, const FloatPoint origin,
@@ -1669,14 +1729,42 @@ namespace ClaFi::Controls
         else
         {
             m_collapsedBlocks.insert(at, block);
-            if (editProps() && editProps()->selRange.start != k_maxSize)
+        }
+        applyFoldChange();
+    }
+
+    void CodeBox::collapseBlocks(const std::optional<std::size_t> lineToKeepOpen)
+    {
+        m_collapsedBlocks.clear();
+        std::size_t previousOpener = k_maxSize;
+        for (const Syntax::SourceBlock& block : m_blocks)
+        {
+            if (block.opener == previousOpener)
+                continue;
+
+            previousOpener = block.opener;
+            if (lineToKeepOpen && block.opener <= *lineToKeepOpen && *lineToKeepOpen <= block.closer)
+                continue;
+
+            m_collapsedBlocks.push_back(block);
+        }
+        applyFoldChange();
+    }
+
+    void CodeBox::applyFoldChange()
+    {
+        const EditProps* edit = editProps();
+        if (!m_collapsedBlocks.empty() && edit && edit->selRange.start != k_maxSize)
+        {
+            const std::size_t line = m_lines.lineAt(caretPos());
+            const auto block = std::ranges::find_if(m_collapsedBlocks,
+                [line](const Syntax::SourceBlock& candidate){
+                    return candidate.opener < line && line <= candidate.closer;
+                });
+            if (block != m_collapsedBlocks.end())
             {
-                const std::size_t line = caretLineColumn().line - 1;
-                if (block.opener < line && line <= block.closer)
-                {
-                    setCaretPos(m_lines.lineStart(block.opener + 1) - 1);
-                    scrollIntoViewOnAlign();
-                }
+                setCaretPos(m_lines.lineStart(block->opener + 1) - 1);
+                scrollIntoViewOnAlign();
             }
         }
         hideCompletion();

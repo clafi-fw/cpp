@@ -173,6 +173,7 @@ namespace ClaFi::Controls
         [[nodiscard]] std::size_t rowHome(CaretHit) const override;
         // A paste of several lines moved as one block to where the language places it.
         void textPasted(const TextRange&) override;
+        void nestedContextPopup(ContextPopupEvent&) override;
         void adjustContextPopup(AdjustContextPopupEvent&) override;
         [[nodiscard]] FloatRect scrollHotspot() const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
@@ -261,6 +262,7 @@ namespace ClaFi::Controls
         // A line down each block in view, the caret's a grade stronger. See Controls#indentguides
         void paintIndentGuides(PaintEvent&, TextLayout&, FloatPoint origin);
         [[nodiscard]] FloatRect gutterBounds() const;
+        [[nodiscard]] std::optional<std::size_t> lineAtGutterPoint(FloatPoint, bool firstRowOnly);
         [[nodiscard]] const Syntax::SourceBlock* blockAtGutterPoint(FloatPoint);
         void paintGutter(PaintEvent&, TextLayout&, FloatPoint origin, const FloatRect& gutter);
         void paintFoldEllipses(PaintEvent&, TextLayout&, FloatPoint origin) const;
@@ -268,6 +270,8 @@ namespace ClaFi::Controls
         void updateHiddenLines() const;
         [[nodiscard]] bool isLineHidden(std::size_t line) const;
         void toggleBlock(Syntax::SourceBlock);
+        void collapseBlocks(std::optional<std::size_t> lineToKeepOpen);
+        void applyFoldChange();
         void revealCaretBlock();
     private:
         static constexpr float k_gutterWidth{ 20.0f };
@@ -320,6 +324,10 @@ namespace ClaFi::Controls
         mutable std::vector<TextRange> m_hiddenLines{};
         bool m_pointerInGutter{ false };
         bool m_gutterPressed{ false };
+        std::optional<std::size_t> m_gutterMenuLine{};
+        Action m_expandAll{ Text{ L"Expand all" } };
+        Action m_collapseAll{ Text{ L"Collapse all" } };
+        Action m_collapseOthers{ Text{ L"Collapse others" } };
         ScopedEventConnection m_formAligned{};
         ScopedEventConnection m_formMoved{};
         ScopedEventConnection m_formFocusChanged{};

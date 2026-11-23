@@ -496,6 +496,10 @@ hide the lines through the block's closing line. An ellipsis marks the opening l
 the block is collapsed. Click the chevron again to show the hidden lines. The gutter stays
 at the left edge when the source scrolls sideways.
 
+The gutter's context menu offers **Expand all**, **Collapse all**, and **Collapse others**.
+**Collapse others** keeps open the blocks containing the line where the menu was raised,
+including any block that opens on that line.
+
 The full source is available to search, select, and copy while folded. A caret moved into a
 fold opens it. Collapsing a block around the caret moves the caret to the end of the opening
 line. A nested fold keeps its state when its enclosing block opens again. An edit that touches
