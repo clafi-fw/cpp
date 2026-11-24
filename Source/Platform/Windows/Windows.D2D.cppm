@@ -45,6 +45,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void setTransparentBase(bool value) override { m_transparentBase = value; }
         void beginPaint(void* nativeContext, const IntRect* dirtyRect) override;
         void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*&) override;
+        [[nodiscard]] Bitmap capturePixels(const IntRect&) const override;
         void* getNativeRenderTarget() const override { return m_renderTarget.Get(); }
 
         void* getNativeBrush(const Brush& brush) override;

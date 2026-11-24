@@ -25,7 +25,7 @@ A SeeDocs page is a SingleSelectionStackView, so the rule that a grid standing i
 scope of its own had only covered the current item. The element page's rules grid held several
 rules for Delete and a drag, and a grid that is no scope cannot pick into its own set: Shift and
 Ctrl picks go through the scope's pick, so only a band would have filled it. Decided with Oj: the
-page holds the set - its body is a StackView under SelectionMode::Multi and DragMode::EasyDrag, its
+page holds the set - its body is a StackView under SelectionMode::Multi and DragMode::LiveShuffle, its
 CanSelectItemEvent lets in the style's own rows alone, and the grid is given no SelectionMode. The
 other shape, the one current rule as the whole selection, was offered and not taken.
 

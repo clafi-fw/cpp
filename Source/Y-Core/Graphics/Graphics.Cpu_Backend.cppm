@@ -46,6 +46,7 @@ namespace ClaFi::Graphics::Cpu
 
         void beginPaint(void* nativeContext, const IntRect* dirtyRect) override;
         void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*& outData) override;
+        [[nodiscard]] Bitmap capturePixels(const IntRect&) const override;
 
         void pushClip(const FloatRect& exactClipRect) override;
         void pushClip(const PixelPath& path, const Matrix3x2* transform = nullptr) override;
@@ -170,6 +171,7 @@ namespace ClaFi::Graphics::Cpu
         IntSize m_size;
         // Whether each frame is cleared before it is painted - see beginPaint.
         bool m_transparentBase{ false };
+        bool m_hasFrame{ false };
         Bitmap m_backBuffer;
         // What the painters write into: the back buffer, or the innermost opacity layer's own
         // buffer while one is open. Every painter reaches its pixels through getActiveView, so

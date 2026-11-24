@@ -1432,6 +1432,29 @@ namespace ClaFi
         return false;
     }
 
+    Control* Control::nextVisibleSiblingOf(Control& item)
+    {
+        if (!item.parent())
+        {
+            return nullptr;
+        }
+        const ControlSpan siblings = item.parent()->controls();
+        auto it = std::ranges::find_if(siblings, [&item](const ControlPtr& sibling) {
+            return sibling.get() == &item;
+        });
+        if (it != siblings.end())
+        {
+            for (++it; it != siblings.end(); ++it)
+            {
+                if (*it && (*it)->visible())
+                {
+                    return it->get();
+                }
+            }
+        }
+        return nullptr;
+    }
+
     ControlSpan::iterator Control::firstChildInViewport(const FloatRect& viewport)
     {
         ControlSpan span = controls();

@@ -18,7 +18,6 @@ import ClaFi.Controls.Tree;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -41,24 +40,8 @@ namespace Themes_App
         RuleSelection selection{};
     };
 
-    export class DesignPage;
-
-    class ElementTree : public TreeView
-    {
-    public:
-        ElementTree(const CreateParams&, DesignPage&);
-    protected:
-        void nestedDrag(DragEvent&) override;
-        void nestedPressUp(PressUpEvent&) override;
-        void nestedKeyDown(KeyDownEvent&) override;
-        void adjustNestedControlVisualState(const Control&, VisualState&) const override;
-    private:
-        DesignPage& m_design;
-    };
-
     export class DesignPage : public Panel
     {
-        friend ElementTree;
     public:
         template<typename... Args>
         explicit DesignPage(const CreateParams&, Args&&...);
@@ -113,15 +96,14 @@ namespace Themes_App
         void renamePendingStyle();
         void deleteStyle(std::wstring_view name);
         void deletePendingStyle();
-        void dragElement(DragEvent&);
-        void releaseElement(PressUpEvent&);
-        [[nodiscard]] bool cancelDrag();
-        [[nodiscard]] const TreeEntry* dropEntry(const Control* pointedControl) const;
+        void queryDrop(CanDropItemsEvent&) const;
+        void dropElements(const ItemsDropEvent&);
+        [[nodiscard]] bool acceptsDrop(std::wstring_view source, const TreeEntry&, DropZone) const;
         [[nodiscard]] bool canMoveStyle(std::wstring_view name, std::wstring_view base) const;
-        void setDropTarget(RichControl*);
         void movePendingStyle();
         void setsChanged(const Text&);
     private:
+        static constexpr std::wstring_view k_rootStyle = L"AnyElement";
         static constexpr std::size_t k_rootIndex = 1ull;
 
         std::vector<TreeEntry> m_entries{};
@@ -138,10 +120,8 @@ namespace Themes_App
         std::wstring m_newName{};
         std::wstring m_styleToDelete{};
         std::wstring m_styleToMove{};
-        std::wstring m_newBase{};
-        std::wstring m_draggedStyle{};
-        RichControl* m_dropTarget{};
-        bool m_dragCanceled{};
+        std::wstring m_targetAnchor{};
+        DropZone m_dropZone{};
         bool m_rebuildingTree{};
         UiTimer m_nameTimer{};
         UiTimer m_renameTimer{};
@@ -149,7 +129,9 @@ namespace Themes_App
         UiTimer m_moveTimer{};
 
         ScrollBox& m_treeScroll{ createLeftBar<ScrollBox>(ScrollBars::Vertical, UiElement::Section) };
-        ElementTree& m_tree{ m_treeScroll.createBody<ElementTree>(*this) };
+        TreeView& m_tree{ m_treeScroll.createBody<TreeView>(
+            Padding{ 4.0f }, DragMode::ZoneDrop, ItemsOrder::Rearrangeable
+        ) };
         PageControl& m_pages{ createBody<PageControl>() };
         Panel& m_palettePage{ m_pages.add<Panel>() };
         Label& m_paletteTitle{ m_palettePage.createTopBar<Panel>(
@@ -172,6 +154,16 @@ namespace Themes_App
         :
         Panel{ params, std::forward<Args>(args)... }
     {
+        m_tree.onCanMoveItem([this](CanMoveItemEvent& event) {
+            const TreeEntry* entry = entryAt(&event.item);
+            event.canMove = entry && entry->elementPage && entry->name != k_rootStyle;
+        });
+        m_tree.onCanDropItems([this](CanDropItemsEvent& event) {
+            queryDrop(event);
+        });
+        m_tree.onItemsDrop([this](ItemsDropEvent& event) {
+            dropElements(event);
+        });
         buildTree();
         m_nameTimer.onTick([this](TimerEvent&) {
             nameAddedStyle();

@@ -1924,6 +1924,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBarBox.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Stack.Drop.cpp">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.StackView.cpp">
       <Filter>Controls\Containers</Filter>
     </ClCompile>

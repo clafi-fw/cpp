@@ -1107,6 +1107,7 @@ namespace ClaFi
         static TextEngine& textEngine() { return s_textEngine; }
     protected:
         explicit Control(Control* parent);
+        [[nodiscard]] static Control* nextVisibleSiblingOf(Control&);
         // Container interface
         virtual ControlSpan controls() { return {}; }
         ControlSpanC controls() const { return const_cast<Control*>(this)->controls(); }
@@ -1397,6 +1398,7 @@ namespace ClaFi
         // The outline over the surface, under the children - over them on a root or scrolled body.
         virtual void paintFrame(PaintEvent&);
         virtual void paintChildren(PaintEvent&);
+        virtual void paintOverlay(PaintEvent&) {}
         virtual void paintOwnText(PaintEvent&);
         // Draws the text handed in; a control overriding it overrides measureText as well.
         virtual DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&);

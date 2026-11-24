@@ -41,6 +41,10 @@ namespace ClaFi::Graphics::Cpu
 
     void CpuBackend::resize(IntSize size)
     {
+        if (m_size != size)
+        {
+            m_hasFrame = false;
+        }
         m_size = size;
         m_backBuffer.resize(size);
         // An image is the size of the surface it was drawn for, so none of them means anything
@@ -67,6 +71,13 @@ namespace ClaFi::Graphics::Cpu
         applyClipStateToGlobal();
         updateActiveView();
 
+        // A first partial paint leaves pixels outside its clip available to a later snapshot.
+        if (!std::exchange(m_hasFrame, false))
+        {
+            m_backBuffer.pixelView().fill(k_noColor);
+            return;
+        }
+
         // **A frame that carries alpha starts from nothing.** Every other frame keeps what the last
         // one left and relies on the children covering every pixel, which costs nothing and is
         // invisible for as long as the covering holds. A frame with alpha cannot rely on it: a
@@ -89,6 +100,23 @@ namespace ClaFi::Graphics::Cpu
         applyClipStateToGlobal();
         updateActiveView();
         outData = &m_backBuffer;
+        m_hasFrame = true;
+    }
+
+    Bitmap CpuBackend::capturePixels(const IntRect& rect) const
+    {
+        if (!m_hasFrame || rect.empty() || rect.left < 0 || rect.top < 0
+            || rect.right > m_backBuffer.width() || rect.bottom > m_backBuffer.height())
+        {
+            return {};
+        }
+        Bitmap result{ rect.dimensions() };
+        for (int y = 0; y < result.height(); ++y)
+        {
+            const Color* row = m_backBuffer.data() + (rect.top + y) * m_backBuffer.stride();
+            std::copy_n(row + rect.left, result.width(), result.pixel(0, y));
+        }
+        return result;
     }
 
     void CpuBackend::pushClip(const FloatRect& exactClipRect)

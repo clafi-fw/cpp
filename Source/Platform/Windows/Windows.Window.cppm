@@ -824,6 +824,9 @@ namespace ClaFi::PlatformImplementation::Windows
             };
             break;
 
+        case FormPlacement::DragPreview:
+            return FloatRect::FromDimensions(anchor.topLeft(), placement.size);
+
         case FormPlacement::OverText:
             // OverText places the window by its **text** rather than by its box. The anchor is the
             // text being covered, and textOrigin is where this window's own text starts inside

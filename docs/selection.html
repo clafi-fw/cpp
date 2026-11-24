@@ -861,9 +861,25 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
                 <tr><td>Ctrl with a mouse click, or Ctrl+Space</td><td>Toggles the item.</td></tr>
                 <tr><td>Ctrl with an arrow</td><td>Moves the current item alone, for Ctrl+Space to toggle.</td></tr>
                 <tr><td>A drag from the surface</td><td>Sweeps a rectangle over the items it crosses.</td></tr>
-                <tr><td>A drag from an item</td><td>Under <code>DragMode::EasySelect</code>, starts a rectangle. Under <code>EasyDrag</code>, carries the selection when the item is selected and the item alone when it is not.</td></tr>
+                <tr><td>A drag from an item</td><td>Under <code>DragMode::EasySelect</code>, starts a rectangle. <code>LiveShuffle</code> moves the carried items among siblings during the drag. <code>ZoneDrop</code> previews a destination until release.</td></tr>
             </table>
             <p>Ranges and rectangles also apply to items in nested panels.</p>
+            <p>For <code>ZoneDrop</code>, enable <code>ItemsOrder::Rearrangeable</code> and use
+            <code>onCanMoveItem</code> to restrict which items the user can drag. In
+            <code>onCanDropItems</code>, inspect the carried <code>items</code>, the target row and its
+            <code>DropZone</code>. Set <code>allowed</code> to accept the position. The top 30% offers
+            <code>Before</code> and the rest of the row offers <code>Inside</code>. At the end of a
+            group, the bottom 15% offers <code>Before</code> on the next outer row, or <code>After</code>
+            on the final row. The overlay highlights the parent row for <code>Inside</code> and draws
+            an insertion line at the destination row's icon column in a tree.
+            The pointer holds a translucent snapshot of the pressed row at the original click point.
+            The action badge below the row stays aligned with the pointer as the window grows
+            to fit the hint and its shadow. The badge shows an arrow entering a box for <code>Inside</code>
+            or an arrow between two rows for insertion. Supply the label in
+            <code>CanDropItemsEvent::hint</code>. The default is
+            &ldquo;Move here&rdquo;. A rejected destination shows only the rejection icon.
+            Apply the model edit in <code>onItemsDrop</code>.
+            Escape cancels the gesture.</p>
             <p>A control that accepts drops can call <code>FormBase::controlUnderPointer()</code>
             during drag and press-up handling. It returns the control hit at the pointer's current
             position, or <code>nullptr</code> where the pointer reaches no control in the form.</p>
@@ -955,7 +971,7 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
                 <tr><td><code>ContainerBase::currentItem()</code>, <code>setCurrentItem()</code></td><td>The item a show enters the container at.</td></tr>
                 <tr><td><code>StackBase::OnCanFocusItem</code></td><td><code>CanFocusItemEvent</code> - may this item be current. Carries <code>item</code> and <code>canFocus</code>.</td></tr>
                 <tr><td><code>StackBase::OnCurrentItemChange</code></td><td><code>CurrentItemChangeEvent</code> - the current item moved. Carries <code>previousItem</code>.</td></tr>
-                <tr><td><code>StackView::selectionMode</code>, <code>dragMode</code></td><td><code>SelectionMode::None</code> or <code>Multi</code>; <code>DragMode::EasySelect</code> or <code>EasyDrag</code>.</td></tr>
+                <tr><td><code>StackView::selectionMode</code>, <code>dragMode</code></td><td><code>SelectionMode::None</code> or <code>Multi</code>; <code>DragMode::EasySelect</code>, <code>LiveShuffle</code> or <code>ZoneDrop</code>.</td></tr>
                 <tr><td><code>StackView::selection()</code>, <code>setSelection()</code></td><td>The selected set, and a way to state it.</td></tr>
                 <tr><td><code>StackView::OnSelectionChange</code>, <code>OnCanSelectItem</code></td><td>The set changed; may this item join it.</td></tr>
                 <tr><td><code>FocusNavigator::enterShown(control)</code></td><td>Moves the focus into a control the way a show enters it, and answers the stop.</td></tr>

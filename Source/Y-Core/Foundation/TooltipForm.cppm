@@ -9,6 +9,7 @@ import :Control;
 import :Form;
 import :WithTextLayout;
 import :Tooltip;
+import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
@@ -33,18 +34,29 @@ namespace ClaFi
     class TooltipLabel : public WithTextLayout<FormControlBase>
     {
         friend TooltipWindow;
+        friend TooltipForm;
     public:
         using WithTextLayout::WithTextLayout;
     protected:
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
         // Held to Tooltip::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
-        ScaledSize calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
+        ScaledSize calculateContent(AlignEvent&) override;
+        void adjustTextRect(AdjustTextRectEvent&) const override;
+        void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
         void followLink(const LinkSpan&, InputStamp) override;
+    private:
+        [[nodiscard]] FloatPoint badgePosition() const;
+        [[nodiscard]] FloatPoint snapshotInset() const;
     private:
         // The width the words this tooltip repeats were broken at, and zero for a tooltip repeating
         // none - see OverTextForm::setAnswer.
         float m_breakWidth{ 0.0f };
+        Graphics::Bitmap m_snapshot{};
+        FloatPoint m_hotspot{};
+        Padding m_badgePadding{};
+        FloatRect m_badge{};
     };
 
     // The window a tooltip is shown in. A form builds two. See Control-Foundation#tooltip
@@ -60,6 +72,9 @@ namespace ClaFi
         [[nodiscard]] bool stillVisible() const;
         [[nodiscard]] bool hideOnUserInput() const { return m_hideOnUserInput; }
         [[nodiscard]] bool hasLinkInput() const { return !m_linkRects.empty(); }
+        [[nodiscard]] bool hasDragPreview() const { return !m_snapshot.empty(); }
+        [[nodiscard]] FloatPoint dragHotspot() const;
+        void setDragSnapshot(Graphics::Bitmap snapshot, FloatPoint hotspot);
     protected:
         void setBreakWidth(const float value) { content().m_breakWidth = value; }
         void setBalancedWrapStart(std::size_t position) { content().setBalancedWrapStart(position); }
@@ -181,6 +196,7 @@ namespace ClaFi
             // The window is about nothing from here on. The words stay in the label, since the
             // pixels they were laid out for are on screen for the whole of the fade.
             hide();
+            m_snapshot = {};
             return;
         }
         content().invalidate();
@@ -201,16 +217,6 @@ namespace ClaFi
         return window().alpha();
     }
 
-    void TooltipWindow::updateVisibility()
-    {
-        // nope! Form::updateVisibility();
-        if (visible())
-            updatePlacement();
-        updateLinkInput();
-        startAlphaAnimation();
-        window().show();
-    }
-
     HitTest TooltipWindow::wnd_hitTest(const PointInForm point)
     {
         const bool linkHit = std::ranges::any_of(m_linkRects, [point](const FloatRect& rect) {
@@ -229,7 +235,7 @@ namespace ClaFi
 
     void TooltipWindow::updateLinkInput()
     {
-        if (visible() && m_control)
+        if (visible() && m_control && !hasDragPreview())
             m_linkRects = content().linkRectsInForm();
         else
             m_linkRects.clear();
@@ -255,9 +261,10 @@ namespace ClaFi
         const std::size_t bodyStart = text.plainText().size() - m_body.plainText().size();
         setBalancedWrapStart(bodyStart);
         content().text() = std::move(text);
-        content().setPadding(tooltipPadding());
+        content().m_badgePadding = tooltipPadding();
+        content().setPadding(hasDragPreview() ? Padding{} : content().m_badgePadding);
         content().setWordWrap(WordWrap::Yes);
-        setPlacement(event.placement);
+        setPlacement(hasDragPreview() ? FormPlacement::DragPreview : event.placement);
         setHideOnUserInput(event.hideOnUserInput);
         invalidateAlign();
     }

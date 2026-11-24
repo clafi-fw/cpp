@@ -1,6 +1,7 @@
 export module ClaFi.Core.Foundation :Tooltip;
 
 import :Control;
+import ClaFi.Core.Graphics.Types;
 
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.Events;
@@ -36,6 +37,8 @@ namespace ClaFi
     public:
         // Puts this form's tooltip up about one of this form's controls, without the wait.
         void showRightNow(Control&);
+        // Holds the drag image at its press point above the action. See Control-Foundation#tooltip
+        void showDragPreview(Control&, Graphics::Bitmap snapshot, FloatPoint hotspot);
     public:
         // The pointer went somewhere. Heard while the mouse drives. The tooltip coming down
         // belongs to the form the pointer was in, which is not always the form it has arrived
@@ -64,6 +67,7 @@ namespace ClaFi
         // focus rests on while the keyboard alone does. See Control-Foundation#tooltip
         [[nodiscard]] static Control* pointedControl();
         [[nodiscard]] static bool holdLinkedTooltipUnderPointer();
+        [[nodiscard]] static bool draggingSnapshot();
         // The control a tooltip is about has changed - to pointedControl(), or to nothing.
         static void pointedControlChanged(bool allowLinkHandoff = true);
         // Whether a tooltip up about a control this one stands in still answers for this one.

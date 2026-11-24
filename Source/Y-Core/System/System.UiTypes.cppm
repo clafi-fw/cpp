@@ -27,7 +27,9 @@ namespace ClaFi
         Hand,
         Wait,
         SizeWE,   // the double arrow of a width being dragged
-        SizeNS    // the double arrow of a height being dragged
+        SizeNS,   // the double arrow of a height being dragged
+        Move,
+        NotAllowed
     };
 
     // The cursor as the platform holds it, opaque above the platform layer. See UI-Types
@@ -413,7 +415,8 @@ namespace ClaFi
         Right,          // **beside** the anchor, off its **right** edge and level with its top
         BottomRight,    // **under** the anchor, its **right** edge level with the anchor's
         ContextMenu,    // right where the mouse pointer is, or BottomLeft using keyboard
-        Mouse           // under the mouse cursor
+        Mouse,          // under the mouse cursor
+        DragPreview     // its top left follows the anchor, including across a screen edge
     };
     export using TooltipPlacement = FormPlacement;
 

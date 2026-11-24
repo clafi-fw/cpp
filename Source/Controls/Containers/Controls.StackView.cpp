@@ -246,7 +246,7 @@ namespace ClaFi::Controls
     {
         StackViewBase::nestedDrag(event);
 
-        if (!isMultiSelect())
+        if (!isMultiSelect() || (dragMode() == DragMode::ZoneDrop && event.hoveredControlLocked()))
             return;
 
         // A band already under way settled both questions when it began: it is past the
@@ -258,7 +258,7 @@ namespace ClaFi::Controls
 
             // What the press landed on says which drag this is, and it says the same on every
             // move of the same drag, so the answer needs no keeping. A carry is the base's.
-            if (m_dragMode == DragMode::EasyDrag && pressedItem(&event.control()))
+            if (dragMode() != DragMode::EasySelect && pressedItem(&event.control()))
                 return;
         }
 
@@ -356,7 +356,7 @@ namespace ClaFi::Controls
         return itemAt(control);
     }
 
-    // A drag from an item is a band under EasySelect. Under EasyDrag it carries the set the press
+    // A drag from an item is a band under EasySelect. A carry takes the set the press
     // landed in, in the order the items stand, else the one item. The set is the scope's: a view
     // standing in a scope carries what that scope holds of its items - see Selection-Model
     std::vector<Control*> StackView::carriedItems(Control& item)
@@ -364,7 +364,7 @@ namespace ClaFi::Controls
         const ItemHold pressedHold = item.hold();
         if (pressedHold == ItemHold::NoSet)
             return StackViewBase::carriedItems(item);
-        if (m_dragMode == DragMode::EasySelect)
+        if (dragMode() == DragMode::EasySelect)
             return {};
         if (pressedHold == ItemHold::NotHeld)
             return StackViewBase::carriedItems(item);

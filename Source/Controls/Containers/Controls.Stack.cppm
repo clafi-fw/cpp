@@ -8,6 +8,7 @@ import ClaFi.Controls.Base.StackPanelBase;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -20,6 +21,39 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls
 {
     export class StackViewBase;
+
+    // What a drag that starts on an item does. See Selection-Model
+    export enum class DragMode
+    {
+        EasySelect,
+        LiveShuffle,
+        ZoneDrop
+    };
+
+    // The position a release offers relative to the target row. See Selection-Model#dragmode
+    export enum class DropZone
+    {
+        Before,
+        Inside,
+        After
+    };
+
+    // A release over an accepted row zone. See Selection-Model#dragmode
+    export struct ItemsDropEvent : public Event
+    {
+        ItemsDropEvent(std::span<Control* const> items, Control& target, DropZone);
+        std::span<Control* const> items;
+        Control& target;
+        DropZone zone;
+    };
+
+    // Accepts a destination and supplies its tooltip. See Selection-Model#dragmode
+    export struct CanDropItemsEvent : public ItemsDropEvent
+    {
+        using ItemsDropEvent::ItemsDropEvent;
+        bool allowed{};
+        Text hint{};
+    };
 
     // Which item a stack raises its preview for. See Item-Containers
     export enum class PreviewMode
@@ -344,9 +378,15 @@ namespace ClaFi::Controls
         template <typename... Args>
         explicit StackViewBase(const CreateParams&, Args&&...);
     public:
+        // The gesture that begins on an item. See Selection-Model#dragmode
+        DECLARE_PROPERTY(DragMode, dragMode, DragMode::EasySelect)
         // Which item the stack raises its preview for.
         DECLARE_WRITABLE_PROPERTY(PreviewMode, previewMode, setPreviewMode, PreviewMode::Focus)
     public:
+        // Asked while pointing at a row and again on release. See Selection-Model#dragmode
+        DECLARE_EVENT(CanDropItemsEvent, OnCanDropItems, onCanDropItems)
+        // Raised on release over an accepted zone. See Selection-Model#dragmode
+        DECLARE_EVENT(ItemsDropEvent, OnItemsDrop, onItemsDrop)
         // Raised once the preview has settled on an item.
         DECLARE_EVENT(PreviewEvent, OnPreview, onPreview)
     public:
@@ -357,6 +397,15 @@ namespace ClaFi::Controls
         // than the last PreviewEvent did.
         [[nodiscard]] Control* previewItem() const { return m_previewItem; }
     protected:
+        void nestedDrag(DragEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
+        void paintOverlay(PaintEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
+        [[nodiscard]] virtual float dropLineInset(const Control&) const { return 0.0f; }
+        // The lower edge offers After on this row, Before on the returned row, or Inside on null.
+        [[nodiscard]] virtual Control* groupEndDropTarget(Control& row, std::span<Control* const> items);
+        virtual void expandDropTarget(Control&) {}
         virtual void previewItemChanged(PreviewEvent&);
         // Says the preview already stands on this item, without raising one and without the wait.
         // For a container built around an item whose preview is what the caller is already
@@ -370,6 +419,23 @@ namespace ClaFi::Controls
         void nestedControlDeleted(Control*) override;
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
     private:
+        struct ZoneDrag
+        {
+            Control* pressedControl{};
+            std::vector<Control*> items{};
+            Control* target{};
+            DropZone zone{};
+            Text hint{};
+            bool canceled{};
+            UiTimer hoverTimer{};
+        };
+    private:
+        void enableZoneDrop();
+        [[nodiscard]] Control* dropItemAt(Control* hit);
+        void updateDropTarget();
+        void clearDropTarget();
+        void hideDropTooltip();
+        void onDropHoverTimer();
         void onPreviewTimer();
         // Aims the preview at an item and waits to see whether it stays there. An item already
         // aimed at costs nothing, which is what makes a held key one preview rather than one per
@@ -379,6 +445,7 @@ namespace ClaFi::Controls
         // Long enough that a pointer crossing the stack previews nothing it merely passes over,
         // short enough to read as the answer to stopping on an item.
         static constexpr MilliSeconds k_previewDelay{ 110 };
+        std::unique_ptr<ZoneDrag> m_zoneDrag{};
         // Connected in the constructor rather than handed its handler here. The constructor is a
         // template, so a default member initializer is instantiated in whatever translation unit
         // builds a Stack, and OnEvent's deduction does not survive the trip - onTick names
@@ -450,9 +517,14 @@ namespace ClaFi::Controls
             MouseFocus::Self,
             std::forward<Args>(args)...
         },
+        INIT_PROPERTY(dragMode),
         INIT_PROPERTY(previewMode),
         m_previewTimer{ UiTimer::OnTick{ [this](TimerEvent&) { onPreviewTimer(); } } }
     {
+        if (dragMode() == DragMode::ZoneDrop)
+        {
+            enableZoneDrop();
+        }
     }
 
     void StackPanelBase::setOrientation(Orientation value)
@@ -1556,6 +1628,25 @@ namespace ClaFi::Controls
     {
         StackPanelBase::nestedControlDeleted(control);
 
+        if (m_zoneDrag)
+        {
+            const auto& items = m_zoneDrag->items;
+            if (control == m_zoneDrag->pressedControl || std::ranges::find(items, control) != items.end())
+            {
+                clearDropTarget();
+                hideDropTooltip();
+                m_zoneDrag->items.clear();
+                m_zoneDrag->pressedControl = nullptr;
+            }
+            else if (control == m_zoneDrag->target)
+            {
+                clearDropTarget();
+                if (Tooltip::control() == this)
+                {
+                    form().tooltip().showRightNow(*this);
+                }
+            }
+        }
         if (control != m_previewItem)
             return;
         // The list being rebuilt under the pointer is the ordinary case here, not a rare one - a

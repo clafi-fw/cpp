@@ -464,6 +464,8 @@ namespace ClaFi::Graphics
         virtual BackendType type() const = 0;
         virtual void resize(IntPoint) = 0;
         virtual IntSize size() const = 0;
+        // Premultiplied pixels from the last frame. An unavailable rectangle returns an empty bitmap.
+        [[nodiscard]] virtual Bitmap capturePixels(const IntRect&) const { return {}; }
         virtual void pushClip(const FloatRect& exactClipRect) = 0;
         virtual void pushClip(const PixelPath& path, const Matrix3x2* transform = nullptr) = 0;
         virtual void popClip() = 0;

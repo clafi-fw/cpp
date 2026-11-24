@@ -182,6 +182,8 @@ the width asked for. Where the display server places toplevels itself, only the 
 
 - OverText lays the window's own text over the text in the rect - an in-place editor, an
   over-text tooltip.
+- DragPreview places the window's top left at the anchor. Its hotspot stays under the pointer
+  even when part of the image crosses a screen edge.
 - Each of the others flips to the opposite side of the rect when the side asked for has no room.
   Placed Right on a rect spanning a list, a window flips to the list's own left edge.
 

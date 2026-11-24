@@ -137,42 +137,6 @@ namespace Themes_App
         }
     }
 
-    ElementTree::ElementTree(const CreateParams& params, DesignPage& design)
-        :
-        TreeView{ params, Padding{ 4.0f } },
-        m_design{ design }
-    {
-    }
-
-    void ElementTree::nestedDrag(DragEvent& event)
-    {
-        TreeView::nestedDrag(event);
-        m_design.dragElement(event);
-    }
-
-    void ElementTree::nestedPressUp(PressUpEvent& event)
-    {
-        TreeView::nestedPressUp(event);
-        m_design.releaseElement(event);
-    }
-
-    void ElementTree::nestedKeyDown(KeyDownEvent& event)
-    {
-        if (event.key == Keys::Escape && m_design.cancelDrag())
-        {
-            event.handled = true;
-            return;
-        }
-        TreeView::nestedKeyDown(event);
-    }
-
-    void ElementTree::adjustNestedControlVisualState(const Control& control, VisualState& state) const
-    {
-        TreeView::adjustNestedControlVisualState(control, state);
-        if (&control == m_design.m_dropTarget)
-            state.selected = true;
-    }
-
     std::wstring_view DesignPage::pickedPage() const
     {
         if (const TreeEntry* entry = pickedEntry())
@@ -228,6 +192,7 @@ namespace Themes_App
     void DesignPage::bind(AppTheme& theme, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged, const OnFollowElementLink& onFollowElementLink)
     {
+        m_moveTimer.stop();
         m_colors = &theme.colors;
         m_styles = &theme.styles;
         m_ruleBase = ruleBase;
@@ -297,7 +262,8 @@ namespace Themes_App
         m_elementsPage.createBody<Label>(
             VerticalAlign::Top,
             Padding{ 12.0f, 8.0f },
-            Text{ L"Drag an element onto its new base, or onto Elements to make it a root." }
+            Text{ L"Drop on a highlighted row to make it the Base. "
+                L"Drop at a line to insert the element at that level." }
         );
         pickPage(k_paletteToken);
     }
@@ -316,9 +282,6 @@ namespace Themes_App
                 collapsed.insert(entry.name);
             entry.page->deleteSelf();
         }
-        setDropTarget(nullptr);
-        m_draggedStyle.clear();
-        m_dragCanceled = false;
         TreeNode& root = *m_entries[k_rootIndex].node;
         while (!root.rows().controls().empty())
             root.rows().controls().back()->deleteSelf();
@@ -615,65 +578,58 @@ namespace Themes_App
         setsChanged(Text{ L"Delete element ", ColoredText{ InkWell::accentInk(), name } });
     }
 
-    void DesignPage::dragElement(DragEvent& event)
+    void DesignPage::queryDrop(CanDropItemsEvent& event) const
     {
-        if (m_dragCanceled)
+        const TreeEntry* source = entryAt(event.items.front());
+        const TreeEntry* target = entryAt(&event.target);
+        event.allowed = source && target && acceptsDrop(source->name, *target, event.zone);
+        if (event.allowed && event.zone == DropZone::Inside)
         {
-            event.stopPropagation();
-            return;
+            if (target->elementPage)
+            {
+                event.hint << L"Move inside " << target->name;
+            }
+            else
+            {
+                event.hint << L"Move to root";
+            }
         }
-        if (event.hoveredControlLocked())
-            return;
-        if (m_draggedStyle.empty())
-        {
-            const TreeEntry* source = entryAt(&event.control());
-            if (!event.pastThreshold() || !source || !source->elementPage)
-                return;
-            m_draggedStyle = source->name;
-        }
-
-        event.stopPropagation();
-        const TreeEntry* target = dropEntry(event.form().controlUnderPointer());
-        setDropTarget(target ? target->row : nullptr);
     }
 
-    void DesignPage::releaseElement(PressUpEvent& event)
+    void DesignPage::dropElements(const ItemsDropEvent& event)
     {
-        if (m_draggedStyle.empty())
-            return;
-        event.handled.preventClick = true;
-        event.scrollIntoView = false;
-        if (const TreeEntry* target = dropEntry(form().controlUnderPointer()))
+        const TreeEntry* source = entryAt(event.items.front());
+        const TreeEntry* target = entryAt(&event.target);
+        if (source && target)
         {
-            m_styleToMove = std::move(m_draggedStyle);
-            m_newBase = target->name;
+            m_styleToMove = source->name;
+            m_targetAnchor = target->anchor;
+            m_dropZone = event.zone;
             m_moveTimer.start(MilliSeconds{ 0u });
         }
-        setDropTarget(nullptr);
-        m_draggedStyle.clear();
-        m_dragCanceled = false;
     }
 
-    bool DesignPage::cancelDrag()
+    bool DesignPage::acceptsDrop(const std::wstring_view source, const TreeEntry& target,
+        const DropZone zone) const
     {
-        if (m_draggedStyle.empty())
+        if (source == k_rootStyle || !m_styles->of(source))
+        {
             return false;
-        setDropTarget(nullptr);
-        m_dragCanceled = true;
-        return true;
-    }
-
-    const DesignPage::TreeEntry* DesignPage::dropEntry(const Control* pointedControl) const
-    {
-        if (m_dragCanceled)
-            return nullptr;
-        const TreeEntry* target = entryAt(pointedControl);
-        if (!target || (!target->elementPage && target != &m_entries[k_rootIndex]))
-            return nullptr;
-        const ControlStyle* source = m_styles->of(m_draggedStyle);
-        if (!source || source->base == target->name || !canMoveStyle(source->name, target->name))
-            return nullptr;
-        return target;
+        }
+        if (!target.elementPage)
+        {
+            return target.anchor == k_elementsAnchor && zone == DropZone::Inside && !m_styles->of(k_rootStyle);
+        }
+        const ControlStyle* style = m_styles->of(target.name);
+        if (!style || !canMoveStyle(source, target.name))
+        {
+            return false;
+        }
+        if (zone == DropZone::Inside)
+        {
+            return true;
+        }
+        return target.name != k_rootStyle && (m_styles->of(style->base) || !m_styles->of(k_rootStyle));
     }
 
     bool DesignPage::canMoveStyle(const std::wstring_view name, const std::wstring_view base) const
@@ -688,33 +644,54 @@ namespace Themes_App
         });
     }
 
-    void DesignPage::setDropTarget(RichControl* target)
-    {
-        if (target == m_dropTarget)
-            return;
-        RichControl* previous = std::exchange(m_dropTarget, target);
-        if (previous)
-            previous->invalidateState(AnimationMode::Off);
-        if (target)
-            target->invalidateState(AnimationMode::Off);
-    }
-
     void DesignPage::movePendingStyle()
     {
         const std::wstring name = std::exchange(m_styleToMove, {});
-        const std::wstring base = std::exchange(m_newBase, {});
-        ControlStyle* style = m_styles->of(name);
-        if (!style || style->base == base || !canMoveStyle(name, base))
+        const std::wstring anchor = std::exchange(m_targetAnchor, {});
+        const auto target = std::ranges::find(m_entries, anchor, &TreeEntry::anchor);
+        if (target == m_entries.end() || !acceptsDrop(name, *target, m_dropZone))
+        {
             return;
-
-        style->base = base;
+        }
+        ControlStyleList& styles = m_styles->list;
+        const auto source = std::ranges::find(styles, name, &ControlStyle::name);
+        const auto neighbor = std::ranges::find(styles, target->name, &ControlStyle::name);
+        const bool inside = m_dropZone == DropZone::Inside;
+        const std::wstring base = inside ? target->name : neighbor->base;
+        auto position = inside ? styles.end() : neighbor + (m_dropZone == DropZone::After ? 1 : 0);
+        if (source->base == base)
+        {
+            const auto first = source < position ? source + 1 : position;
+            const auto last = source < position ? position : source;
+            if (std::none_of(first, last, [&base](const ControlStyle& sibling) {
+                return sibling.base == base;
+            }))
+            {
+                return;
+            }
+        }
+        source->base = base;
+        if (source < position)
+        {
+            std::rotate(source, source + 1, position);
+        }
+        else
+        {
+            std::rotate(position, source, source + 1);
+        }
+        Text what{ L"Move element ", ColoredText{ InkWell::accentInk(), name } };
+        if (target->name.empty())
+        {
+            what << L" to the root";
+        }
+        else
+        {
+            const std::wstring_view relation = inside ? L" under "
+                : m_dropZone == DropZone::Before ? L" before " : L" after ";
+            what << relation << ColoredText{ InkWell::accentInk(), target->name };
+        }
         rebuildTree();
         focusElement(name);
-        Text what{ L"Move element ", ColoredText{ InkWell::accentInk(), name } };
-        if (base.empty())
-            what << L" to the root";
-        else
-            what << L" under " << ColoredText{ InkWell::accentInk(), base };
         setsChanged(what);
     }
 

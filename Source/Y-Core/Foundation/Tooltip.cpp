@@ -7,6 +7,13 @@ import :Form;
 import :Input;
 
 import :TooltipForm;
+import :PaintEvent;
+import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.ShadowPainter;
+import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.System.Scaler;
+import ClaFi.Core.System.Animation;
 
 import ClaFi.StdLib;
 import ClaFi.Core.System.Events;
@@ -109,7 +116,7 @@ namespace ClaFi
 
     void Tooltip::hoveredZoneChanged()
     {
-        if (!Input::mouse().active())
+        if (!Input::mouse().active() || draggingSnapshot())
             return;
         if (holdLinkedTooltipUnderPointer())
         {
@@ -135,7 +142,7 @@ namespace ClaFi
 
     void Tooltip::restartHoverDelay()
     {
-        if (holdLinkedTooltipUnderPointer())
+        if (draggingSnapshot() || holdLinkedTooltipUnderPointer())
         {
             return;
         }
@@ -193,8 +200,17 @@ namespace ClaFi
         return true;
     }
 
+    bool Tooltip::draggingSnapshot()
+    {
+        return s_current && s_current->m_form->hasDragPreview() && Input::isMouseDown();
+    }
+
     void Tooltip::pointedControlChanged(const bool allowLinkHandoff)
     {
+        if (draggingSnapshot())
+        {
+            return;
+        }
         Control* pointed = pointedControl();
         if (pointed && pointed->form().windowRole() == WindowRole::Tooltip)
         {
@@ -310,6 +326,12 @@ namespace ClaFi
     void Tooltip::updatePosition(Control& control, const FloatRect& anchorRect)
     {
         TooltipForm& form = *m_form;
+        if (form.hasDragPreview())
+        {
+            const FloatPoint origin = m_ownerForm.mousePos() - form.dragHotspot();
+            form.setPlacementRect(FloatRect::FromDimensions(origin, {}));
+            return;
+        }
         // Where the control comes to rest rather than where a glide has carried it so far - see
         // TooltipForm::placementTargetBounds.
         FloatRect restingRect = anchorRect;
@@ -325,6 +347,13 @@ namespace ClaFi
         // thumb being dragged with its value on the tooltip.
         if (control() != &target)
             stopAndHide();
+        showOrHide(&target);
+    }
+
+    void Tooltip::showDragPreview(Control& target, Graphics::Bitmap snapshot, const FloatPoint hotspot)
+    {
+        stopAndHide();
+        m_form->setDragSnapshot(std::move(snapshot), hotspot);
         showOrHide(&target);
     }
 
@@ -427,7 +456,7 @@ namespace ClaFi
     // the window repeats that over the words. See Control-Foundation#tooltip
     void Tooltip::overTextChanged()
     {
-        Control* hovered = Input::mouse().active() ? Input::hoveredControl() : nullptr;
+        Control* hovered = Input::mouse().active() && !draggingSnapshot() ? Input::hoveredControl() : nullptr;
         OverTextAnswer answer{};
         if (!hovered || !hovered->overTextAnswer(answer))
         {
@@ -498,4 +527,107 @@ namespace ClaFi
             s_overTextCurrent = nullptr;
     }
 
+    ScaledSize TooltipLabel::calculateContent(AlignEvent& event)
+    {
+        const ScaledSize text = FormControlBase::calculateContent(event);
+        if (m_snapshot.empty())
+        {
+            return text;
+        }
+
+        const FloatPoint padding = event.scale(m_badgePadding);
+        const FloatPoint badgeSize{ text.x + 2.0f * padding.x, text.y + 2.0f * padding.y };
+        const FloatPoint inset = snapshotInset();
+        m_badge = FloatRect::FromDimensions(inset + badgePosition(), badgeSize);
+        const Graphics::ShadowPainter::Reach reach = form().wnd_shadowPainter().reach();
+        return {
+            std::max(inset.x + m_snapshot.width(), m_badge.right + std::ceil(reach.right)),
+            std::max(inset.y + m_snapshot.height(), m_badge.bottom + std::ceil(reach.bottom))
+        };
+    }
+
+    void TooltipLabel::adjustTextRect(AdjustTextRectEvent& event) const
+    {
+        if (!m_snapshot.empty())
+        {
+            FloatRect text{ m_badge, -event.scale(m_badgePadding) };
+            text.offset(event.textBounds.topLeft());
+            event.textBounds = text;
+        }
+    }
+
+    void TooltipLabel::paintSurface(PaintEvent& event)
+    {
+        if (m_snapshot.empty())
+        {
+            FormControlBase::paintSurface(event);
+            return;
+        }
+        event.canvas().drawBitmap(m_snapshot, event.topLeft() + snapshotInset(), 0.55f);
+        FloatRect badge = m_badge;
+        badge.offset(event.topLeft());
+        const Graphics::ShadowPainter& shadow = form().wnd_shadowPainter();
+        shadow.draw(event.canvas(), badge);
+        const float radius = shadow.design().radii.topLeft;
+        event.canvas().fillRoundedRectangle(badge, radius, radius, event.surfaceRgb());
+        event.canvas().drawRoundedRectangle(badge, radius, radius, event.textRgb(InkGrade::Faint), event.scale(1.0f));
+    }
+
+    void TooltipLabel::paintFrame(PaintEvent& event)
+    {
+        if (m_snapshot.empty())
+        {
+            FormControlBase::paintFrame(event);
+        }
+    }
+
+    FloatPoint TooltipLabel::badgePosition() const
+    {
+        return { m_hotspot.x, m_snapshot.height() + form().scaler().scale(3.0f) };
+    }
+
+    FloatPoint TooltipLabel::snapshotInset() const
+    {
+        const FloatPoint badge = badgePosition();
+        const Graphics::ShadowPainter::Reach reach = form().wnd_shadowPainter().reach();
+        return {
+            std::max(0.0f, std::ceil(reach.left - badge.x)),
+            std::max(0.0f, std::ceil(reach.top - badge.y))
+        };
+    }
+
+    FloatPoint TooltipWindow::dragHotspot() const
+    {
+        return m_hotspot + snapshotInset();
+    }
+
+    void TooltipWindow::setDragSnapshot(Graphics::Bitmap snapshot, const FloatPoint hotspot)
+    {
+        m_snapshot = std::move(snapshot);
+        m_hotspot = hotspot;
+    }
+
+    void TooltipWindow::updateVisibility()
+    {
+        if (visible())
+        {
+            updatePlacement();
+        }
+        updateLinkInput();
+        if (hasDragPreview())
+        {
+            appContext().animator().stop(this);
+            window().setAlpha(visible() ? m_alpha : 0);
+            if (!visible())
+            {
+                window().hide();
+                return;
+            }
+        }
+        else
+        {
+            startAlphaAnimation();
+        }
+        window().show();
+    }
 }

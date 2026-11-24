@@ -411,7 +411,8 @@ namespace ClaFi::PlatformImplementation::Wayland
     // has no side to be rounded towards. A size is stated through toSurfaceHolding.
     constexpr int toSurfaceLength(int bufferLength, int scale120)
     {
-        return (bufferLength * k_scaleUnit + scale120 / 2) / scale120;
+        const int half = bufferLength < 0 ? -scale120 / 2 : scale120 / 2;
+        return (bufferLength * k_scaleUnit + half) / scale120;
     }
 
     // **The fewest surface pixels that come back as no less than the real ones asked for**, between
@@ -1225,7 +1226,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (isTranslucent())
         {
             wl_region* opaque = nullptr;
-            if (m_alpha == 255)
+            if (m_alpha == 255 && m_placement.placement != FormPlacement::DragPreview)
             {
                 const int radiusPixels = static_cast<int>(std::ceil(appliedFrame().radius));
                 const int radius = (radiusPixels * k_scaleUnit + m_scale120 - 1) / m_scale120;
@@ -1946,6 +1947,14 @@ namespace ClaFi::PlatformImplementation::Wayland
 
         switch (placement.placement)
         {
+        case FormPlacement::DragPreview:
+            // The image may extend outside its owner. Anchor to the owner and offset to the image.
+            ::xdg_positioner_set_anchor_rect(positioner, 0, 0, 1, 1);
+            ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_TOP_LEFT);
+            ::xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
+            ::xdg_positioner_set_offset(positioner, toSurface(anchor.left), toSurface(anchor.top));
+            break;
+
         case FormPlacement::OverText:
             // The two texts land on top of each other: the window is anchored by the top left of
             // the text it covers and offset back by where its own text starts inside it. **It must

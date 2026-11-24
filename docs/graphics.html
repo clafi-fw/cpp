@@ -273,6 +273,10 @@ the transform it was given, builds out of a path the few shapes a backend may de
 rounded rectangle, a shadow - and forwards everything else. The backend turns a call into pixels,
 and it is the only part that differs between the CPU and the GPU.</p>
 
+<p><code>IBackend::capturePixels(rect)</code> copies a rectangle of the last painted frame into a
+premultiplied <code>Bitmap</code>. The rectangle uses surface pixels. An unavailable rectangle
+or a backend without readback returns an empty bitmap.</p>
+
 <p>The application builds a form's canvas, and the form's paint passes draw through it, so a paint
 handler never begins or ends a frame. A canvas of one's own - a picture baked once and cut into
 tiles, for example - is built over a CPU backend.

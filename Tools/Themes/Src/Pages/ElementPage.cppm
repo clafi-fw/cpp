@@ -257,7 +257,7 @@ namespace Themes_App
             BodyProps{
                 Orientation::Vertical,
                 SelectionMode::Multi,
-                DragMode::EasyDrag,
+                DragMode::LiveShuffle,
                 Padding{ k_pagePadding, k_headPadding },
                 Spacing{ k_sectionSpacing }
             }
@@ -362,7 +362,7 @@ namespace Themes_App
             FocusScope::No, // the page is the scope; the rows are its items, the held ones its set
             NavigationReach::No,
             MouseFocus::Parent,
-            DragMode::EasyDrag,
+            DragMode::LiveShuffle,
             ItemsOrder::Rearrangeable,
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ RuleColumn::ApplyTo },

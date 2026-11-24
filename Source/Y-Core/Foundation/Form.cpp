@@ -1551,10 +1551,10 @@ namespace ClaFi
         // **A resize that moved nothing is not a resize.** A window's position is stated whether or
         // not it has changed - see Window::place - and the message stating it arrives here all
         // the same, so a placement pass that agreed with the window would throw away the
-        // alignment it had just made, and the loop that asked for it could never tell that it
-        // had finished. The surface follows from the two compared below, and Canvas::resize
-        // drops the brush cache and the kept images whether the size moved or not.
-        if (frame == m_frame and placed == m_placed.size)
+        // alignment it had just made. A Wayland configure can confirm a size already granted
+        // by placement while the canvas is still waiting for its first resize.
+        if (frame == m_frame && placed == m_placed.size
+            && surface.x == m_canvas.width() && surface.y == m_canvas.height())
         {
             return;
         }
@@ -2015,6 +2015,10 @@ namespace ClaFi
 
     WindowFrame FormBase::designFrame() const
     {
+        if (m_placement == FormPlacement::DragPreview)
+        {
+            return {};
+        }
         const ControlMetrics& metrics = m_content.metrics();
         const WindowShadow& shadow = metrics.shadow;
         const Scaler& scaler = this->scaler();
@@ -2616,7 +2620,8 @@ namespace ClaFi
             return;
         if (rectOfControl(target, true).empty())
             return;
-        if (m_placement == FormPlacement::Mouse || m_placement == FormPlacement::ContextMenu)
+        if (m_placement == FormPlacement::Mouse || m_placement == FormPlacement::ContextMenu
+            || m_placement == FormPlacement::DragPreview)
             return;
 
         // **The rect follows the target's box**, both where it is and how big it is. A placement

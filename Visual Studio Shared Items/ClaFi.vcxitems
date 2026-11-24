@@ -67,6 +67,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Panel.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ScrollBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Stack.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Stack.Drop.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.StackView.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.StackView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.TabbedBox.cppm" />

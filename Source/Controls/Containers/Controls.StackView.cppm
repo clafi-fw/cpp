@@ -2,7 +2,7 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.StackView;
 
-import ClaFi.Controls.Stack;
+export import ClaFi.Controls.Stack;
 import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
@@ -17,13 +17,6 @@ namespace ClaFi::Controls
     {
         None,   // the current item is the only one marked
         Multi   // any number of items are held selected alongside the current item
-    };
-
-    // What a drag that starts on an item does. See Selection-Model
-    export enum class DragMode
-    {
-        EasySelect,   // an item is one more place to start a selection rectangle from
-        EasyDrag      // an item is the selection's handle, and the drag carries what is selected
     };
 
     export class StackView;
@@ -79,8 +72,6 @@ namespace ClaFi::Controls
     public:
         // Whether the view holds a selection on top of the current item.
         DECLARE_PROPERTY(SelectionMode, selectionMode, SelectionMode::None)
-        // What a drag that starts on an item does.
-        DECLARE_PROPERTY(DragMode, dragMode, DragMode::EasySelect)
     public:
         // Raised after the set of selected items has changed.
         DECLARE_EVENT(SelectionChangeEvent, OnSelectionChange, onSelectionChange)
@@ -93,7 +84,7 @@ namespace ClaFi::Controls
         void setSelection(std::span<Control* const>);
     protected:
         void toggleItemSelection(Control*, bool keepSelection = false);
-        // The selection, in a Multi view under EasyDrag where the press landed in it.
+        // The selection, in a Multi view under LiveShuffle or ZoneDrop where the press landed in it.
         [[nodiscard]] std::vector<Control*> carriedItems(Control& item) override;
         void selectRange(Control* anchor, Control* item, bool keepSelection = false);
         virtual void selectionChanged() {}
@@ -164,8 +155,7 @@ namespace ClaFi::Controls
     StackView::StackView(const CreateParams& params, Args && ...args)
         :
         StackViewBase{ params, std::forward<Args>(args)... },
-        INIT_PROPERTY(selectionMode),
-        INIT_PROPERTY(dragMode)
+        INIT_PROPERTY(selectionMode)
     {
         connectSelectionActions();
     }

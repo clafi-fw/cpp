@@ -48,11 +48,29 @@ is built otherwise.
 
 ## DragMode
 
-A drag from the surface sweeps a rectangle in either mode.
+A drag from the surface of a multi-selection view sweeps a selection rectangle.
 
-- `EasySelect` - for items that stay put and a selection that is only read.
-- `EasyDrag` - for items that move. A drag from a selected item carries the selection - see
-  ItemsOrder - and from any other item carries that item alone.
+- `EasySelect` starts a selection rectangle from an item.
+- `LiveShuffle` moves items among their siblings as the pointer crosses them. See ItemsOrder.
+- `ZoneDrop` offers Before in the top 30% of a row and Inside below it. At the end of a
+  group, the bottom 15% offers Before on the following outer row, or After on the last row
+  when there is no following row. An open header with visible children keeps its Inside zone.
+
+**The view asks CanMoveItemEvent about the source.** ItemsOrder::Rearrangeable enables moving
+visible items. A multi-selection view carries the selected siblings when the press lands on one.
+
+**CanDropItemsEvent asks the application about a destination.** Set allowed to accept the zone.
+Set hint to the text describing the drop. The pointer holds a translucent snapshot of the pressed
+row at the original click point. The action badge sits below the row, with its left edge aligned
+to the pointer. The window grows to fit the badge and its shadow. The action icon shows an arrow
+entering a box for Inside or pointing between rows for insertion. An empty hint reads "Move here".
+A rejected destination shows only the rejection icon.
+The overlay highlights the row for Inside or draws a line for insertion. In a tree, the line
+begins at the destination row's icon column. Holding over Inside for half a second opens the node.
+
+**ItemsDropEvent delivers an accepted release.** Apply the edit to the model using items, target
+and zone. Defer rebuilding the pressed controls until the input event returns. Escape cancels
+the gesture.
 
 ## CanSelectItemEvent
 

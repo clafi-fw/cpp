@@ -887,6 +887,12 @@ namespace ClaFi
                         }
                     }
                     control.paintChildren(*this);
+                    if (m_paintsSelf)
+                    {
+                        m_overlayHost = &control;
+                        m_overlayStage = true;
+                        control.paintOverlay(*this);
+                    }
                     m_overlayHost = savedHost;
                     m_overlayStage = savedStage;
                 }

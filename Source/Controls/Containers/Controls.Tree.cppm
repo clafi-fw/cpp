@@ -56,8 +56,6 @@ namespace ClaFi::Controls
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
     private:
-        [[nodiscard]] float textLead(const Scaler&) const; // where the text begins past the padding
-    private:
         TreeView& m_tree;
         std::size_t m_level;
     };
@@ -173,6 +171,9 @@ namespace ClaFi::Controls
         // Opens the current row's own node and the ones it stands under, and closes every other.
         void collapseOthers();
     protected:
+        [[nodiscard]] float dropLineInset(const Control& row) const override;
+        [[nodiscard]] Control* groupEndDropTarget(Control& row, std::span<Control* const> items) override;
+        void expandDropTarget(Control& row) override;
         void calculateChildren(FormBase&) override;
         bool defaultCanFocusItem(Control&) override;
         void nestedContextPopup(ContextPopupEvent&) override;

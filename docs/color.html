@@ -756,8 +756,15 @@ style names its base. The theme defines the inheritance tree, including its root
 parent link.</p>
 
 <p>The Themes editor shows this tree under <strong>Elements</strong>. Use <strong>Add root
-element</strong> on Elements or <strong>Add child element</strong> on an element. Drag an element
-onto another element to change its base, or onto Elements to make it a root. Deleting an element
+element</strong> on Elements or <strong>Add child element</strong> on an element. Drop on a highlighted
+row to set it as the Base and append the element to its children. Hover there for half a second to
+open a collapsed branch. The dragged row follows the pointer from the point you grabbed.
+The badge below it names the new Base, such as
+&ldquo;Move inside AnyNonWindow&rdquo;. At an insertion line it says &ldquo;Move here&rdquo;.
+Drop at the line above a row to insert the element before it. The line
+starts at that row's icon, showing its level even where a branch ends. The bottom edge of the
+final row also accepts an insertion after it. <code>AnyElement</code> stays at the root. In a theme without
+<code>AnyElement</code>, dropping inside Elements makes the dragged element a root. Deleting an element
 promotes its children to its parent. Undo and Redo cover these edits. The element page shows
 its inheritance parent under <strong>Base</strong>. The <strong>Preview surface</strong> picker
 sets <code>standsOn</code>, the background used to preview the element.</p>

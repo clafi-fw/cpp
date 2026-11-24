@@ -472,6 +472,48 @@ namespace ClaFi::PlatformImplementation::Windows
         }
     }
 
+    Bitmap Direct2DBackend::capturePixels(const IntRect& rect) const
+    {
+        if (!m_targetBitmap || m_isPainting || rect.empty() || rect.left < 0 || rect.top < 0)
+        {
+            return {};
+        }
+        const D2D1_SIZE_U size = m_targetBitmap->GetPixelSize();
+        if (static_cast<UINT32>(rect.right) > size.width || static_cast<UINT32>(rect.bottom) > size.height)
+        {
+            return {};
+        }
+
+        const D2D1_BITMAP_PROPERTIES1 properties = D2D1::BitmapProperties1(
+            D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW, m_targetBitmap->GetPixelFormat());
+        ComPtr<ID2D1Bitmap1> staging;
+        if (FAILED(m_deviceContext->CreateBitmap(D2D1::SizeU(rect.width(), rect.height()),
+            nullptr, 0, &properties, staging.GetAddressOf())))
+        {
+            return {};
+        }
+        const D2D1_RECT_U area = D2D1::RectU(rect.left, rect.top, rect.right, rect.bottom);
+        if (FAILED(staging->CopyFromBitmap(nullptr, m_targetBitmap.Get(), &area)))
+        {
+            return {};
+        }
+
+        Bitmap result{ rect.dimensions() };
+        D2D1_MAPPED_RECT mapped{};
+        if (FAILED(staging->Map(D2D1_MAP_OPTIONS_READ, &mapped)))
+        {
+            return {};
+        }
+        const BYTE* row = mapped.bits;
+        for (int y = 0; y < result.height(); ++y)
+        {
+            std::memcpy(result.pixel(0, y), row, result.width() * sizeof(Color));
+            row += mapped.pitch;
+        }
+        staging->Unmap();
+        return result;
+    }
+
     void Direct2DBackend::endPaint(void* /* nativeContext */, const IntRect* /* dirtyRect */, Bitmap*&)
     {
         if (!m_deviceContext || !m_isPainting)

@@ -563,6 +563,11 @@ a walk in document order rather than over what is on screen.
 **The framework drives it**, asking a control for its tooltip through nestedAdjustTooltip. A control
 that must show its tooltip at once calls `form().tooltip().showRightNow(control)`.
 
+At the start of a drag, `showDragPreview(control, std::move(bitmap), hotspot)` places the snapshot
+and the control's action tooltip in one click-through window. The hotspot is the press position in
+bitmap pixels. Call `showRightNow(control)` as the pointer moves and `stopAndHide()` when the drag
+ends. An empty bitmap shows the action tooltip alone.
+
 **A tooltip is a caption and a body.** The caption line holds the control's name and the key that
 runs it, in bold; the body is what the control or its action states. Either part stands on its own,
 and with neither there is no tooltip.

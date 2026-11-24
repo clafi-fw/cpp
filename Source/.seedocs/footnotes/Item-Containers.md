@@ -119,7 +119,7 @@ inside the item has taken for its own - a text box selecting - is no carry.
 - A `Horizontal` or `Vertical` stack only. A wrapping stack carries nothing.
 - An item lands among the movable items around it. One the stack or a handler keeps in place -
   a grid's header, its new-item row - bounds the run.
-- A StackView under SelectionMode::Multi and DragMode::EasyDrag carries the selection, as one
+- A StackView under SelectionMode::Multi and DragMode::LiveShuffle carries the selection, as one
   block - see DragMode.
 
 ## CanMoveItemEvent

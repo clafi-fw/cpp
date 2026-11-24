@@ -17,12 +17,21 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    // Scaling the mark and its padding separately keeps the icon aligned with a header's mark slot.
+    static float treeRowLead(const Scaler& scaler, const std::size_t level)
+    {
+        return scaler.scale(static_cast<float>(level) * TreeRows::Step)
+            + scaler.scale(TreeRows::MarkSize)
+            + scaler.scale(TreeRows::MarkPadding) * 2.0f
+            + scaler.scale(TreeRows::Gap);
+    }
+
     // TreeItem
 
     ScaledSize TreeItem::calculateContent(AlignEvent& event)
     {
         ScaledSize result = ToolButton::calculateContent(event);
-        result.x += textLead(event.scaler());
+        result.x += treeRowLead(event.scaler(), m_level);
         return result;
     }
 
@@ -31,7 +40,7 @@ namespace ClaFi::Controls
     void TreeItem::alignContent(AlignEvent& event, ScaledPosition position,
         ScaledSize& contentSize)
     {
-        const float lead = textLead(event.scaler());
+        const float lead = treeRowLead(event.scaler(), m_level);
         contentSize.x = std::max(0.0f, contentSize.x - lead);
         position.x += lead;
         ToolButton::alignContent(event, position, contentSize);
@@ -50,24 +59,14 @@ namespace ClaFi::Controls
     FloatRect TreeItem::iconRect(const PaintEvent& event) const
     {
         FloatRect result = ToolButton::iconRect(event);
-        result.offset(textLead(event.scaler()), 0.0f);
+        result.offset(treeRowLead(event.scaler(), m_level), 0.0f);
         return result;
     }
 
     void TreeItem::adjustTextRect(AdjustTextRectEvent& event) const
     {
-        event.textBounds.left += textLead(event.scaler());
+        event.textBounds.left += treeRowLead(event.scaler(), m_level);
         ToolButton::adjustTextRect(event);
-    }
-
-    // Each part is scaled on its own, the way the header scales its lead, its mark and its
-    // spacing, so the rounding comes out the same in both.
-    float TreeItem::textLead(const Scaler& scaler) const
-    {
-        return scaler.scale(static_cast<float>(m_level) * TreeRows::Step)
-            + scaler.scale(TreeRows::MarkSize)
-            + scaler.scale(TreeRows::MarkPadding) * 2.0f
-            + scaler.scale(TreeRows::Gap);
     }
 
     // TreeDivider
@@ -188,6 +187,71 @@ namespace ClaFi::Controls
             node.header().setExpanded(holdsCurrentRow(node));
         }
         showCurrentRow();
+    }
+
+    float TreeView::dropLineInset(const Control& row) const
+    {
+        std::size_t level = 0;
+        for (const Control* part = row.parent(); part && part != this; part = part->parent())
+        {
+            if (part->isHostedAsBody())
+            {
+                ++level;
+            }
+        }
+        return row.scaledPadding().x + treeRowLead(scaler(), level);
+    }
+
+    Control* TreeView::groupEndDropTarget(Control& row, const std::span<Control* const> items)
+    {
+        Control* item = &row;
+        const auto branch = std::ranges::find(m_nodes, row.parent());
+        if (branch != m_nodes.end() && &(*branch)->header() == &row)
+        {
+            TreeNode& node = **branch;
+            if (node.header().expanded() && std::ranges::any_of(node.rows().controls(),
+                [](const ControlPtr& child) { return child->visible(); }))
+            {
+                return nullptr;
+            }
+            item = &node;
+        }
+        if (nextVisibleSiblingOf(*item))
+        {
+            return nullptr;
+        }
+        // At the foot of a branch the following outer row owns the gap from either side.
+        while (item->parent() && item->parent()->isHostedAsBody())
+        {
+            const auto owner = std::ranges::find(m_nodes, item->parent()->parent());
+            if (owner == m_nodes.end())
+            {
+                break;
+            }
+            if (std::ranges::find(items, &(*owner)->header()) != items.end())
+            {
+                return nullptr;
+            }
+            item = *owner;
+            if (Control* next = nextVisibleSiblingOf(*item))
+            {
+                const auto node = std::ranges::find(m_nodes, next);
+                return node == m_nodes.end() ? next : &(*node)->header();
+            }
+        }
+        return &row;
+    }
+
+    void TreeView::expandDropTarget(Control& row)
+    {
+        for (TreeNode* node : m_nodes)
+        {
+            if (&node->header() == &row)
+            {
+                node->header().setExpanded(true);
+                return;
+            }
+        }
     }
 
     // **Every row is one line**, and where the tree's width is given no row's width is read, so
