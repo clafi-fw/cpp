@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Documents - Developer Manual</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
+    </style>
+</head>
+<
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header"><a href="index.html">ClaFi Manuals</a></div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#storages">Document storages</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#application">Building a document browser</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#files">Working with files</a></div></li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header><h1>Documents</h1></header>
+        <main>
+<p>A document browser opens and edits one kind of file across a set of filesystem folders.</p>
+
+<h2 id="storages">Document storages</h2>
+<p>The <strong>Storages</strong> menu on a document listing opens a configured folder. Its commands
+add a folder or change, remove, or set read-only access on the folder being shown. Removing a storage
+removes its entry and leaves the folder and its files on disk.</p>
+<p>When application settings are enabled, the browser keeps storage paths and access settings there.
+Each added storage has its own path segment in the browser, so files with the same name open independently.
+Changing a storage's folder gives the replacement a new path segment. An open tab keeps the file it
+was opened on and can save a copy after its original storage is detached.</p>
+<p>A read-only storage supports opening documents. The browser protects the storage from New, Rename,
+Delete and Save. Save as uses the current storage when it is writable, then tries the primary storage
+and the remaining storages in order. The name prompt identifies the destination when it uses another
+storage.</p>
+
+<h2 id="application">Building a document browser</h2>
+<p>Import <code>ClaFi.Documents</code>. Derive a <code>DocumentsFolder</code> to define the file format,
+icons, and what counts as an edited file. Keep it alive while the browser runs. Pass it to
+<code>DocumentsApplication::run</code> as the primary folder and format for all the browser's storages.
+The application constructor adds storage settings to the root schema.</p>
+<p><code>DocumentsBrowser</code> takes the application's home-page and document-page types. Pages
+receive the format folder through <code>folder()</code> and the folder they show through
+<code>storageFolder()</code>. Custom lists can read the <code>DocumentStorageView</code> construction
+property for the folder and for the flag that identifies the main home view. A custom browser can use
+<code>documentPath</code> to get a browser path from a storage and a filename.</p>
+
+<h2 id="files">Working with files</h2>
+<p>Use <code>DocumentsFolder::saveDocument</code>, <code>createFile</code>, <code>renameFile</code>,
+and <code>deleteFile</code> for browser commands. These functions enforce a storage's access setting.
+<code>canWriteFile</code> also checks the file's location and rejects symbolic links. The virtual
+<code>writeDocument</code> is the application's format implementation.</p>
+        </main>
+    </div>
+</body>
+</html>

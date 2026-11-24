@@ -28,6 +28,11 @@ namespace ClaFi::Documents
         return m_path.stem().wstring();
     }
 
+    EditorMode DocumentTile::editorMode() const
+    {
+        return m_folder.canWriteFile(m_path) ? Base::editorMode() : EditorMode::None;
+    }
+
     void DocumentTile::drawIcon(DrawIconEvent& event)
     {
         m_folder.drawIcon(fileName(), event);

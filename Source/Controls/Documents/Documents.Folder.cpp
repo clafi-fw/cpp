@@ -33,18 +33,54 @@ namespace ClaFi::Documents
                 .number = std::wcstol(stem.data() + i, &end, 10)
             };
         }
+
+        [[nodiscard]] std::filesystem::path resolvedDirectory(const std::filesystem::path& path)
+        {
+            if (path.empty())
+            {
+                return {};
+            }
+            std::error_code error;
+            const std::filesystem::path absolute = std::filesystem::absolute(path, error);
+            if (error)
+            {
+                return {};
+            }
+            std::filesystem::path resolved = std::filesystem::weakly_canonical(absolute, error);
+            if (error)
+            {
+                return {};
+            }
+            if (resolved != resolved.root_path() && !resolved.has_filename())
+            {
+                resolved = resolved.parent_path();
+            }
+            return resolved;
+        }
     }
 
     DocumentsFolder::DocumentsFolder(const std::filesystem::path& directory,
         const DocumentKind& kind)
         :
         m_directory{ directory },
+        m_resolvedDirectory{ resolvedDirectory(directory) },
         m_kind{ kind }
     {
-        m_dirWatchConnection = m_dirWatcher.onChange([this](DirWatchChangeEvent&) {
-            m_loaded = false;
-            notifyListeners();
-        });
+        watchDirectory();
+    }
+
+    void DocumentsFolder::setReadOnly(const bool readOnly)
+    {
+        m_readOnly = readOnly;
+    }
+
+    void DocumentsFolder::detach()
+    {
+        m_available = false;
+        m_dirWatchConnection = {};
+        m_dirWatcher.reset();
+        m_loaded = false;
+        notifyListeners();
     }
 
     const FilePaths& DocumentsFolder::files()
@@ -55,7 +91,21 @@ namespace ClaFi::Documents
 
     std::filesystem::path DocumentsFolder::fileOf(const std::wstring_view fileName) const
     {
-        return m_directory / fileName;
+        const std::filesystem::path name{ fileName };
+        if (m_directory.empty() || name.empty() || name.has_root_path()
+            || name != name.filename() || name == L"." || name == L".."
+            || fileName.find(L'\0') != std::wstring_view::npos)
+        {
+            return {};
+        }
+        if constexpr (std::filesystem::path::preferred_separator == L'\\')
+        {
+            if (fileName.find(L':') != std::wstring_view::npos)
+            {
+                return {};
+            }
+        }
+        return m_directory / name;
     }
 
     std::wstring DocumentsFolder::fileNameOf(const std::wstring_view stem) const
@@ -63,21 +113,64 @@ namespace ClaFi::Documents
         return std::wstring{ stem }.append(m_kind.extension);
     }
 
+    bool DocumentsFolder::canWrite() const
+    {
+        return m_available && !m_readOnly && !m_directory.empty();
+    }
+
+    bool DocumentsFolder::canWriteFile(const std::filesystem::path& path) const
+    {
+        if (!canWrite() || path.empty() || path != fileOf(path.filename().wstring())
+            || !directoryUnchanged())
+        {
+            return false;
+        }
+        std::error_code error;
+        const std::filesystem::file_status status = std::filesystem::symlink_status(path, error);
+        return status.type() == std::filesystem::file_type::not_found
+            || (!error && std::filesystem::is_regular_file(status));
+    }
+
+    bool DocumentsFolder::saveDocument(const Dom::DomNodeBase& document,
+        const std::filesystem::path& path)
+    {
+        if (!canWriteFile(path))
+        {
+            return false;
+        }
+        needDirectory();
+        std::error_code error;
+        return std::filesystem::is_directory(m_directory, error)
+            && canWriteFile(path) && writeDocument(document, path);
+    }
+
+    bool DocumentsFolder::deleteFile(const std::filesystem::path& path) const
+    {
+        if (!canWriteFile(path))
+        {
+            return false;
+        }
+        std::error_code error;
+        return std::filesystem::remove(path, error);
+    }
+
     bool DocumentsFolder::needDirectory()
     {
         std::error_code errorCode;
-        if (m_directory.empty() || std::filesystem::exists(m_directory, errorCode))
+        if (!canWrite() || !directoryUnchanged() || std::filesystem::exists(m_directory, errorCode))
             return false;
         if (!std::filesystem::create_directories(m_directory, errorCode))
             return false;
-        m_dirWatcher.restart();
+        watchDirectory();
         return true;
     }
 
     std::wstring DocumentsFolder::createFile(const DocumentTemplate* documentTemplate)
     {
-        if (m_directory.empty())
+        if (!canWrite())
+        {
             return {};
+        }
         needDirectory();
 
         const std::wstring_view stem = documentTemplate && !documentTemplate->newStem.empty()
@@ -91,12 +184,19 @@ namespace ClaFi::Documents
             ++counter;
             file = newFile(stem, counter);
         }
-        while (std::filesystem::exists(file, errorCode));
+        while (std::filesystem::exists(std::filesystem::symlink_status(file, errorCode)));
+
+        if (!canWriteFile(file))
+        {
+            return {};
+        }
 
         if (documentTemplate && documentTemplate->document)
         {
-            if (!writeDocument(*documentTemplate->document, file))
+            if (!saveDocument(*documentTemplate->document, file))
+            {
                 return {};
+            }
         }
         else
         {
@@ -110,6 +210,11 @@ namespace ClaFi::Documents
     std::wstring DocumentsFolder::renameFile(const std::filesystem::path& oldPath,
         AcceptEditEvent& event) const
     {
+        if (!canWriteFile(oldPath))
+        {
+            event.refuse(L"This file is read-only.");
+            return {};
+        }
         const std::wstring newStem{ event.text.plainText() };
         checkNameShape(event, newStem);
         if (event.refused())
@@ -121,6 +226,11 @@ namespace ClaFi::Documents
         const std::wstring newName = fileNameOf(newStem);
         std::filesystem::path newPath = oldPath;
         newPath.replace_filename(newName);
+        if (!canWriteFile(newPath))
+        {
+            event.refuse(L"This name cannot be used.");
+            return {};
+        }
 
         std::error_code errorCode;
         // The name that is already taken may be this file's own: the stem comparison above is
@@ -181,13 +291,17 @@ namespace ClaFi::Documents
         m_files.clear();
 
         std::error_code errorCode;
-        if (std::filesystem::exists(m_directory, errorCode))
+        if (m_available && std::filesystem::is_directory(m_directory, errorCode))
         {
-            for (const std::filesystem::directory_entry& entry :
-                std::filesystem::directory_iterator{ m_directory, errorCode })
+            const std::filesystem::directory_iterator end{};
+            for (std::filesystem::directory_iterator item{ m_directory, errorCode };
+                item != end && !errorCode; item.increment(errorCode))
             {
-                if (entry.is_regular_file() && entry.path().extension() == m_kind.extension)
-                    m_files.push_back(entry.path());
+                std::error_code statusError;
+                if (item->is_regular_file(statusError) && item->path().extension() == m_kind.extension)
+                {
+                    m_files.push_back(item->path());
+                }
             }
 
             using Path = std::filesystem::path;
@@ -205,6 +319,11 @@ namespace ClaFi::Documents
         filesRead(m_files);
     }
 
+    bool DocumentsFolder::directoryUnchanged() const
+    {
+        return !m_resolvedDirectory.empty() && resolvedDirectory(m_directory) == m_resolvedDirectory;
+    }
+
     std::filesystem::path DocumentsFolder::newFile(const std::wstring_view stem,
                                                    const int counter) const
     {
@@ -217,12 +336,27 @@ namespace ClaFi::Documents
 
     void DocumentsFolder::watchDirectory()
     {
-        if (m_dirWatcher.watching())
+        if (!m_available || (m_dirWatcher && m_dirWatcher->watching()))
+        {
             return;
+        }
         std::error_code errorCode;
-        if (!std::filesystem::exists(m_directory, errorCode))
+        if (!std::filesystem::is_directory(m_directory, errorCode))
+        {
             return;
-        m_dirWatcher.restart();
+        }
+        if (m_dirWatcher)
+        {
+            m_dirWatcher->restart();
+        }
+        else
+        {
+            m_dirWatcher.emplace(m_directory);
+            m_dirWatchConnection = m_dirWatcher->onChange([this](DirWatchChangeEvent&) {
+                m_loaded = false;
+                notifyListeners();
+            });
+        }
         // Whatever the list holds was read while nothing was watching, so it is read again.
         m_loaded = false;
     }

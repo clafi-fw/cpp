@@ -163,8 +163,7 @@ namespace ClaFi
         const std::filesystem::path& path) const
     {
         const Dom::FileFormat::ClaFi ff;
-        ff.saveSectionToFile(*statedTheme(node.as<Dom::Section>()), path);
-        return true;
+        return ff.saveSectionToFile(*statedTheme(node.as<Dom::Section>()), path);
     }
 
     // A theme file states only what it differs from the defaults in, so one that states nothing

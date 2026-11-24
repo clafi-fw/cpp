@@ -525,7 +525,7 @@ namespace Themes_App
         // user theme from taking one. The extension cannot answer it: a file the user put in the
         // directory called Foo.theme carries the built-ins' extension and is not one of them.
         const std::wstring stem = std::filesystem::path{ pageData().name }.stem().wstring();
-        return ThemesManager::isReservedName(stem);
+        return primaryStorage() && ThemesManager::isReservedName(stem);
     }
 
     Hsl ThemePage::elementColor(const std::wstring_view style)

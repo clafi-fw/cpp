@@ -2,9 +2,9 @@
 
 The words that do not fit above a declaration.
 
-A documents application is a browser over one folder of files of one kind. The home page lists
-the folder as tiles, a document page edits one file, and the tab keeps the document as it is on
-screen. The application states the kind, the editor control and what its tool bar adds.
+A documents application is a browser over folders of files of one kind. A storage page lists its
+folder as tiles, a document page edits one file, and the tab holds the document as it is on screen.
+The application states the kind, the editor control and what its tool bar adds.
 
 ## DocumentKind
 
@@ -20,11 +20,26 @@ and its strip lists them all. With none, New makes an empty file.
 
 **The derived folder states the format** - readDocument, writeDocument, drawIcon and isEdited.
 
-**The application owns the folder.** It is built after the platform and outlives every window.
-Hand it on as a `DocumentsFolder*` prop - the exact type Props::get looks for.
+**The application owns the format and primary folder.** Its derived `DocumentsFolder` is built
+after the platform and outlives the browser. The browser uses its format for each storage.
 
 **The list is read on demand.** A report from the directory watch tells every listener, and the
 next files() reads the disk. A missing directory reads as an empty list, and filesRead is told so.
+
+## DocumentsFolder saveDocument
+
+**Save into a storage through this function.** It checks that the storage permits writes and that
+the path is a direct file in its directory, then calls the format's `writeDocument`.
+
+## DocumentsFolder detach
+
+**A detached folder remains available to pages that hold it as their original source.** Its list
+is empty and writes are disabled. The folder stops reporting directory changes.
+
+## DocumentStorageView
+
+**The folder prop identifies the storage a browser list displays.** The `primary` flag identifies
+the main home view, which can also show items supplied by the application.
 
 ## DocumentsFolder templates
 
@@ -84,6 +99,7 @@ of the page's own then stands over the browser's.
 them with editHandler and menuHandler. Every command waits for that connection.
 
 - New makes a file from the first template, or an empty one, and opens an editor over its tile.
+- Storages opens a folder or lets the user add, change, remove or set the access of a storage.
 - Delete serves the tool bar button, the Delete key and the menu item alike, over the selection. It
   asks once, and only where isEdited says a selected file holds work.
 - Open acts on the current tile. A right mouse click makes the tile under the pointer current.
@@ -97,6 +113,8 @@ With the default DocumentsList it is the whole home page of a flat list of docum
 
 - Save writes the page's file and says so beside the button.
 - Save as writes under a new name and takes the tab there, leaving the original as it was.
+- A read-only storage allows opening documents and disables Save. Save as uses a writable storage
+  when one is configured.
 - A name already taken asks before replacing the file.
 - A page with no file of its own answers no to canSaveEdits, and its Save works as Save as.
 
@@ -125,7 +143,8 @@ and a key inside a box still reaches the box.
 
 ## DocumentsBrowserBase
 
-**The home crumb's strip lists the folder's files**, fetched again on every drop.
+**The home crumb's strip lists the primary files and extra storages.** Each extra storage has a
+stable path segment and a crumb whose strip lists its own files. Both strips fetch on every drop.
 
 **A page holds its page data by reference**, so a tab that moves to another gets a new page, even
 of the same kind.
@@ -133,8 +152,8 @@ of the same kind.
 ## DocumentsBrowserBase documentFileOf
 
 **It asks the disk**, since the folder's list waits for the directory watch. The path is empty for
-the home page and for a document whose file has gone. A page can be renamed only where this
-returns a path.
+storage pages, detached folders and documents whose files have gone. Rename also checks whether
+the storage allows writes.
 
 ## DocumentsBrowser
 

@@ -102,6 +102,8 @@ namespace ClaFi
             const UserTheme*);
     private:
         ThemesManager& m_themes;
+        DocumentStorageView m_storage;
+        UserThemeList m_storageThemes{};
         // What a tile's own name is kept in, and nothing where the list does not rename. A tile
         // with no handler connected offers no Rename at all - see WithInPlaceEdit.
         DocumentEditHandler m_editTheme{};
@@ -182,12 +184,15 @@ namespace ClaFi
         // The application's own manager: a themes list is built over nothing else, whatever
         // folder prop a host hands its tiles.
         m_themes{ appThemes() },
+        // The application theme picker uses the primary view when it has no browser storage.
+        m_storage{ READ_PROPERTY(DocumentStorageView, (DocumentStorageView{ &m_themes, true })) },
         // The host's answer to a name typed over a tile, where it wants one.
         m_editTheme{ READ_PROPERTY(DocumentEditHandler, nullptr) },
         // The host's answer to a tile raising its menu, where it wants one.
         m_tileMenu{ READ_PROPERTY(DocumentMenuHandler, nullptr) }
     {
-        m_themes.listeners().insert(this);
+        m_storage.folder->listeners().insert(this);
+        m_builtInGroup.setVisible(m_storage.primary);
 
         onCanFocusItem([this](CanFocusItemEvent& event) {
             event.canFocus = event.item.parent() == &m_userTiles

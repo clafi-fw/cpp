@@ -71,7 +71,8 @@ namespace ClaFi
 
     ThemesList::~ThemesList()
     {
-        m_themes.listeners().erase(this);
+        m_storage.folder->listeners().erase(this);
+        m_userTiles.clearControls();
     }
 
     DocumentTiles ThemesList::tiles()
@@ -141,9 +142,27 @@ namespace ClaFi
         m_builtInTiles.clearControls();
         m_userTiles.clearControls();
 
-        addTile(m_builtInTiles, defaultTheme(), m_themes.fileOf(k_defaultThemeName), nullptr);
-        for (const UserThemePtr& theme : m_themes.userThemes())
+        if (m_storage.primary)
+        {
+            addTile(m_builtInTiles, defaultTheme(), std::filesystem::path{ k_defaultThemeName }, nullptr);
+        }
+        const UserThemeList* themes = &m_storageThemes;
+        if (m_storage.folder == &m_themes)
+        {
+            themes = &m_themes.userThemes();
+        }
+        else
+        {
+            m_storageThemes.clear();
+            for (const std::filesystem::path& path : m_storage.folder->files())
+            {
+                m_storageThemes.push_back(std::make_unique<UserTheme>(path));
+            }
+        }
+        for (const UserThemePtr& theme : *themes)
+        {
             addTile(m_userTiles, theme->theme(), theme->path(), &*theme);
+        }
 
         // A tile is as many lines of name as it needs inside a fixed width, so a list built
         // afresh is a new height. See the deferred-request rule: ask, do not lay out from here.
@@ -156,7 +175,7 @@ namespace ClaFi
         const std::filesystem::path& file, const UserTheme* userTheme)
     {
         ThemeTile& tile = group.add<ThemeTile>(
-            DocumentTileData{ &m_themes, file },
+            DocumentTileData{ m_storage.folder, file },
             ThemeTileData{ &theme, userTheme },
             IndicatorStyle::Check,
             Text{ file.stem().wstring() }

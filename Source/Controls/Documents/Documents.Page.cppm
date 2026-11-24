@@ -51,6 +51,8 @@ namespace ClaFi::Documents
     protected:
         static constexpr IconSize k_toolButtonIconSize{ 18.0f };
     private:
+        [[nodiscard]] bool canWriteBack() const;
+        [[nodiscard]] DocumentsFolder* saveAsStorage() const;
         // Writes the page's work to its own file, and answers whether it got there.
         [[nodiscard]] bool writeDocument() const;
         [[nodiscard]] Text notSavedText() const; // what a write that did not get there says
@@ -58,7 +60,7 @@ namespace ClaFi::Documents
         // is left on the disk as it stands, which is what tells this from Save.
         void saveAs(Control& initiator);
         // Asks for a name and writes the work to it, and does no more than that. Answers the file
-        // name it wrote, or nothing where the user would not give one.
+        // page path it wrote, or nothing where the user would not give one.
         [[nodiscard]] std::wstring saveAsFile(Control& initiator) const;
         // Puts the name the user typed back to them where a file already stands under it, and
         // answers whether they said to write over it.
@@ -111,11 +113,14 @@ namespace ClaFi::Documents
         m_saveButton.dropdownAction(StdActions::saveAs);
 
         onGetActionState([this](GetActionStateEvent& event) {
-            // Claiming says this page is what the command acts on. Neither is ever refused: a
-            // page with no file of its own still has somewhere to put the work, and Save asks
-            // where rather than saying no.
-            if (&event.action == &StdActions::save || &event.action == &StdActions::saveAs)
-                event.claim({});
+            if (&event.action == &StdActions::save)
+            {
+                event.claim({ .enabled = canSaveEdits() ? canWriteBack() : saveAsStorage() != nullptr });
+            }
+            else if (&event.action == &StdActions::saveAs)
+            {
+                event.claim({ .enabled = saveAsStorage() != nullptr });
+            }
         });
 
         onActionClick([this](ActionClickEvent& event) {
@@ -135,6 +140,10 @@ namespace ClaFi::Documents
             // that runs.
             if (isSave && canSaveEdits())
             {
+                if (!canWriteBack())
+                {
+                    return;
+                }
                 // A write leaves nothing on screen to say it happened - the page looks exactly as
                 // it did - so the command says so itself, beside the button that ran it.
                 const std::wstring_view noun = folder().kind().noun;

@@ -57,6 +57,10 @@ namespace ClaFi::Documents
         // Empty where the platform names no folder, and then nothing is ever written.
         [[nodiscard]] const std::filesystem::path& directory() const { return m_directory; }
         [[nodiscard]] const DocumentKind& kind() const { return m_kind; }
+        [[nodiscard]] bool available() const { return m_available; }
+        [[nodiscard]] bool readOnly() const { return m_readOnly; }
+        void setReadOnly(bool readOnly);
+        void detach();
         // What a new file can be made from, in the order New lists them.
         [[nodiscard]] DocumentTemplates& templates() { return m_templates; }
         [[nodiscard]] const DocumentTemplates& templates() const { return m_templates; }
@@ -65,6 +69,10 @@ namespace ClaFi::Documents
         [[nodiscard]] const FilePaths& files();
         [[nodiscard]] std::filesystem::path fileOf(std::wstring_view fileName) const;
         [[nodiscard]] std::wstring fileNameOf(std::wstring_view stem) const;
+        [[nodiscard]] bool canWrite() const;
+        [[nodiscard]] bool canWriteFile(const std::filesystem::path&) const;
+        [[nodiscard]] bool saveDocument(const Dom::DomNodeBase&, const std::filesystem::path&);
+        [[nodiscard]] bool deleteFile(const std::filesystem::path&) const;
         // Makes the folder where there is none yet, and answers whether it had to.
         bool needDirectory();
         // Makes a file numbered past the names taken, from the template where one is given.
@@ -92,18 +100,29 @@ namespace ClaFi::Documents
         [[nodiscard]] bool matchesTemplate(const std::filesystem::path&) const;
         void update();
     private:
+        [[nodiscard]] bool directoryUnchanged() const;
         [[nodiscard]] std::filesystem::path newFile(std::wstring_view stem, int counter) const;
         // Puts the watch over a directory that was made after the watch was set up.
         void watchDirectory();
         void notifyListeners() const;
     private:
         std::filesystem::path m_directory;
+        std::filesystem::path m_resolvedDirectory{};
         DocumentKind m_kind;
         DocumentTemplates m_templates{};
-        DirWatch m_dirWatcher{ m_directory };
+        std::optional<DirWatch> m_dirWatcher{};
         ScopedEventConnection m_dirWatchConnection{};
+        bool m_available{ true };
+        bool m_readOnly{ false };
         bool m_loaded{ false };
         FilePaths m_files{};
         std::set<IListener*> m_listeners{};
+    };
+
+    // The folder a browser page shows and whether it is the primary view. See Documents
+    export struct DocumentStorageView
+    {
+        DocumentsFolder* folder;
+        bool primary;
     };
 }

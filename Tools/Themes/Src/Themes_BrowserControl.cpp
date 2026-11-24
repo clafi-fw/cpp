@@ -59,12 +59,25 @@ namespace Themes_App
             return true;
         }
 
-        auto& manager = static_cast<ThemesManager&>(folder());
-        static_cast<void>(manager.userThemes());
-        const AppTheme* theme = manager.themeByName(themePath.substr(1));
-        if (!theme || !theme->styles.of(name))
+        const PageData* data = findPageData(themePath);
+        if (!data || !isDocumentPage(*data))
         {
             return false;
+        }
+        if (data->parent == &homePageData() && data->name == k_defaultPageName)
+        {
+            if (!defaultTheme().styles.of(name))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            const std::filesystem::path file = documentFileOf(*data);
+            if (file.empty() || !UserTheme{ file }.theme().styles.of(name))
+            {
+                return false;
+            }
         }
 
         goToLater(Url{ themePath, styleAnchor(name) });
@@ -73,11 +86,10 @@ namespace Themes_App
 
     void ThemesBrowser::fetchSubItems(PageData& data)
     {
-        if (!isHomePage(data))
-            return;
-        // The built-in first, then the folder's files as the base names them: the same themes
-        // the home page shows, in the order it shows them.
-        addSubItem(data, k_defaultPageName);
+        if (isHomePage(data))
+        {
+            addSubItem(data, k_defaultPageName);
+        }
         Base::fetchSubItems(data);
     }
 
@@ -107,7 +119,8 @@ namespace Themes_App
     // the one a theme file carries - and both are theme pages.
     bool ThemesBrowser::isDocumentPage(const PageData& data) const
     {
-        return Base::isDocumentPage(data) || data.name.ends_with(k_builtInThemeExtension);
+        return Base::isDocumentPage(data) || (data.parent == &homePageData()
+            && data.name.ends_with(k_builtInThemeExtension));
     }
 
     std::filesystem::path ThemesBrowser::documentFileOf(const PageData& data) const
@@ -115,7 +128,8 @@ namespace Themes_App
         // The same test that keeps a user theme from taking a built-in's name. The extension
         // cannot answer it: a file the user drops in the directory called Foo.theme carries the
         // built-ins' extension and is not one of them.
-        if (ThemesManager::isReservedName(std::filesystem::path{ data.name }.stem().wstring()))
+        if (data.parent == &homePageData()
+            && ThemesManager::isReservedName(std::filesystem::path{ data.name }.stem().wstring()))
             return {};
         return Base::documentFileOf(data);
     }

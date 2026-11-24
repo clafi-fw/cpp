@@ -46,6 +46,7 @@ namespace ClaFi::Documents
         [[nodiscard]] std::wstring fileName() const;
         [[nodiscard]] std::wstring stem() const;
     protected:
+        [[nodiscard]] EditorMode editorMode() const override;
         void drawIcon(DrawIconEvent&) override;
     private:
         using Base = WithInPlaceEdit<Button>;

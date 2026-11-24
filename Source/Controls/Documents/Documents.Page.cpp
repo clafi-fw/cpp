@@ -1,6 +1,7 @@
 module ClaFi.Documents.Page;
 
 import ClaFi.Documents.BasePage;
+import ClaFi.Documents.Browser;
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.Utils;
 
@@ -43,7 +44,7 @@ namespace ClaFi::Documents
 
     bool DocumentPage::saveEdits(Control& initiator) const
     {
-        if (canSaveEdits())
+        if (canWriteBack())
         {
             // The leaving question stays up on a failed write, so the reason stands under the
             // answer that was pressed.
@@ -65,7 +66,7 @@ namespace ClaFi::Documents
 
     std::filesystem::path DocumentPage::documentFile() const
     {
-        return folder().fileOf(pageData().name);
+        return storageFolder().fileOf(pageData().name);
     }
 
     bool DocumentPage::loadDocument() const
@@ -75,7 +76,7 @@ namespace ClaFi::Documents
 
     bool DocumentPage::readSavedDocument(Dom::DomNodeBase& into) const
     {
-        return folder().readDocument(documentFile(), into);
+        return storageFolder().readDocument(documentFile(), into);
     }
 
     void DocumentPage::setEditHistory(IEditHistory& history)
@@ -85,11 +86,20 @@ namespace ClaFi::Documents
         StdActions::redo.invalidateState();
     }
 
+    bool DocumentPage::canWriteBack() const
+    {
+        return canSaveEdits() && storageFolder().canWriteFile(documentFile());
+    }
+
+    DocumentsFolder* DocumentPage::saveAsStorage() const
+    {
+        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
+        return browser.saveAsStorage(pageData());
+    }
+
     bool DocumentPage::writeDocument() const
     {
-        // The folder can go while a page stands open on one of its files.
-        folder().needDirectory();
-        return folder().writeDocument(documentNode(), documentFile());
+        return canWriteBack() && storageFolder().saveDocument(documentNode(), documentFile());
     }
 
     Text DocumentPage::notSavedText() const
@@ -100,12 +110,12 @@ namespace ClaFi::Documents
 
     void DocumentPage::saveAs(Control& initiator)
     {
-        const std::wstring fileName = saveAsFile(initiator);
-        if (fileName.empty())
+        const std::wstring path = saveAsFile(initiator);
+        if (path.empty())
             return;
         // The name the page already has: the file was written over, which is Save, and the tab
         // stands where it stands.
-        if (fileName == pageData().name)
+        if (path == pageData().path())
             return;
 
         // Said before the tab moves, and read by the question canLeavePage puts. The work is on
@@ -115,33 +125,50 @@ namespace ClaFi::Documents
         // **Only the going waits**: taking the tab to what it wrote rebuilds this page, and the
         // frames above the press go on reading the button that goes down with it. The browser holds
         // that wait, because it outlives what the going destroys.
-        tab().browserControl().goToLater(Url{ pagePathOfDocument(fileName), tab().anchor() });
+        tab().browserControl().goToLater(Url{ path, tab().anchor() });
     }
 
     std::wstring DocumentPage::saveAsFile(Control& initiator) const
     {
+        DocumentsFolder* storage = saveAsStorage();
+        if (!storage)
+        {
+            ContextMessage::show(initiator, Text{ L"Add or enable a writable storage to save a copy." });
+            return {};
+        }
         const DocumentKind& kind = folder().kind();
         // The prompt opens on the name this page already stands under - the name the user is
         // working from, and the one they are about to vary.
         const std::wstring currentStem = std::filesystem::path{ pageData().name }.stem().wstring();
-
+        std::wstring title = std::wstring{ L"Save " }.append(kind.noun).append(L" as");
+        if (storage != &storageFolder())
+        {
+            title.append(L" in ").append(storage->directory().wstring());
+        }
         PromptDialog dialog{
             initiator,
-            std::wstring{ L"Save " }.append(kind.noun).append(L" as"),
+            title,
             currentStem,
             MessageIcon::Question
         };
-        dialog.onAccept([this](AcceptEditEvent& event) {
+        dialog.onAccept([this, storage](AcceptEditEvent& event) {
             const std::wstring stem{ event.text.plainText() };
             folder().checkNameShape(event, stem);
             if (event.refused())
                 return;
 
+            const std::filesystem::path path = storage->fileOf(storage->fileNameOf(stem));
+            if (!storage->canWriteFile(path))
+            {
+                event.refuse(L"This file cannot be written.");
+                return;
+            }
+
             // **A name already taken is a question, not a refusal.** Writing over a document is a
             // thing the user may well have meant, and the one who typed the name is the only one
             // who can say whether they did.
             std::error_code errorCode;
-            if (!std::filesystem::exists(folder().fileOf(folder().fileNameOf(stem)), errorCode))
+            if (!std::filesystem::exists(path, errorCode))
                 return;
             if (!confirmReplacing(event.askedBy, stem))
                 event.refuse();
@@ -149,14 +176,14 @@ namespace ClaFi::Documents
         if (!dialog.execute())
             return {};
 
-        const std::wstring fileName = folder().fileNameOf(dialog.text());
-        folder().needDirectory();
-        if (!folder().writeDocument(documentNode(), folder().fileOf(fileName)))
+        const std::wstring fileName = storage->fileNameOf(dialog.text());
+        if (!storage->saveDocument(documentNode(), storage->fileOf(fileName)))
         {
             ContextMessage::show(initiator, notSavedText());
             return {};
         }
-        return fileName;
+        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
+        return browser.documentPath(*storage, fileName);
     }
 
     bool DocumentPage::confirmReplacing(Control& initiator, const std::wstring_view stem) const

@@ -11,6 +11,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
 
@@ -29,8 +30,10 @@ namespace ClaFi::Documents
     {
     public:
         using Base = Browser::BrowserApplication<PlatformType, GpuBackend, BrowserType>;
-        using Base::Base;
     public:
+        template<typename TRootSchema, typename TTabEntrySchema, typename TTabSchema>
+        DocumentsApplication(typename PlatformType::Params&&, const ApplicationProperties&,
+            TRootSchema&& rootSchema, TTabEntrySchema&& tabEntrySchema, TTabSchema&& tabSchema);
         // Builds the main form over the folder, runs it, and answers what the form answered.
         [[nodiscard]] int run(DocumentsFolder&, MinSize, PreferredSize);
     };
@@ -38,6 +41,26 @@ namespace ClaFi::Documents
 
     //-----------------------------------------------------------------------------
 
+
+    template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend,
+        IsDocumentsBrowser BrowserType>
+    template<typename TRootSchema, typename TTabEntrySchema, typename TTabSchema>
+    DocumentsApplication<PlatformType, GpuBackend, BrowserType>::DocumentsApplication(
+        typename PlatformType::Params&& platformParams, const ApplicationProperties& properties,
+        TRootSchema&& rootSchema, TTabEntrySchema&& tabEntrySchema, TTabSchema&& tabSchema)
+        :
+        Base{
+            std::move(platformParams),
+            properties,
+            Dom::Dt::Section{
+                DocumentsBrowserBase::storageSettingsSchema(),
+                std::forward<TRootSchema>(rootSchema)
+            },
+            std::forward<TTabEntrySchema>(tabEntrySchema),
+            std::forward<TTabSchema>(tabSchema)
+        }
+    {
+    }
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend,
         IsDocumentsBrowser BrowserType>

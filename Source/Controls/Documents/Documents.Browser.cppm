@@ -8,10 +8,12 @@ import ClaFi.Documents.Page;
 
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
+import ClaFi.Browser.Settings;
 
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -40,7 +42,13 @@ namespace ClaFi::Documents
         explicit DocumentsBrowserBase(const CreateParams&, Args&&...);
         ~DocumentsBrowserBase() override;
     public:
+        void initialize(BrowserSettings&);
         [[nodiscard]] DocumentsFolder& folder() const { return m_folder; }
+        [[nodiscard]] static Dom::Dt::Section storageSettingsSchema();
+        [[nodiscard]] DocumentsFolder& storageFolder(const PageData&) const;
+        [[nodiscard]] DocumentsFolder* saveAsStorage(const PageData&) const;
+        [[nodiscard]] std::wstring documentPath(const DocumentsFolder&, std::wstring_view fileName) const;
+        void showStorages(const PageData&, Control& owner);
     protected:
         void initPageData(PageData&) override;
         void fetchSubItems(PageData&) override;
@@ -62,7 +70,25 @@ namespace ClaFi::Documents
         // The document file a page stands for, or an empty path where there is none to rename.
         [[nodiscard]] virtual std::filesystem::path documentFileOf(const PageData&) const;
     private:
+        struct StorageEntry
+        {
+            std::wstring id;
+            std::unique_ptr<DocumentsFolder> folder;
+        };
+        using StorageEntries = std::vector<StorageEntry>;
+    private:
+        [[nodiscard]] static bool isStoragePage(const PageData&);
+        [[nodiscard]] const StorageEntry* storageEntry(std::wstring_view id) const;
+        [[nodiscard]] std::unique_ptr<DocumentsFolder> makeStorage(
+            const std::filesystem::path&, bool readOnly) const;
+        void addStorage(const std::filesystem::path& path, bool readOnly);
+        void storeStorages();
+        void editStorage(Control& owner, DocumentsFolder*);
+    private:
         DocumentsFolder& m_folder;
+        StorageEntries m_storages{};
+        std::unique_ptr<DocumentsFolder> m_missingStorage{};
+        std::size_t m_nextStorageId{ 1 };
     };
 
     export template<IsDocumentsHomePage HomePageType, IsDocumentPage DocumentPageType>
@@ -97,13 +123,21 @@ namespace ClaFi::Documents
     DocumentsHomePageBase& DocumentsBrowser<HomePageType, DocumentPageType>::createHomePage(
         BrowserTab& tab)
     {
-        return tab.createPage<HomePageType>(Tag{ k_homePageTag }, &folder());
+        return tab.createPage<HomePageType>(
+            Tag{ k_homePageTag },
+            &folder(),
+            DocumentStorageView{ &storageFolder(*tab.pageData()), isHomePage(*tab.pageData()) }
+        );
     }
 
     template<IsDocumentsHomePage HomePageType, IsDocumentPage DocumentPageType>
     DocumentPage& DocumentsBrowser<HomePageType, DocumentPageType>::createDocumentPage(
         BrowserTab& tab)
     {
-        return tab.createPage<DocumentPageType>(Tag{ k_documentPageTag }, &folder());
+        return tab.createPage<DocumentPageType>(
+            Tag{ k_documentPageTag },
+            &folder(),
+            DocumentStorageView{ &storageFolder(*tab.pageData()), isHomePage(*tab.pageData()->parent) }
+        );
     }
 }

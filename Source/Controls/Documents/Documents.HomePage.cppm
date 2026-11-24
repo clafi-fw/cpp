@@ -56,6 +56,8 @@ namespace ClaFi::Documents
         // waiting to be named on. A derived page adds what it owes, after this.
         virtual void documentsRebuilt();
     private:
+        void showStorages();
+        [[nodiscard]] bool canDeleteSelectedFiles() const;
         // Asks for the tile under `fileName` to be renamed once the pass that lays it out has run.
         void renameAfterAlign(std::wstring_view fileName);
         void renamePendingTile();
@@ -114,6 +116,7 @@ namespace ClaFi::Documents
             Button::OnDrawIcon{ Icons::OpenInExplorerIcon::draw },
             L"Open folder"
         ) };
+        Button& m_storagesButton{ toolBar().add<ToolButton>(L"Storages") };
     };
 
     export template<IsDocumentTiles ListType = DocumentsList>
@@ -155,7 +158,7 @@ namespace ClaFi::Documents
             m_newButton.secondaryPart()->setVisible(false);
         // A folder the platform could not name is nowhere to make a file.
         m_newButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = !folder().directory().empty();
+            event.state.enabled = storageFolder().canWrite();
             event.stopPropagation();
         });
         // Connected here rather than given to the timer as a construction property: MSVC rejects
@@ -165,12 +168,19 @@ namespace ClaFi::Documents
         });
 
         m_exploreButton.onClick([this](ClickEvent&) {
-            Platform::shellExecute(form(), folder().directory().wstring());
+            if (storageFolder().available())
+            {
+                Platform::shellExecute(form(), storageFolder().directory().wstring());
+            }
         });
         m_exploreButton.onGetState([this](GetStateEvent& event) {
             std::error_code errorCode;
-            event.state.enabled = std::filesystem::exists(folder().directory(), errorCode);
+            event.state.enabled = storageFolder().available()
+                && std::filesystem::is_directory(storageFolder().directory(), errorCode);
             event.stopPropagation();
+        });
+        m_storagesButton.onClick([this](ClickEvent&) {
+            showStorages();
         });
     }
 
@@ -187,7 +197,8 @@ namespace ClaFi::Documents
                 UiElement::Page
             },
             BodyProps{
-                &folder(),
+                &storageFolder(),
+                DocumentStorageView{ &storageFolder(), primaryStorage() },
                 SelectionMode::Multi,
                 DragMode::EasySelect,
                 editHandler(),

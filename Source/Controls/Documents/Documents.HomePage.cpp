@@ -1,6 +1,7 @@
 module ClaFi.Documents.HomePage;
 
 import ClaFi.Documents.BasePage;
+import ClaFi.Documents.Browser;
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.List;
 import ClaFi.Documents.Utils;
@@ -39,7 +40,13 @@ namespace ClaFi::Documents
     // about the one the keyboard stands on.
     std::wstring DocumentsHomePageBase::pathToOpen()
     {
-        return pagePathOfDocument(m_tiles->currentFileName());
+        const std::wstring fileName = m_tiles->currentFileName();
+        if (primaryStorage())
+        {
+            return pagePathOfDocument(fileName);
+        }
+        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
+        return browser.documentPath(storageFolder(), fileName);
     }
 
     void DocumentsHomePageBase::connectTiles(IDocumentTiles& tiles)
@@ -52,7 +59,7 @@ namespace ClaFi::Documents
         // page's.
         onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &StdActions::del)
-                event.claim({ .enabled = !m_tiles->view().selection().empty() });
+                event.claim({ .enabled = canDeleteSelectedFiles() });
         });
         onActionClick([this](ActionClickEvent& event) {
             // Under whatever presented the command, so a question about it stands where the user
@@ -113,6 +120,23 @@ namespace ClaFi::Documents
             renameAfterAlign(m_fileNameToRename);
     }
 
+    void DocumentsHomePageBase::showStorages()
+    {
+        auto& browser = static_cast<DocumentsBrowserBase&>(tab().browserControl());
+        browser.showStorages(pageData(), m_storagesButton);
+        m_newButton.invalidateState();
+        m_exploreButton.invalidateState();
+    }
+
+    bool DocumentsHomePageBase::canDeleteSelectedFiles() const
+    {
+        const auto& selection = m_tiles->view().selection();
+        return storageFolder().canWrite() && !selection.empty()
+            && std::ranges::all_of(selection, [this](const Control* item) {
+                return storageFolder().canWriteFile(static_cast<const DocumentTile*>(item)->path());
+            });
+    }
+
     // **Asked for on a tick**, because the rebuild that created the tile is still on the stack: it
     // holds the list this tile is in, and clears it, and the editor runs a message loop of its
     // own. The tile has no layout yet either, so the editor waits for the form to settle by
@@ -139,7 +163,7 @@ namespace ClaFi::Documents
 
     void DocumentsHomePageBase::acceptTileEdit(DocumentTile& tile, AcceptEditEvent& event)
     {
-        const std::wstring newName = folder().renameFile(tile.path(), event);
+        const std::wstring newName = storageFolder().renameFile(tile.path(), event);
         if (newName.empty())
             return;
         // **The file is renamed and this tile still says otherwise** until the folder reports, and
@@ -180,7 +204,7 @@ namespace ClaFi::Documents
 
     void DocumentsHomePageBase::createNewFile(const DocumentTemplate* documentTemplate)
     {
-        const std::wstring fileName = folder().createFile(documentTemplate);
+        const std::wstring fileName = storageFolder().createFile(documentTemplate);
         // The folder may have been made along with the file, and Open folder reads whether it is
         // there.
         m_exploreButton.invalidateState();
@@ -210,15 +234,14 @@ namespace ClaFi::Documents
 
     void DocumentsHomePageBase::deleteSelectedFiles(Control& initiator)
     {
-        if (!confirmDeleting(initiator))
+        if (!canDeleteSelectedFiles() || !confirmDeleting(initiator))
             return;
 
         // Taken after the question, so a selection the user kept is left standing as it was.
         m_tiles->selectFileNameAfterRebuild(fileNameAfterDeleting());
         for (Control* item : m_tiles->view().selection())
         {
-            std::error_code errorCode;
-            std::filesystem::remove(static_cast<DocumentTile*>(item)->path(), errorCode);
+            static_cast<void>(storageFolder().deleteFile(static_cast<DocumentTile*>(item)->path()));
         }
     }
 

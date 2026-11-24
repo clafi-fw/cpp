@@ -29,6 +29,8 @@ namespace ClaFi::Documents
         explicit DocumentsBasePage(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] DocumentsFolder& folder() const { return m_folder; }
+        [[nodiscard]] DocumentsFolder& storageFolder() const { return *m_storage.folder; }
+        [[nodiscard]] bool primaryStorage() const { return m_storage.primary; }
         // Brings the page up on what its tab's view state holds.
         virtual void restoreViewState() {}
         // Whether this page holds work the file behind it has never seen.
@@ -45,6 +47,7 @@ namespace ClaFi::Documents
         [[nodiscard]] Panel& topPanel() const { return m_topPanel; }
     private:
         DocumentsFolder& m_folder;
+        DocumentStorageView m_storage;
         // The tool bar's color, none of its sizes: the divider runs the strip's full width.
         StackPanel& m_topStack{ createTopBar<StackPanel>(
             Orientation::Vertical,
@@ -82,7 +85,9 @@ namespace ClaFi::Documents
             std::forward<Args>(args)...
         },
         // The folder the page's document stands in, which outlives the page.
-        m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) }
+        m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) },
+        // A page built without a storage prop uses its app folder as the primary view.
+        m_storage{ READ_PROPERTY(DocumentStorageView, (DocumentStorageView{ &m_folder, true })) }
     {
     }
 }
