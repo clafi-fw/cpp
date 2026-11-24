@@ -288,6 +288,10 @@ namespace ClaFi
             const FormControlBase& going = *m_topLayer;
             if (m_downItem && going.containsNested(m_downItem))
                 m_downItem = nullptr;
+            if (m_middleButtonTarget && going.containsNested(m_middleButtonTarget))
+            {
+                m_middleButtonTarget = nullptr;
+            }
             if (m_focusOnShow && going.containsNested(m_focusOnShow, CheckSelf::Yes))
                 m_focusOnShow = nullptr;
             std::erase_if(m_scrollIntoViewOnAlign, [&going](const Control* control) {
@@ -1038,6 +1042,44 @@ namespace ClaFi
         // do not place any code here because this may be killed in the nestedClick()
     }
 
+    void FormBase::wnd_middleButton(PointInForm pt, const InputStamp stamp, const bool down)
+    {
+        if (down)
+        {
+            m_middleButtonTarget = nullptr;
+            Tooltip::handleUserInput(this);
+            Input::mouseActed(m_appContext);
+            if (!m_activePopup)
+            {
+                if (Control* hit = controlAt(pt).control)
+                {
+                    m_middleButtonTarget = &hit->clickReceiver();
+                    m_middleButtonStamp = stamp;
+                }
+            }
+            return;
+        }
+
+        Control* target = std::exchange(m_middleButtonTarget, nullptr);
+        if (!target || m_activePopup)
+        {
+            return;
+        }
+        Control* hit = controlAt(pt).control;
+        if (!hit || &hit->clickReceiver() != target || !target->canClick())
+        {
+            return;
+        }
+
+        NestedMiddleClickEvent event{ *target, pt, m_middleButtonStamp };
+        for (Control* control = target; control && !event.propagationStopped();)
+        {
+            Control* parent = control->parent();
+            control->nestedMiddleClick(event);
+            control = parent;
+        }
+    }
+
     void FormBase::wnd_doubleClick(PointInForm pt, InputStamp stamp)
     {
         // The same question a single press asks, and for the same reason. A double click that
@@ -1095,6 +1137,7 @@ namespace ClaFi
 
     void FormBase::wnd_mouseLeave()
     {
+        m_middleButtonTarget = nullptr;
         m_pointerInside = false;
         if (Input::hoveredControl() && &Input::hoveredControl()->form() == this)
             Input::setHoveredControl(nullptr);
@@ -1593,6 +1636,10 @@ namespace ClaFi
     {
         if (m_downItem == item)
             m_downItem = nullptr;
+        if (m_middleButtonTarget == item)
+        {
+            m_middleButtonTarget = nullptr;
+        }
         if (m_contentFocusBeforeTopLayer == item)
             m_contentFocusBeforeTopLayer = nullptr;
         if (m_focusBeforePopup == item)

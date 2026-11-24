@@ -209,6 +209,7 @@ namespace ClaFi
         virtual void wnd_frameRelease() = 0;
         virtual void wnd_mouseDown(PointInForm, InputStamp, bool& handled) = 0;
         virtual void wnd_mouseUp(PointInForm) = 0;
+        virtual void wnd_middleButton(PointInForm, InputStamp, bool) {}
         virtual void wnd_doubleClick(PointInForm, InputStamp) = 0;
         virtual void wnd_tripleClick(PointInForm, InputStamp) = 0;
         virtual void wnd_mouseLeave() = 0;

@@ -61,6 +61,7 @@ namespace ClaFi::Documents
         // waiting to be named on. A derived page adds what it owes, after this.
         virtual void documentsRebuilt();
     private:
+        [[nodiscard]] std::wstring tilePagePath(std::wstring_view fileName) const;
         [[nodiscard]] DocumentsFolder* selectedStorage() const;
         [[nodiscard]] DocumentsFolder* folderToExplore() const;
         void editStorage(DocumentsFolder*);
@@ -75,6 +76,7 @@ namespace ClaFi::Documents
         void showTileMenu(DocumentTile&, ContextPopupEvent&);
         // Runs Open on the tile the list stands on. The stamp is the press behind the gesture.
         void openDocument(Control& presenter, InputStamp);
+        void openTileInNewTab(const DocumentTile&);
         // Makes a file from the template, or an empty one, and puts an editor over its tile.
         void createNewFile(const DocumentTemplate*);
         // Lists the folder's templates under the strip, each making a file.

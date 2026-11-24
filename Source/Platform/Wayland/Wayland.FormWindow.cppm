@@ -32,6 +32,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void pointerMoved(IntPoint) override;
         void pointerButton(IntPoint, std::uint32_t time, InputStamp, bool down) override;
         void pointerContextMenu(IntPoint, InputStamp) override;
+        void pointerMiddleButton(IntPoint, InputStamp, bool down) override;
         void pointerSideButton(IntPoint, SideButton, InputStamp) override;
         void pointerWheel(IntPoint, float delta, bool horizontal) override;
         void pointerLeft() override;
@@ -251,6 +252,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         // menu raised from the keyboard passes none, and the form asks the focus instead.
         PointInForm point = pt.toFloat();
         m_form.wnd_contextMenu(&point, stamp);
+    }
+
+    void FormWindow::pointerMiddleButton(IntPoint pt, InputStamp stamp, const bool down)
+    {
+        m_form.wnd_middleButton(pt.toFloat(), stamp, down);
     }
 
     void FormWindow::pointerSideButton(IntPoint pt, const SideButton button, InputStamp stamp)

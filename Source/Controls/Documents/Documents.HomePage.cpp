@@ -8,6 +8,7 @@ import ClaFi.Documents.Utils;
 
 import ClaFi.Browser.Actions;
 import ClaFi.Browser.Control;
+import ClaFi.Browser.PageData;
 
 import ClaFi.Icons.DeleteIcon;
 
@@ -56,13 +57,7 @@ namespace ClaFi::Documents
     // about the one the keyboard stands on.
     std::wstring DocumentsHomePageBase::pathToOpen()
     {
-        const std::wstring fileName = m_tiles->currentFileName();
-        if (m_storageTiles || primaryStorage())
-        {
-            return pagePathOfDocument(fileName);
-        }
-        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
-        return browser.documentPath(storageFolder(), fileName);
+        return tilePagePath(m_tiles->currentFileName());
     }
 
     void DocumentsHomePageBase::connectTiles(IDocumentTiles& tiles)
@@ -119,6 +114,17 @@ namespace ClaFi::Documents
             event.stopPropagation();
             openDocument(*tile, event.stamp);
         });
+        view.onNestedMiddleClick([this](NestedMiddleClickEvent& event) {
+            for (const DocumentTile* tile : m_tiles->tiles())
+            {
+                if (tile->containsNested(&event.clickedControl, CheckSelf::Yes))
+                {
+                    event.stopPropagation();
+                    openTileInNewTab(*tile);
+                    return;
+                }
+            }
+        });
     }
 
     DocumentEditHandler DocumentsHomePageBase::editHandler()
@@ -139,6 +145,16 @@ namespace ClaFi::Documents
     {
         if (!m_fileNameToRename.empty())
             renameAfterAlign(m_fileNameToRename);
+    }
+
+    std::wstring DocumentsHomePageBase::tilePagePath(const std::wstring_view fileName) const
+    {
+        if (m_storageTiles || primaryStorage())
+        {
+            return pagePathOfDocument(fileName);
+        }
+        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
+        return browser.documentPath(storageFolder(), fileName);
     }
 
     DocumentsFolder* DocumentsHomePageBase::selectedStorage() const
@@ -239,6 +255,20 @@ namespace ClaFi::Documents
     void DocumentsHomePageBase::openDocument(Control& presenter, const InputStamp stamp)
     {
         Browser::Actions::Open.invoke(form(), &presenter, stamp);
+    }
+
+    void DocumentsHomePageBase::openTileInNewTab(const DocumentTile& tile)
+    {
+        auto& browser = static_cast<DocumentsBrowserBase&>(tab().browserControl());
+        const std::wstring path = tilePagePath(tile.fileName());
+        if (path.empty())
+        {
+            return;
+        }
+        if (Browser::PageData* page = browser.findPageData(path))
+        {
+            browser.addTab(*page, {}, Browser::SelectTab::No);
+        }
     }
 
     void DocumentsHomePageBase::createNewFile(const DocumentTemplate* documentTemplate)

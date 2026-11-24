@@ -108,6 +108,7 @@ them with editHandler and menuHandler. Every command waits for that connection.
   asks once, and only where isEdited says a selected file holds work.
 - Open acts on the current tile. A right mouse click makes the tile under the pointer current.
 - Return, Space and a mouse double click open a tile. With Ctrl or Shift, the key selects instead.
+- Middle-click a document or folder tile to open it in a background tab.
 
 ## DocumentsHomePage
 

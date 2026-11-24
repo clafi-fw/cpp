@@ -253,6 +253,15 @@ namespace ClaFi
         using NestedClickEventBase::NestedClickEventBase;
     };
 
+    export struct NestedMiddleClickEvent : Event
+    {
+        NestedMiddleClickEvent(Control& clickedControl, PointInForm position, InputStamp);
+
+        Control& clickedControl;
+        const PointInForm position;
+        const InputStamp stamp;
+    };
+
     // The second press of one run of clicks, on the control it is raised on. See Control-Foundation
     export class DoubleClickEvent : public ClickEventBase
     {
@@ -677,6 +686,8 @@ namespace ClaFi
         DECLARE_EVENT(ClickEvent, OnClick, onClick)   // a click on this control
         // A click on this control or on any control inside it.
         DECLARE_EVENT(NestedClickEvent, OnNestedClick, onNestedClick)
+        // A middle-button click on this control or one of its descendants.
+        DECLARE_EVENT(NestedMiddleClickEvent, OnNestedMiddleClick, onNestedMiddleClick)
         // The second press of a run of clicks on this control.
         DECLARE_EVENT(DoubleClickEvent, OnDoubleClick, onDoubleClick)
         // A double click on this control or on any control inside it.
@@ -1327,6 +1338,7 @@ namespace ClaFi
         virtual void nestedPressUp(PressUpEvent&) {}
         virtual void click(ClickEvent&);
         virtual void nestedClick(NestedClickEvent&);
+        virtual void nestedMiddleClick(NestedMiddleClickEvent&);
         virtual void doubleClick(DoubleClickEvent&);
         virtual void nestedDoubleClick(NestedDoubleClickEvent&);
         virtual void tripleClick(TripleClickEvent&);

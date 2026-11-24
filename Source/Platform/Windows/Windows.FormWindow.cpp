@@ -539,6 +539,14 @@ namespace ClaFi
             m_form.wnd_doubleClick(toSurface(msg.mousePos()).toFloat(), InputStamp{});
             break;
 
+        case WM_MBUTTONDOWN:
+        case WM_MBUTTONDBLCLK:
+        case WM_MBUTTONUP:
+            m_form.wnd_middleButton(toSurface(msg.mousePos()).toFloat(), InputStamp{},
+                msg.msg != WM_MBUTTONUP);
+            msg.handled = true;
+            break;
+
         case WM_CONTEXTMENU:
         {
             IntPoint intPt = msg.mousePos();

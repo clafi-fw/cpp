@@ -151,6 +151,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void onPointerMoved(IntPoint surfacePoint) final;
         void onPointerButton(IntPoint surfacePoint, std::uint32_t time, InputStamp, bool down) final;
         void onPointerContextMenu(IntPoint surfacePoint, InputStamp) final;
+        void onPointerMiddleButton(IntPoint surfacePoint, InputStamp, bool down) final;
         void onPointerSideButton(IntPoint surfacePoint, SideButton, InputStamp) final;
         void onPointerWheel(IntPoint surfacePoint, float delta, bool horizontal) final;
         void onPointerLeft() final;
@@ -186,6 +187,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         virtual void pointerMoved(IntPoint) {}
         virtual void pointerButton(IntPoint, std::uint32_t time, InputStamp, bool down) {}
         virtual void pointerContextMenu(IntPoint, InputStamp) {}
+        virtual void pointerMiddleButton(IntPoint, InputStamp, bool) {}
         virtual void pointerSideButton(IntPoint, SideButton, InputStamp) {}
         virtual void pointerWheel(IntPoint, float delta, bool horizontal) {}
         virtual void pointerLeft() {}
@@ -1381,6 +1383,11 @@ namespace ClaFi::PlatformImplementation::Wayland
     void Window::onPointerContextMenu(IntPoint surfacePoint, InputStamp stamp)
     {
         pointerContextMenu(toBufferPoint(surfacePoint), stamp);
+    }
+
+    void Window::onPointerMiddleButton(IntPoint surfacePoint, InputStamp stamp, const bool down)
+    {
+        pointerMiddleButton(toBufferPoint(surfacePoint), stamp, down);
     }
 
     void Window::onPointerSideButton(IntPoint surfacePoint, const SideButton button,

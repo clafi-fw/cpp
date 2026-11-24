@@ -418,6 +418,7 @@ namespace ClaFi
         void wnd_frameRelease() override;
         void wnd_mouseDown(PointInForm, InputStamp, bool& handled) override;
         void wnd_mouseUp(PointInForm) override;
+        void wnd_middleButton(PointInForm, InputStamp, bool down) override;
         void wnd_doubleClick(PointInForm, InputStamp) override;
         void wnd_tripleClick(PointInForm, InputStamp) override;
         void wnd_mouseLeave() override;
@@ -693,6 +694,8 @@ namespace ClaFi
         // this is taken where the press arrives and read where a request needs it.
         InputStamp m_mouseDownStamp{};
         Control* m_downItem{};
+        Control* m_middleButtonTarget{};
+        InputStamp m_middleButtonStamp{};
         bool m_isKeyboardClick{};
         // What the next arrow press reads. See Control-Foundation#navigationstep
         NavigationLine m_navigationLine{};

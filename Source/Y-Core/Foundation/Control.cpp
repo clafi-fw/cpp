@@ -377,6 +377,15 @@ namespace ClaFi
         modifiers = click.modifiers;
     }
 
+    NestedMiddleClickEvent::NestedMiddleClickEvent(Control& clickedControl, PointInForm position,
+        const InputStamp stamp)
+        :
+        clickedControl{ clickedControl },
+        position{ position },
+        stamp{ stamp }
+    {
+    }
+
     // GetStateEvent
 
     GetStateEvent::GetStateEvent(const Control& control)
@@ -1824,6 +1833,11 @@ namespace ClaFi
     }
 
     void Control::nestedClick(NestedClickEvent& event)
+    {
+        emitEvent(event);
+    }
+
+    void Control::nestedMiddleClick(NestedMiddleClickEvent& event)
     {
         emitEvent(event);
     }

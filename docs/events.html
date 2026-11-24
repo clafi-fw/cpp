@@ -587,6 +587,12 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
         <span class="kw">return</span>;                    <span class="cm">// the caller replaced the menu</span>
     <span class="cm">// ... otherwise show the built-in one</span>
 }</pre>
+            <p>Use <code>onNestedMiddleClick</code> to handle a middle-button click. When the button
+            goes down and up on the same click receiver, <code>NestedMiddleClickEvent</code> starts
+            there and bubbles through its parents. <code>clickedControl</code> names the receiver,
+            <code>position</code> is the release point in the form, and <code>stamp</code> identifies
+            the press on platforms that provide one. The gesture leaves focus and the primary-button
+            click sequence alone.</p>
             <div class="warning"><strong>Don't emit from a constructor.</strong> Handlers passed as
             construction properties are connected by <code>EventComponent</code>'s constructor, which runs before
             any derived constructor body. An event raised while the object is still being built calls handlers
