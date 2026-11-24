@@ -479,6 +479,9 @@ namespace ClaFi
         // The desktop's folder dialog over the form; nothing where none was picked. See Context
         [[nodiscard]] static std::optional<std::filesystem::path> pickFolder(const IForm*,
             std::wstring_view title, const std::filesystem::path& startFolder);
+        // The destination chosen in the desktop's Save As dialog. See Context
+        [[nodiscard]] static std::optional<std::filesystem::path> pickSaveFile(const IForm*,
+            std::wstring_view title, std::wstring_view suggestedName);
         //
         static std::wstring appDataPath();
         // The user's own documents folder, with a trailing separator - empty where there is none.

@@ -344,44 +344,63 @@ namespace ClaFi
         ::waitpid(outer, &status, 0);
     }
 
-    // **The portal's file chooser**, parented by the form's toplevel where the compositor exports
-    // one. The answer comes over the session bus whenever the dialog is closed, so the loop runs
-    // until it does, with the bus among what it sleeps on - the source only wakes it, and the
-    // request reads its own socket after every pass.
+    namespace
+    {
+        using PlatformImplementation::Linux::FileChooserAction;
+
+        // **The portal's file chooser**, parented by the form's toplevel where the compositor exports
+        // one. The answer comes over the session bus whenever the dialog is closed, so the loop runs
+        // until it does, with the bus among what it sleeps on - the source only wakes it, and the
+        // request reads its own socket after every pass.
+        [[nodiscard]] std::optional<std::filesystem::path> chooseFile(const IForm* form,
+            const std::wstring_view title, const FileChooserAction action,
+            const std::filesystem::path& startFolder, const std::wstring_view suggestedName)
+        {
+            using PlatformImplementation::Linux::FileChooserRequest;
+            using PlatformImplementation::Wayland::ExportedToplevel;
+            using PlatformImplementation::Wayland::PollSource;
+            using PlatformImplementation::Wayland::Window;
+
+            constexpr std::string_view k_parentPrefix = "wayland:";
+
+            DisplayManager& display = standingDisplay();
+            std::optional<ExportedToplevel> exported;
+            if (form)
+            {
+                const auto& window = static_cast<const Window&>(form->wnd_window());
+                if (window.isToplevelRole())
+                    exported.emplace(display, window.surface());
+            }
+            std::string parentWindow;
+            if (exported && !exported->handle().empty())
+                parentWindow = std::string{ k_parentPrefix } + exported->handle();
+
+            FileChooserRequest request{ parentWindow, toUtf8(title), action, startFolder,
+                toUtf8(suggestedName) };
+            if (request.settled())
+                return std::nullopt;
+            const PollSource bus{ display, request.fd(), []() {
+            } };
+            while (!request.settled() && !display.quitRequested())
+            {
+                display.dispatchPending();
+                display.waitForEvent();
+                request.dispatch();
+            }
+            return request.answer();
+        }
+    }
+
     std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,
         const std::wstring_view title, const std::filesystem::path& startFolder)
     {
-        using PlatformImplementation::Linux::FolderRequest;
-        using PlatformImplementation::Wayland::ExportedToplevel;
-        using PlatformImplementation::Wayland::PollSource;
-        using PlatformImplementation::Wayland::Window;
+        return chooseFile(form, title, FileChooserAction::PickFolder, startFolder, {});
+    }
 
-        constexpr std::string_view k_parentPrefix = "wayland:";
-
-        DisplayManager& display = standingDisplay();
-        std::optional<ExportedToplevel> exported;
-        if (form)
-        {
-            const auto& window = static_cast<const Window&>(form->wnd_window());
-            if (window.isToplevelRole())
-                exported.emplace(display, window.surface());
-        }
-        std::string parentWindow;
-        if (exported && !exported->handle().empty())
-            parentWindow = std::string{ k_parentPrefix } + exported->handle();
-
-        FolderRequest request{ parentWindow, toUtf8(title), startFolder };
-        if (request.settled())
-            return std::nullopt;
-        const PollSource bus{ display, request.fd(), []() {
-        } };
-        while (!request.settled() && !display.quitRequested())
-        {
-            display.dispatchPending();
-            display.waitForEvent();
-            request.dispatch();
-        }
-        return request.answer();
+    std::optional<std::filesystem::path> Platform::pickSaveFile(const IForm* form,
+        const std::wstring_view title, const std::wstring_view suggestedName)
+    {
+        return chooseFile(form, title, FileChooserAction::SaveFile, {}, suggestedName);
     }
 
     std::wstring Platform::appDataPath()

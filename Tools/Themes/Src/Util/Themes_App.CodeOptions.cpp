@@ -23,7 +23,6 @@ namespace Themes_App::CodeOptions
     namespace
     {
         CodeContent s_content{ CodeContent::Full };
-        CodeScope s_scope{ CodeScope::ClassMethod };
 
         // A click writes through the form it arrived on: an action answering for itself is handed
         // no control, and the form is the one thing both events of a click carry.
@@ -37,14 +36,6 @@ namespace Themes_App::CodeOptions
             onlyDifferences.invalidateState();
             full.invalidateState();
         }
-
-        void setScope(CodeScope value, FormBase& form)
-        {
-            s_scope = value;
-            (form.appContext().config() / k_codeScopeAttrName).set(value);
-            asClassMethod.invalidateState();
-            asOutsideClass.invalidateState();
-        }
     }
 
     CodeContent content()
@@ -52,15 +43,9 @@ namespace Themes_App::CodeOptions
         return s_content;
     }
 
-    CodeScope scope()
-    {
-        return s_scope;
-    }
-
     void restore(const Dom::Section& appConfig)
     {
         s_content = (appConfig / k_codeContentAttrName).get<CodeContent>();
-        s_scope = (appConfig / k_codeScopeAttrName).get<CodeScope>();
     }
 
     Action onlyDifferences{
@@ -83,24 +68,5 @@ namespace Themes_App::CodeOptions
         } }
     };
 
-    Action asClassMethod{
-        Text{ L"Class method" },
-        Action::OnGetState{ [](GetActionStateEvent& event) {
-            event.claim({ .selected = s_scope == CodeScope::ClassMethod });
-        } },
-        Action::OnClick{ [](ActionClickEvent& event) {
-            setScope(CodeScope::ClassMethod, event.form);
-        } }
-    };
-
-    Action asOutsideClass{
-        Text{ L"Outside the class" },
-        Action::OnGetState{ [](GetActionStateEvent& event) {
-            event.claim({ .selected = s_scope == CodeScope::OutsideClass });
-        } },
-        Action::OnClick{ [](ActionClickEvent& event) {
-            setScope(CodeScope::OutsideClass, event.form);
-        } }
-    };
 
 }

@@ -47,7 +47,7 @@ PaintChannel:
 - a text box or a slider - the bottom edge, while it is in edit mode
 - a callout, a message bar, a code block - the left edge, always
 
-**The built-in theme draws a tab's band and the edit mode's in the accent's values**, read as the
+**The starter theme draws a tab's band and the edit mode's in the accent's values**, read as the
 tab is selected and as the control is in edit mode, and a block's in its element's own color.
 
 **The Tab, Text Box and Slider styles state twice the border's width**, Any Callout 4, and every
@@ -187,19 +187,18 @@ behind the window.
 
 ## themePathOf
 
-**A theme is known by a virtual path** - a root and a bare name, such as `BuiltIn/Default` or
-`User/Ocean`. The config holds it, and every route that changes the theme states one.
+**Settings keeps a virtual path for the selected theme.** Each path has a root and a name.
 
-- `BuiltIn` names a theme compiled into the framework, whatever is on the disk.
-- `User` names a file in the themes directory the publisher's applications share, by its stem. A
-  change of extension keeps the path.
+- `App/Default` names the application's declared default regardless of its caption.
+- `App/Ocean` names an additional theme registered by the application as `Ocean`.
+- `User/Ocean` names `Ocean.clafitheme` in the shared theme folder.
 
-The path names the colors only, and the config states the mode beside it. The application layer
-resolves a path - see ThemesManager::themeByPath and connectAppThemes.
+The config stores the color mode beside the path. See ThemesManager and connectAppThemes.
 
 ## k_defaultThemePath
 
-The config's default, and the theme an application wears when its stored path names a missing one.
+The Settings path of the declared default. The application wears that theme when the stored
+path cannot be resolved.
 
 ## ThemeColors
 

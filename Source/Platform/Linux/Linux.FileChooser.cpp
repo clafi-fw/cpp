@@ -15,19 +15,21 @@ namespace ClaFi::PlatformImplementation::Linux
             constexpr const char* ObjectPath = "/org/freedesktop/portal/desktop";
             constexpr const char* InterfaceName = "org.freedesktop.portal.FileChooser";
             constexpr const char* OpenMethod = "OpenFile";
+            constexpr const char* SaveMethod = "SaveFile";
             constexpr std::string_view RequestInterface = "org.freedesktop.portal.Request";
             constexpr std::string_view ResponseSignal = "Response";
             // A request's path: this, the caller's unique name, and the token it chose.
             constexpr std::string_view RequestFolder = "/org/freedesktop/portal/desktop/request/";
         }
 
-        // The options OpenFile takes, and the result it answers with.
+        // The options and results of the file chooser calls.
         namespace ChooserKeys
         {
             constexpr const char* HandleToken = "handle_token";
             constexpr const char* Modal = "modal";
             constexpr const char* Directory = "directory";
             constexpr const char* CurrentFolder = "current_folder";
+            constexpr const char* CurrentName = "current_name";
             constexpr std::string_view Uris = "uris";
         }
 
@@ -36,7 +38,7 @@ namespace ClaFi::PlatformImplementation::Linux
         constexpr std::string_view k_fileScheme = "file://";
         constexpr std::string_view k_tokenPrefix = "clafi";
 
-        using Answer = FolderRequest::Answer;
+        using Answer = FileChooserRequest::Answer;
 
         [[nodiscard]] std::string nextToken();   // unique for the process's life
         // A unique bus name as a request path spells it: ":1.42" is "1_42".
@@ -52,9 +54,9 @@ namespace ClaFi::PlatformImplementation::Linux
             dbus_bool_t value);
         [[nodiscard]] bool appendBytesOption(DBusMessageIter& options, const char* key,
             std::string_view bytes);
-        // The folder the results' uris name: the first of them, as a path on this machine.
-        [[nodiscard]] Answer folderOfResults(DBusMessageIter& results);
-        [[nodiscard]] Answer folderOfUris(DBusMessageIter& variant);
+        // The first URI in the results, as a path on this machine.
+        [[nodiscard]] Answer pathOfResults(DBusMessageIter& results);
+        [[nodiscard]] Answer pathOfUris(DBusMessageIter& variant);
         // A file URI's path with its escapes read; nothing for a URI of any other scheme.
         [[nodiscard]] Answer pathOfUri(std::string_view uri);
         [[nodiscard]] int hexValue(char digit);   // -1 for a character that is no hex digit
@@ -65,15 +67,16 @@ namespace ClaFi::PlatformImplementation::Linux
 
 namespace ClaFi::PlatformImplementation::Linux
 {
-    // FolderRequest
+    // FileChooserRequest
 
-    FolderRequest::FolderRequest(const std::string_view parentWindow, const std::string_view title,
-        const std::filesystem::path& startFolder)
+    FileChooserRequest::FileChooserRequest(const std::string_view parentWindow,
+        const std::string_view title, const FileChooserAction action,
+        const std::filesystem::path& startFolder, const std::string_view suggestedName)
     {
-        ask(parentWindow, title, startFolder);
+        ask(parentWindow, title, action, startFolder, suggestedName);
     }
 
-    FolderRequest::~FolderRequest()
+    FileChooserRequest::~FileChooserRequest()
     {
         settle();
     }
@@ -81,7 +84,7 @@ namespace ClaFi::PlatformImplementation::Linux
     // What the loop calls after each wait. The socket is read whether or not it stirred, so a
     // hang-up, which poll reports whatever was asked for, settles the request rather than
     // waking every wait after it.
-    void FolderRequest::dispatch()
+    void FileChooserRequest::dispatch()
     {
         if (!m_connection)
             return;
@@ -103,10 +106,11 @@ namespace ClaFi::PlatformImplementation::Linux
     }
 
     // **A private connection**, so that its lifetime is the request's. The answer is watched for
-    // before OpenFile is sent, under the path the token names, so it cannot arrive unwatched.
+    // before the call is sent, under the path the token names, so it cannot arrive unwatched.
     // Every way this fails settles the request with no answer.
-    void FolderRequest::ask(const std::string_view parentWindow, const std::string_view title,
-        const std::filesystem::path& startFolder)
+    void FileChooserRequest::ask(const std::string_view parentWindow, const std::string_view title,
+        const FileChooserAction action, const std::filesystem::path& startFolder,
+        const std::string_view suggestedName)
     {
         DBusError error{};
         dbus_error_init(&error);
@@ -130,8 +134,10 @@ namespace ClaFi::PlatformImplementation::Linux
         requestPath.append(token);
         watchResponse(std::move(requestPath));
 
+        const bool pickFolder = action == FileChooserAction::PickFolder;
+        const char* method = pickFolder ? ChooserPortal::OpenMethod : ChooserPortal::SaveMethod;
         DBusMessage* message = dbus_message_new_method_call(ChooserPortal::BusName,
-            ChooserPortal::ObjectPath, ChooserPortal::InterfaceName, ChooserPortal::OpenMethod);
+            ChooserPortal::ObjectPath, ChooserPortal::InterfaceName, method);
         if (!message)
         {
             settle();
@@ -152,10 +158,20 @@ namespace ClaFi::PlatformImplementation::Linux
             && dbus_message_iter_open_container(&arguments, DBUS_TYPE_ARRAY, k_optionsSignature,
                 &options)
             && appendTextOption(options, ChooserKeys::HandleToken, token.c_str())
-            && appendFlagOption(options, ChooserKeys::Modal, TRUE)
-            && appendFlagOption(options, ChooserKeys::Directory, TRUE);
+            && appendFlagOption(options, ChooserKeys::Modal, TRUE);
+        if (built && pickFolder)
+        {
+            built = appendFlagOption(options, ChooserKeys::Directory, TRUE);
+        }
+        if (built && !suggestedName.empty())
+        {
+            const std::string name{ suggestedName };
+            built = appendTextOption(options, ChooserKeys::CurrentName, name.c_str());
+        }
         if (built && !startFolder.empty())
+        {
             built = appendBytesOption(options, ChooserKeys::CurrentFolder, startBytes);
+        }
         built = built && dbus_message_iter_close_container(&arguments, &options);
         const bool sent = built && dbus_connection_send(m_connection, message, &m_callSerial);
         dbus_message_unref(message);
@@ -169,7 +185,7 @@ namespace ClaFi::PlatformImplementation::Linux
 
     // The bus delivers the one signal this request waits for. Given no error to fill, the match
     // is sent without waiting for the bus, and goes out ahead of what is sent after it.
-    void FolderRequest::watchResponse(std::string path)
+    void FileChooserRequest::watchResponse(std::string path)
     {
         m_requestPath = std::move(path);
         std::string rule = "type='signal',interface='";
@@ -182,10 +198,10 @@ namespace ClaFi::PlatformImplementation::Linux
         dbus_bus_add_match(m_connection, rule.c_str(), nullptr);
     }
 
-    // **One message off the bus**: OpenFile's reply, its refusal, or the answer. A portal older
-    // than the token answers OpenFile with a request path of its own, and that path is watched
+    // **One message off the bus**: the call's reply, its refusal, or the answer. A portal older
+    // than the token answers the call with a request path of its own, and that path is watched
     // instead. Anything else - the bus's own greeting among them - is passed over.
-    void FolderRequest::take(DBusMessage* message)
+    void FileChooserRequest::take(DBusMessage* message)
     {
         switch (dbus_message_get_type(message))
         {
@@ -217,7 +233,7 @@ namespace ClaFi::PlatformImplementation::Linux
 
     // **The answer**: a response code, then the results. Any code but success is the dialog
     // canceled or failed, and settles the request with nothing.
-    void FolderRequest::takeResponse(DBusMessage* message)
+    void FileChooserRequest::takeResponse(DBusMessage* message)
     {
         const char* interfaceName = dbus_message_get_interface(message);
         const char* member = dbus_message_get_member(message);
@@ -236,12 +252,12 @@ namespace ClaFi::PlatformImplementation::Linux
             dbus_uint32_t response = 0;
             dbus_message_iter_get_basic(&arguments, &response);
             if (response == k_responseSuccess && dbus_message_iter_next(&arguments))
-                m_answer = folderOfResults(arguments);
+                m_answer = pathOfResults(arguments);
         }
         settle();
     }
 
-    void FolderRequest::settle()
+    void FileChooserRequest::settle()
     {
         if (!m_connection)
             return;
@@ -319,7 +335,7 @@ namespace ClaFi::PlatformImplementation::Linux
                 && closeOption(options, entry, variant);
         }
 
-        Answer folderOfResults(DBusMessageIter& results)
+        Answer pathOfResults(DBusMessageIter& results)
         {
             if (dbus_message_iter_get_arg_type(&results) != DBUS_TYPE_ARRAY)
                 return std::nullopt;
@@ -333,14 +349,14 @@ namespace ClaFi::PlatformImplementation::Linux
                 if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRING)
                     dbus_message_iter_get_basic(&entry, &key);
                 if (key && ChooserKeys::Uris == key && dbus_message_iter_next(&entry))
-                    return folderOfUris(entry);
+                    return pathOfUris(entry);
                 dbus_message_iter_next(&entries);
             }
             return std::nullopt;
         }
 
         // A variant holding an array of strings.
-        Answer folderOfUris(DBusMessageIter& variant)
+        Answer pathOfUris(DBusMessageIter& variant)
         {
             if (dbus_message_iter_get_arg_type(&variant) != DBUS_TYPE_VARIANT)
                 return std::nullopt;

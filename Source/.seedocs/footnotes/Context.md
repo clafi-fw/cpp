@@ -205,6 +205,11 @@ close, and returns nothing when canceled or when the platform has none.
 
 **Ask from a toplevel.** A popup closes when the dialog takes the focus.
 
+## Platform::pickSaveFile
+
+**Save As opens over the supplied form.** Give it a suggested file name and use the returned
+path for the write. The result is empty if the user cancels or the desktop cannot pick a path.
+
 ## ScopedWaitCursor
 
 It puts back `Platform::cursor` as read when it was built, a system sizing arrow included. So

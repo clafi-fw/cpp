@@ -327,10 +327,10 @@ bus, and a change arrives as a signal.
 - A session without a bus answers Light and is not asked again.
 - A bus that hangs up leaves the last answer in place.
 
-## FolderRequest
+## FileChooserRequest
 
-Opens the portal's FileChooser for a folder, over a private session bus connection held until the
-request settles.
+Opens the portal's folder picker or Save As dialog. The request holds its own session bus
+connection until it settles.
 
 **Poll fd() and call dispatch() after every wake** until settled(). answer() then holds the
 Response's first URI as a local path. It holds nothing where the dialog was canceled, the session

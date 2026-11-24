@@ -607,6 +607,40 @@ interface, and it can use any colors. Brand marks are a fixed identity and follo
 brand owner rather than the theme.
 </div>
 
+<h2 id="application-themes">Application Themes</h2>
+
+<p>Each windowed application sets <code>ApplicationProperties::defaultTheme</code> to a
+<code>NamedTheme</code> with a Settings caption and an <code>AppTheme</code>. It can list other
+in-memory themes in <code>additionalThemes</code>. The application declares its own styles in
+each theme it supplies.</p>
+
+<p>Every windowed application discovers readable <code>.clafitheme</code> files in a
+<code>Themes</code> folder beside its executable and in a <code>Themes</code> folder inside its
+config directory. Set <code>ApplicationProperties::usePublisherThemes</code> to connect the
+framework-managed <code>&lt;publisher&gt;/Share/Themes</code> folder under the platform's config
+root. <code>themesOffered</code> controls whether files from the publisher folder must state styles
+for every element the application names.</p>
+
+<p>Settings stores a path that identifies each theme independently, including files that share a
+name.</p>
+<ul>
+<li><code>App/Default</code> for the declared default and <code>App/&lt;name&gt;</code> for an
+additional in-memory theme. Give additional themes unique names without slashes and keep the
+names stable across releases.</li>
+<li><code>AppExecutable/&lt;stem&gt;</code> for a file in <code>Themes</code> beside the executable.</li>
+<li><code>AppConfig/&lt;stem&gt;</code> for a file in <code>Themes</code> inside the app config folder.</li>
+<li><code>User/&lt;stem&gt;</code> for a file in the publisher's shared folder.</li>
+</ul>
+<p>When a saved path is unavailable, the application uses its default and keeps the saved path.</p>
+
+<p>To edit files from another application's <code>Themes</code> folder, add that folder as a
+document storage in the Themes editor and open the file from that storage.</p>
+
+<p>To use an edited theme in an application, open the theme file in Themes and select the
+<strong>C++</strong> tab. <strong>Export as C++</strong> saves the displayed <code>.cppm</code>
+module. Add it to the application's build, import it, and call the exported factory to supply the
+<code>AppTheme</code> in <code>defaultTheme</code> or <code>additionalThemes</code>.</p>
+
 <h2 id="theming">What a Theme Owns</h2>
 
 <h3 id="palette">The palette</h3>
@@ -775,10 +809,9 @@ property in paint.</p>
 
 <p>A control that uses no style takes only its own rules, at a form's root as anywhere else. An
 application declares its own element names in <code>ApplicationProperties::elements</code> and
-uses the i-th as <code>appElement(i)</code>. The Settings theme picker offers user themes that
-provide the application's declared elements. The Themes editor lists every user theme file in
-<strong>Additional Themes</strong>. A control whose element has no style in the theme receives no
-theme rules for it.</p>
+uses the i-th as <code>appElement(i)</code>. By default, the Settings theme picker offers files
+that provide the application's declared elements. The Themes editor lists the files in the
+selected storage. An element without a style receives no theme rules.</p>
 
 <p>A control with a rule no theme can state, such as a tab taking on the color of the page it opens,
 states rules of its own. These are baked rules, <code>BakedColorRule</code>, passed as a span that

@@ -126,11 +126,11 @@ namespace ClaFi::Dom
 
     bool FileFormatBase::loadSectionFromFile(Section& section, const std::filesystem::path& path) const
     {
-        if (!std::filesystem::exists(path))
+        std::ifstream file{ path };
+        if (!file)
         {
             return false;
         }
-        std::ifstream file{ path };
         std::string utf8{ std::istreambuf_iterator<char>{ file },
             std::istreambuf_iterator<char>{} };
 

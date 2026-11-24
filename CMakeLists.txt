@@ -408,14 +408,17 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # a showcase is application code that imports ClaFi, not part of it - so the files are named
     # here instead. The option table, the renderer and the console application know nothing of any
     # platform; the entries are one file per platform.
+    set(starter_theme_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/Shared")
     set(millscene_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/MillScene")
     set(millscene_src "${millscene_dir}/Src")
     add_executable(MillScene
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${millscene_src}/MillScene_Main.cpp"
         "${millscene_src}/MillScene_Icon.cpp"
         "${millscene_src}/MillScene_App.Options.cpp"
         "${millscene_src}/MillScene_Wayland.cpp")
     target_sources(MillScene PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${millscene_src}/MillScene_Icon.cppm"
         "${millscene_src}/MillScene_Main.cppm"
         "${millscene_src}/MillScene_App.Options.cppm")
@@ -443,6 +446,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # what the font stack lacks shows here first.
     set(textengine_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/TextEngine/Src")
     add_executable(TextEngine
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${textengine_dir}/TextEngine_Main.cpp"
         "${textengine_dir}/TextEngine_Icon.cpp"
         "${textengine_dir}/TextEngine_Wayland.cpp"
@@ -452,6 +456,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${textengine_dir}/Pages/TextEngine_Emoji.cpp"
         "${textengine_dir}/Pages/TextEngine_Scripts.cpp")
     target_sources(TextEngine PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${textengine_dir}/TextEngine_Main.cppm"
         "${textengine_dir}/TextEngine_Icon.cppm"
         "${textengine_dir}/Pages/TextEngine_Code.cppm"
@@ -475,6 +480,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # adds to.
     set(whatsclip_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/WhatsClip/Src")
     add_library(WhatsClip_Lib STATIC
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${whatsclip_dir}/WhatsClip_Encodings.cpp"
         "${whatsclip_dir}/WhatsClip_Languages.cpp"
         "${whatsclip_dir}/WhatsClip_Main.cpp"
@@ -490,6 +496,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${whatsclip_dir}/Pages/WhatsClip_TextPage.cpp")
     # PUBLIC for the reason ClaFi's file set is: the entry point imports these modules.
     target_sources(WhatsClip_Lib PUBLIC FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${whatsclip_dir}/WhatsClip_Encodings.cppm"
         "${whatsclip_dir}/WhatsClip_Languages.cppm"
         "${whatsclip_dir}/WhatsClip_Main.cppm"
@@ -518,6 +525,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # and scans a tree itself where its project has no database yet.
     set(seedocs_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocs
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${seedocs_dir}/Ui/SeeDocs_Wayland.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.AppIcon.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.BasesTree.cpp"
@@ -552,6 +560,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Search.cpp"
         "${seedocs_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.AppIcon.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.BasesTree.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.Browser.cppm"
@@ -594,6 +603,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # library and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
     set(themes_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/Src")
     add_executable(Themes
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${themes_dir}/Themes_Main.cpp"
         "${themes_dir}/Themes_Icon.cpp"
         "${themes_dir}/Themes_Wayland.cpp"
@@ -624,6 +634,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/Themes_App.ThemeToCppCode.cpp"
         "${themes_dir}/Util/Themes_App.ValueRuleControl.cpp")
     target_sources(Themes PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${themes_dir}/Themes_Main.cppm"
         "${themes_dir}/Themes_Icon.cppm"
         "${themes_dir}/Themes_BrowserControl.cppm"
@@ -672,6 +683,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # same Documents layer.
     set(pascalscripts_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/PascalScripts")
     add_executable(PascalScripts
+        "${starter_theme_dir}/StarterTheme.cpp"
         "${pascalscripts_dir}/Src/PascalScripts_Main.cpp"
         "${pascalscripts_dir}/Src/PascalScripts_Icon.cpp"
         "${pascalscripts_dir}/Src/PascalScripts_Wayland.cpp"
@@ -679,6 +691,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${pascalscripts_dir}/Src/Util/PascalScripts_App.Language.cpp"
         "${pascalscripts_dir}/Src/Util/PascalScripts_App.Scripts.cpp")
     target_sources(PascalScripts PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/StarterTheme.cppm"
         "${pascalscripts_dir}/Src/PascalScripts_Main.cppm"
         "${pascalscripts_dir}/Src/PascalScripts_Icon.cppm"
         "${pascalscripts_dir}/Src/PascalScripts_Browser.cppm"

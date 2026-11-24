@@ -89,6 +89,7 @@ namespace Themes_App
         explicit CodePage(const CreateParams&, Args&&...);
         [[nodiscard]] StackPanel& options() { return m_options; }
         [[nodiscard]] StackPanel& contentGroup() { return m_contentGroup; }
+        void hideContentOptions();
         [[nodiscard]] CodeBox& box() { return m_box; }
     private:
         StackPanel& m_options{ createLeftBar<ScrollBox>(
@@ -129,11 +130,9 @@ namespace Themes_App
         explicit ThemePage(const CreateParams&, Args&&...);
     public:
         void restoreViewState() override;
-        [[nodiscard]] bool canSaveEdits() const override { return !isBuiltIn(); }
         // The theme this page's tab stands for - what its icon is drawn from, edits and all.
         [[nodiscard]] const AppTheme& tabTheme() const { return m_editTheme; }
     protected:
-        [[nodiscard]] bool readSavedDocument(Dom::DomNodeBase& into) const override;
         const AppTheme* selectedTheme() override { return &m_editTheme; }
         void visibilityChanged() override;
         // The pigment grid reads every element in the preview's mode.
@@ -201,13 +200,6 @@ namespace Themes_App
         void followElementLink(LinkClickEvent&);
         // A rule or a size was changed on the Design page, or a style reset.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
-        // Asks whether the user is the one this button is for, and answers whether they said so.
-        [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
-        // Whether this page stands for one of the built-ins. They are answered from the
-        // compiled-in colors rather than from a file, so Save has nothing to write over and
-        // falls back to Save as.
-        [[nodiscard]] bool isBuiltIn() const;
-        //
         [[nodiscard]] Hsl elementColor(std::wstring_view style);
         // The ink a style's text starts from: the same nesting as elementColor, walked through
         // text rules instead of surface ones.
@@ -229,9 +221,7 @@ namespace Themes_App
         // A pick was made on this page. The action has already moved the answer and refreshed
         // every presenter of it; what is left is the document this page is showing.
         void codeOptionPicked(ClickEvent&);
-        // Writes this theme as the framework's own once the user has said they are a ClaFi
-        // developer, and says beside the button what came of it.
-        void writeToSource(ClickEvent&);
+        void exportCpp(ClickEvent&);
     private:
         static constexpr TagValue k_harmonyTag = 2ull;
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
@@ -253,8 +243,7 @@ namespace Themes_App
         bool m_restoring{ false };
         // Set while showAnchor picks a design page, a pick the tab already stands on.
         bool m_showingAnchor{ false };
-        // Where Write to source writes - empty where the tree it was compiled from is not there.
-        const std::filesystem::path m_builtInThemeFile{ builtInThemeFile() };
+        std::wstring m_cppModule{};
 
         ColorHarmonySelector m_harmonySelector{ editColors().anchorHue };
 
@@ -269,29 +258,7 @@ namespace Themes_App
         CodePage& m_xmlPage{ m_tabbedBox.pageControl().add<CodePage>() };
         CodePage& m_jsonPage{ m_tabbedBox.pageControl().add<CodePage>() };
 
-        // The scope is the C++ page's own question, so it is added to that page's bar under the
-        // choice every code page carries.
-        Controls::Divider& m_cppOptionsDivider{ m_cppCodePage.options().add<Controls::Divider>(
-            Thickness::Heavy,
-            Padding{ 0.0f, 4.0f }
-        ) };
-
-        Label& m_cppScopeLabel{ m_cppCodePage.options().add<Label>(
-            Text{ StyledText{ TextStyles::Section, L"Scope" } }
-        ) };
-
-        StackPanel& m_cppScopeGroup{ m_cppCodePage.options().add<StackPanel>(
-            Orientation::Vertical
-        ) };
-
-        Controls::Divider& m_writeSourceDivider{ m_cppCodePage.options().add<Controls::Divider>(
-            Thickness::Heavy,
-            Padding{ 0.0f, 4.0f }
-        ) };
-
-        Button& m_writeSourceButton{ m_cppCodePage.options().add<Button>(
-            L"Write to source"
-        ) };
+        Button& m_exportCppButton{ m_cppCodePage.options().add<Button>(L"Export as C++") };
 
         Tab& m_designTab{ m_tabbedBox.strip().addTab(
             L"Design",
@@ -501,26 +468,16 @@ namespace Themes_App
         m_xmlPage.box().setLanguage(Syntax::Languages::Xml);
         m_jsonPage.box().setLanguage(Syntax::Languages::Json);
 
-        // Every page presents the same two commands. A presenter takes the action as a property
-        // and takes its words, its mark and its click from it, so nothing here says what a button
-        // reads or which choice it stands for.
-        for (CodePage* page : { &m_cppCodePage, &m_claFiPage, &m_xmlPage, &m_jsonPage })
+        m_cppCodePage.hideContentOptions();
+        for (CodePage* page : { &m_claFiPage, &m_xmlPage, &m_jsonPage })
+        {
             for (Action* action : { &CodeOptions::onlyDifferences, &CodeOptions::full })
             {
                 RadioButton& button = page->contentGroup().add<RadioButton>(*action);
                 button.connectEvent(this, &ThemePage::codeOptionPicked);
             }
-
-        for (Action* action : { &CodeOptions::asClassMethod, &CodeOptions::asOutsideClass })
-        {
-            RadioButton& button = m_cppScopeGroup.add<RadioButton>(*action);
-            button.connectEvent(this, &ThemePage::codeOptionPicked);
         }
-
-        m_writeSourceButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = !m_builtInThemeFile.empty();
-            });
-        m_writeSourceButton.connectEvent(this, &ThemePage::writeToSource);
+        m_exportCppButton.connectEvent(this, &ThemePage::exportCpp);
 
         writeHarmonyCaption();
 

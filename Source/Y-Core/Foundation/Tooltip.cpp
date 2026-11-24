@@ -39,15 +39,10 @@ namespace ClaFi
         },
         m_timer{ OnEvent{ [this](TimerEvent&) { showOrHide(nullptr); } } },
         m_linkHandoffTimer{ OnEvent{ [this](TimerEvent&) {
-            if (s_current != this)
-                return;
-            if (Input::mouse().active() && m_form->hasLinkInput()
-                && m_form->window().pointerOver(m_form->geometry()))
+            if (s_current == this)
             {
-                m_linkHandoffTimer.start(MilliSeconds{ 50u });
-                return;
+                pointedControlChanged(false);
             }
-            pointedControlChanged(false);
         } } },
         m_overTextTimer{ OnEvent{ [this](TimerEvent&) { showOrHideOverText(); } } }
     {
@@ -116,6 +111,10 @@ namespace ClaFi
     {
         if (!Input::mouse().active())
             return;
+        if (holdLinkedTooltipUnderPointer())
+        {
+            return;
+        }
         Control* hovered = Input::hoveredControl();
         const Control* shown = control();
         // A tooltip on screen about the hovered control, or about one it stands in, is asked again
@@ -132,6 +131,16 @@ namespace ClaFi
         }
         pointedControlChanged();
         overTextChanged();
+    }
+
+    void Tooltip::restartHoverDelay()
+    {
+        if (holdLinkedTooltipUnderPointer())
+        {
+            return;
+        }
+        stopAndHide();
+        hoveredControlChanged();
     }
 
     // **The focus has its say while the keyboard alone drives.** A click lands the focus as well,
@@ -164,6 +173,26 @@ namespace ClaFi
         return Input::focusDelegate();
     }
 
+    bool Tooltip::holdLinkedTooltipUnderPointer()
+    {
+        if (!Input::mouse().active() || !s_current)
+        {
+            return false;
+        }
+        const TooltipForm& form = *s_current->m_form;
+        if (!form.visible() || !form.hasLinkInput() || !form.window().pointerOver(form.geometry()))
+        {
+            return false;
+        }
+
+        // Movement across the transparent body may leave the underlying control's hover unchanged.
+        if (!s_current->m_linkHandoffTimer.isActive())
+        {
+            s_current->m_linkHandoffTimer.start(MilliSeconds{ 50u });
+        }
+        return true;
+    }
+
     void Tooltip::pointedControlChanged(const bool allowLinkHandoff)
     {
         Control* pointed = pointedControl();
@@ -171,6 +200,11 @@ namespace ClaFi
         {
             if (s_current && &pointed->form() == s_current->m_form.get())
                 s_current->m_linkHandoffTimer.stop();
+            return;
+        }
+
+        if (holdLinkedTooltipUnderPointer())
+        {
             return;
         }
 

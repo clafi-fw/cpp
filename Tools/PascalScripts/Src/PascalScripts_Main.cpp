@@ -1,5 +1,7 @@
 module PascalScripts_App.Main;
 
+import ClaFiApps.StarterTheme;
+
 import PascalScripts_App.Consts;
 
 import ClaFi.App.WindowApplication;
@@ -28,7 +30,10 @@ namespace PascalScripts_App
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"PascalScripts-v"
-            }
+            },
+            .defaultTheme = { L"Default", ClaFiApps::starterTheme() },
+            .legacyThemeFileDefaults = &ClaFiApps::starterTheme(),
+            .usePublisherThemes = true
         };
     }
 

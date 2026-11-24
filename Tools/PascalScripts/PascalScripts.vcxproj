@@ -223,6 +223,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Pages\ScriptPage.cpp" />
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\Pages\ScriptPage.cppm" />
     <ClCompile Include="Src\PascalScripts_Browser.cppm" />
     <ClCompile Include="Src\PascalScripts_Icon.cpp" />

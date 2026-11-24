@@ -310,12 +310,12 @@ else has arrived into the middle of it. The proxy goes back to the default queue
 since it outlives the wait. Exporting a surface that is no xdg toplevel is a protocol error,
 which is why Platform::pickFolder asks Window::isToplevelRole first.
 
-## FolderRequest
+## FileChooserRequest
 
 **The answer is watched for before it is asked for.** The request path is the caller's unique name
-and the `handle_token` it chose, so the match rule for its Response is sent ahead of OpenFile on
-the same connection and the bus has it before the portal can answer. A portal older than the
-token answers OpenFile with a path of its own, and that one is watched as the reply arrives.
+and the `handle_token` it chose, so the match rule for its Response is sent ahead of the method
+call on the same connection. A portal older than the token answers with a path of its own, and
+that path is watched as the reply arrives.
 
 The socket is read after every pass of the loop, not only when poll reports it readable: a bus
 that hangs up is reported whatever was asked for, and a source dispatched on POLLIN alone would

@@ -67,16 +67,15 @@ namespace ClaFi
         applyStoredTheme(appContext);
     }
 
-    // **A path naming nothing is not an application without a theme.** A user theme can be renamed
-    // or deleted between two sessions, and the config still holds the path it had, so the built-in
-    // the framework can always answer for stands in its place. The node is left as it is - the
-    // theme may be back the next time the application runs.
     const AppTheme& storedTheme(AppContext& appContext)
     {
         const std::wstring path = appContext.themePath().get();
-        if (const AppTheme* theme = appThemes().themeByPath(path))
+        ThemesManager& manager = appThemes();
+        if (const AppTheme* theme = manager.themeByPath(path))
+        {
             return *theme;
-        return defaultTheme();
+        }
+        return manager.defaultTheme().theme;
     }
 
     void applyStoredTheme(AppContext& appContext)

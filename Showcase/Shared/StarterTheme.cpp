@@ -1,19 +1,25 @@
-// The framework's own theme, written whole by the Themes app's Write to source.
-// An edit made here is lost at the next write.
-module ClaFi.Core.AppTheme_Theme;
+module ClaFiApps.StarterTheme;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.AppTheme_Styles;
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace ClaFi
+namespace ClaFiApps
 {
-    AppTheme::AppTheme()
+    using namespace ClaFi;
+
+    [[nodiscard]] AppTheme makeStarterTheme();
+
+    AppTheme makeStarterTheme()
     {
+        AppTheme theme{};
+        ThemeColors& colors = theme.colors;
+        ThemeStyles& styles = theme.styles;
         colors.anchorHue = 0.666534f;
 
         colors.harmonyKind = ColorHarmonyKind::Complementary;
@@ -863,5 +869,12 @@ namespace ClaFi
                 }
             }
         };
+        return theme;
+    }
+
+    const AppTheme& starterTheme()
+    {
+        static const AppTheme theme = makeStarterTheme();
+        return theme;
     }
 }

@@ -1,12 +1,12 @@
 module ClaFi.Application.ThemesManager;
 
+import ClaFi.App.ApplicationProperties;
+
 import ClaFi.App.ThemeIcon;
 
 import ClaFi.Documents.Folder;
 
 import ClaFi.Dom.Formats.ClaFi;
-
-import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
@@ -15,29 +15,25 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    namespace
-    {
-        // The names a user theme may not take: every built-in's, without its extension.
-        constexpr std::array<std::wstring_view, 1ull> k_reservedStems{
-            BuiltInThemes::DefaultTheme
-        };
-    }
-
     // UserTheme
 
-    UserTheme::UserTheme(const std::filesystem::path& path)
+    UserTheme::UserTheme(const std::filesystem::path& path, const AppTheme& defaults)
         :
         m_path{ path }
     {
-        Dom::Value<AppTheme> section{ nullptr, {} };
+        Dom::Value<AppTheme> section{ nullptr, defaults };
         const Dom::FileFormat::ClaFi ff;
-        ff.loadSectionFromFile(section, path);
-        loadTheme(section, m_theme);
+        m_readable = ff.loadSectionFromFile(section, path);
+        if (m_readable)
+        {
+            loadTheme(section, m_theme);
+        }
     }
 
     void UserTheme::loadTheme(const Dom::Value<AppTheme>& configNode, AppTheme& theme)
@@ -45,90 +41,30 @@ namespace ClaFi
         configNode.getTo(theme);
     }
 
-    // addBuiltInStyles
-
-    // Read as a theme file is, over the defaults - and a list in a file is the whole list, so
-    // what comes back holds the text's styles alone. Each joins the built-in theme, replacing a
-    // style of its name.
-    void addBuiltInStyles(const std::wstring_view themeText)
-    {
-        if (themeText.empty())
-            return;
-        Dom::Value<AppTheme> section{ nullptr, {} };
-        const Dom::FileFormat::ClaFi ff;
-        std::wistringstream stream{ std::wstring{ themeText } };
-        ff.loadSectionFromStream(section, stream);
-        AppTheme theme{};
-        UserTheme::loadTheme(section, theme);
-        for (ControlStyle& style : theme.styles.list)
-            defaultTheme().styles.add(std::move(style));
-    }
-
-    // ThemesManager
-
-    ThemesManager::ThemesManager(const std::filesystem::path& directory,
-        const AppElementNames requiredElements)
+    ThemeFolder::ThemeFolder(const std::filesystem::path& directory,
+        const AppTheme* legacyThemeFileDefaults)
         :
         DocumentsFolder{ directory, k_themeKind },
-        m_requiredElements{ requiredElements }
+        m_themeFileDefaults{ legacyThemeFileDefaults ? *legacyThemeFileDefaults : AppTheme{} }
     {
     }
 
-    const UserThemeList& ThemesManager::userThemes()
+    const UserThemeList& ThemeFolder::userThemes()
     {
         update();
         return m_userThemes;
     }
 
-    bool ThemesManager::acceptsTheme(const AppTheme& theme) const
+    const AppTheme* ThemeFolder::themeByName(const std::wstring_view themeName) const
     {
-        return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
-            return theme.styles.of(name) != nullptr;
-        });
-    }
-
-    const AppTheme* ThemesManager::themeByName(const std::wstring_view themeName) const
-    {
-        if (k_defaultThemeName == themeName)
-            return &defaultTheme();
-
         for (const UserThemePtr& theme : m_userThemes)
-            if (theme->path().filename() == themeName)
+            if (theme->readable() && theme->path().filename() == themeName)
                 return &theme->theme();
 
         return nullptr;
     }
 
-    const AppTheme* ThemesManager::themeByPath(const std::wstring_view path)
-    {
-        const std::wstring_view root = themePathRoot(path);
-        const std::wstring_view name = themePathName(path);
-        if (root == ThemeRoots::BuiltIn)
-            return builtInTheme(name);
-        if (root != ThemeRoots::User)
-            return nullptr;
-
-        for (const UserThemePtr& theme : userThemes())
-            if (name == theme->path().stem().wstring() && acceptsTheme(theme->theme()))
-                return &theme->theme();
-        return nullptr;
-    }
-
-    std::wstring ThemesManager::pathOf(const UserTheme& theme)
-    {
-        return themePathOf(ThemeRoots::User, theme.path().stem().wstring());
-    }
-
-    bool ThemesManager::isReservedName(const std::wstring_view stem)
-    {
-        return std::ranges::any_of(k_reservedStems, [stem](const std::wstring_view reserved) {
-            return std::ranges::equal(stem, reserved, [](const wchar_t alpha, const wchar_t beta) {
-                return std::towlower(alpha) == std::towlower(beta);
-            });
-        });
-    }
-
-    void ThemesManager::saveTheme(const std::wstring_view themeName,
+    void ThemeFolder::saveTheme(const std::wstring_view themeName,
         Dom::Value<AppTheme>& configNode) const
     {
         const AppTheme* theme = themeByName(themeName);
@@ -137,48 +73,46 @@ namespace ClaFi
         saveTheme(*theme, configNode);
     }
 
-    void ThemesManager::saveTheme(const AppTheme& theme, Dom::Value<AppTheme>& configNode)
+    void ThemeFolder::saveTheme(const AppTheme& theme, Dom::Value<AppTheme>& configNode)
     {
         configNode.set(theme);
     }
 
-    std::unique_ptr<Dom::Section> ThemesManager::statedTheme(const Dom::Section& themeNode)
+    std::unique_ptr<Dom::Section> ThemeFolder::statedTheme(const Dom::Section& themeNode) const
     {
-        const Dom::Value<AppTheme> defaults{ nullptr, AppTheme{} };
+        const Dom::Value<AppTheme> defaults{ nullptr, m_themeFileDefaults };
         return Dom::withoutDefaults(themeNode, defaults);
     }
 
-    bool ThemesManager::readDocument(const std::filesystem::path& path,
+    bool ThemeFolder::readDocument(const std::filesystem::path& path,
         Dom::DomNodeBase& into) const
     {
-        // Seeded with the defaults and loaded over, exactly as UserTheme reads a file: the file
-        // states only what it changes, so the node is a whole theme only if it is filled in the
-        // same way. A file that cannot be read leaves the defaults, which is the empty theme.
-        into.set(AppTheme{});
+        into.set(m_themeFileDefaults);
         const Dom::FileFormat::ClaFi ff;
         return ff.loadSectionFromFile(into.as<Dom::Section>(), path);
     }
 
-    bool ThemesManager::writeDocument(const Dom::DomNodeBase& node,
+    bool ThemeFolder::writeDocument(const Dom::DomNodeBase& node,
         const std::filesystem::path& path) const
     {
         const Dom::FileFormat::ClaFi ff;
-        return ff.saveSectionToFile(*statedTheme(node.as<Dom::Section>()), path);
+        return ff.saveSectionToFile(node.as<Dom::Section>(), path);
     }
 
-    // A theme file states only what it differs from the defaults in, so one that states nothing
-    // is a theme nobody has touched - what New theme leaves behind, and what may go without
-    // being asked about. Read off the disk, the way saving writes it.
-    bool ThemesManager::isEdited(const std::filesystem::path& path) const
+    bool ThemeFolder::isEdited(const std::filesystem::path& path) const
     {
-        const UserTheme theme{ path };
-        const Dom::Value<AppTheme> defaults{ nullptr, AppTheme{} };
+        const UserTheme theme{ path, m_themeFileDefaults };
+        if (!theme.readable())
+        {
+            return true;
+        }
+        const Dom::Value<AppTheme> defaults{ nullptr, m_themeFileDefaults };
         Dom::Value<AppTheme> themeNode{ nullptr, AppTheme{} };
         saveTheme(theme.theme(), themeNode);
         return !Dom::sameValue(themeNode, defaults);
     }
 
-    void ThemesManager::drawIcon(const std::wstring_view fileName, DrawIconEvent& event)
+    void ThemeFolder::drawIcon(const std::wstring_view fileName, DrawIconEvent& event)
     {
         return;
 
@@ -189,21 +123,103 @@ namespace ClaFi
             drawThemeIcon(event, *theme);
     }
 
-    void ThemesManager::checkNameShape(Controls::AcceptEditEvent& event,
-        const std::wstring_view stem) const
-    {
-        DocumentsFolder::checkNameShape(event, stem);
-        if (event.refused())
-            return;
-        if (isReservedName(stem))
-            event.refuse(L"That name belongs to a built-in theme.");
-    }
-
-    void ThemesManager::filesRead(const Documents::FilePaths& files)
+    void ThemeFolder::filesRead(const Documents::FilePaths& files)
     {
         m_userThemes.clear();
         m_userThemes.reserve(files.size());
         for (const std::filesystem::path& file : files)
-            m_userThemes.push_back(std::make_unique<UserTheme>(file));
+            m_userThemes.push_back(std::make_unique<UserTheme>(file, m_themeFileDefaults));
+    }
+
+    ThemesManager::ThemesManager(const std::filesystem::path& publisherDirectory,
+        const AppElementNames requiredElements, const NamedTheme& defaultTheme,
+        const NamedThemes& additionalThemes, const AppTheme* legacyThemeFileDefaults,
+        const std::filesystem::path& appConfigDirectory,
+        const std::filesystem::path& appExecutableDirectory)
+        :
+        ThemeFolder{ publisherDirectory, legacyThemeFileDefaults },
+        m_requiredElements{ requiredElements },
+        m_defaultTheme{ defaultTheme },
+        m_additionalThemes{ additionalThemes },
+        m_appConfigThemes{ appConfigDirectory, legacyThemeFileDefaults },
+        m_appExecutableThemes{ appExecutableDirectory, legacyThemeFileDefaults }
+    {
+        m_appConfigThemes.setReadOnly(true);
+        m_appExecutableThemes.setReadOnly(true);
+        if (m_defaultTheme.name.empty())
+        {
+            noReach("A window application must declare a default theme.");
+        }
+        std::unordered_set<std::wstring_view> names{
+            themePathName(k_defaultThemePath), m_defaultTheme.name
+        };
+        for (const NamedTheme& theme : m_additionalThemes)
+        {
+            if (theme.name.empty() || theme.name.find(ThemeRoots::Separator) != std::wstring::npos
+                || !names.insert(theme.name).second)
+            {
+                noReach("An additional theme must have a unique Settings name without a slash.");
+            }
+        }
+    }
+
+    ThemeFolder* ThemesManager::fileThemeFolder(const std::wstring_view root)
+    {
+        if (root == ThemeRoots::AppConfig && !m_appConfigThemes.directory().empty())
+        {
+            return &m_appConfigThemes;
+        }
+        if (root == ThemeRoots::AppExecutable && !m_appExecutableThemes.directory().empty())
+        {
+            return &m_appExecutableThemes;
+        }
+        if (root == ThemeRoots::User && !directory().empty())
+        {
+            return this;
+        }
+        return nullptr;
+    }
+
+    bool ThemesManager::acceptsTheme(const AppTheme& theme) const
+    {
+        return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
+            return theme.styles.of(name) != nullptr;
+        });
+    }
+
+    bool ThemesManager::offersTheme(const std::wstring_view root, const UserTheme& theme) const
+    {
+        return theme.readable() && (root != ThemeRoots::User || acceptsTheme(theme.theme()));
+    }
+
+    const AppTheme* ThemesManager::themeByPath(const std::wstring_view path)
+    {
+        if (path == k_defaultThemePath || path == L"BuiltIn/Default")
+        {
+            return &m_defaultTheme.theme;
+        }
+        const std::wstring_view root = themePathRoot(path);
+        const std::wstring_view name = themePathName(path);
+        if (root == ThemeRoots::App)
+        {
+            const auto theme = std::ranges::find(m_additionalThemes, name, &NamedTheme::name);
+            return theme == m_additionalThemes.end() ? nullptr : &theme->theme;
+        }
+        if (ThemeFolder* folder = fileThemeFolder(root))
+        {
+            for (const UserThemePtr& theme : folder->userThemes())
+            {
+                if (name == theme->path().stem().wstring() && offersTheme(root, *theme))
+                {
+                    return &theme->theme();
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    std::wstring ThemesManager::pathOf(const UserTheme& theme)
+    {
+        return themePathOf(ThemeRoots::User, theme.path().stem().wstring());
     }
 }

@@ -621,7 +621,7 @@ m_box-&gt;<span class="fn">setFocus</span>();             <span class="cm">// sh
             the control the root's current item. A message box opens on its first answer this way, and a caller
             selects another answer the same way:</p>
 
-<pre><span class="tp">MessageDialog</span> dialog{ initiator, <span class="st">L"Write to source"</span>, message, <span class="tp">MessageIcon</span>::Question };
+<pre><span class="tp">MessageDialog</span> dialog{ initiator, <span class="st">L"Replace the file?"</span>, message, <span class="tp">MessageIcon</span>::Question };
 dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::Yes);
 dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<span class="fn">makeCurrentItem</span>();   <span class="cm">// opens on No</span>
 <span class="kw">return</span> dialog.<span class="fn">execute</span>() == <span class="tp">DialogAnswer</span>::Yes;</pre>

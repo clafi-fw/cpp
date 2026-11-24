@@ -410,6 +410,8 @@
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.WebFetch.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Include="..\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\Pages\TextEngine_Features.cppm" />
     <ClCompile Include="Src\Pages\TextEngine_Code.cpp" />
     <ClCompile Include="Src\Pages\TextEngine_Code.cppm" />

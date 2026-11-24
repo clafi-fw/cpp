@@ -52,105 +52,48 @@ namespace Themes_App
         }
     }
 
-    // themeToCppCode
-
-    std::wstring themeToCppCode(const AppTheme& theme, CodeContent content, CodeScope scope)
+    std::wstring themeToModule(const AppTheme& theme, const std::wstring_view name)
     {
-        return CppCodeGenerator{ theme, content, scope }.text();
-    }
-
-    // themeToSourceFile
-
-    std::wstring themeToSourceFile(const AppTheme& theme)
-    {
-        const std::wstring text = CppCodeGenerator{ theme }.text();
-        std::wstring_view statements = text;
-        std::wstring result{ k_sourceFileHead };
-        while (!statements.empty())
+        std::wstring moduleName{ L"AppThemes.Theme" };
+        bool wordStart = true;
+        for (const wchar_t character : name)
         {
-            const std::size_t lineEnd = statements.find(L'\n');
-            const std::wstring_view line = statements.substr(0ull, lineEnd);
-            // A blank line stays empty rather than carrying the indent as trailing whitespace.
-            if (!line.empty())
-                result.append(k_sourceFileIndent, L' ').append(line);
-            result.push_back(L'\n');
-            if (lineEnd == std::wstring_view::npos)
-                break;
-            statements.remove_prefix(lineEnd + 1ull);
-        }
-        // The last statement's blank line would stand above the closing brace.
-        while (result.ends_with(L"\n\n"))
-            result.pop_back();
-        return result.append(k_sourceFileTail);
-    }
-
-    // builtInThemeFile
-
-    std::filesystem::path builtInThemeFile()
-    {
-        // This file stands in the tree it was compiled from, wherever the executable was put.
-        std::error_code error;
-        std::filesystem::path folder =
-            std::filesystem::path{ std::source_location::current().file_name() }.parent_path();
-        while (!folder.empty())
-        {
-            const std::filesystem::path appThemeFolder =
-                folder / L"Source" / L"Y-Core" / L"AppTheme";
-            if (std::filesystem::exists(appThemeFolder / k_themeModuleFileName, error))
-                return appThemeFolder / k_builtInThemeFileName;
-            std::filesystem::path parent = folder.parent_path();
-            // A root is its own parent.
-            if (parent == folder)
-                break;
-            folder = std::move(parent);
-        }
-        return {};
-    }
-
-    // writeBuiltInTheme
-
-    SourceWrite writeBuiltInTheme(const std::filesystem::path& file, const AppTheme& theme)
-    {
-        const std::string_view lineEnd = lineEndOf(file.parent_path() / k_themeModuleFileName);
-        std::string content{};
-        for (const char c : toUtf8(themeToSourceFile(theme)))
-        {
-            if (c == '\n')
+            if ((character >= L'a' && character <= L'z')
+                || (character >= L'A' && character <= L'Z')
+                || (character >= L'0' && character <= L'9'))
             {
-                content.append(lineEnd);
+                if (wordStart)
+                {
+                    moduleName.push_back(L'_');
+                }
+                moduleName.push_back(character);
+                wordStart = false;
             }
             else
             {
-                content.push_back(c);
+                wordStart = true;
             }
         }
-        // An untouched file is not rebuilt.
-        if (fileBytes(file) == content)
-            return SourceWrite::Unchanged;
-        std::ofstream stream{ file, std::ios::binary | std::ios::trunc };
-        stream.write(content.data(), static_cast<std::streamsize>(content.size()));
-        stream.close();
-        return stream ? SourceWrite::Written : SourceWrite::Failed;
-    }
 
-    // lineEndOf
-
-    std::string_view lineEndOf(const std::filesystem::path& file)
-    {
-        std::ifstream stream{ file, std::ios::binary };
-        std::string line{};
-        std::getline(stream, line);
-        if (line.ends_with('\r'))
-            return "\r\n";
-        return "\n";
-    }
-
-    // fileBytes
-
-    std::string fileBytes(const std::filesystem::path& file)
-    {
-        std::ifstream stream{ file, std::ios::binary };
-        return { std::istreambuf_iterator<char>{ stream }, std::istreambuf_iterator<char>{} };
+        std::wstring result{ L"export module " };
+        result.append(moduleName).append(L";\n\n"
+            L"import ClaFi.Core.AppTheme_Theme;\n"
+            L"import ClaFi.Core.AppTheme_Colors;\n"
+            L"import ClaFi.Core.AppTheme_Metrics;\n"
+            L"import ClaFi.Core.AppTheme_Palette;\n"
+            L"import ClaFi.Core.AppTheme_Styles;\n"
+            L"import ClaFi.Core.System.UiTypes;\n"
+            L"\n"
+            L"namespace AppThemes\n"
+            L"{\n"
+            L"    export [[nodiscard]] ClaFi::AppTheme ");
+        result.append(moduleName.substr(std::wstring_view{ L"AppThemes." }.size())).append(L"()\n"
+            L"    {\n"
+            L"        using namespace ClaFi;\n"
+            L"        AppTheme theme{};\n"
+            L"\n");
+        result.append(CppCodeGenerator{ theme }.text());
+        return result.append(L"\n        return theme;\n    }\n}\n");
     }
 
     // literalValue
@@ -184,22 +127,9 @@ namespace Themes_App
 
     // CppCodeGenerator
 
-    CppCodeGenerator::CppCodeGenerator(const AppTheme& theme, CodeContent content,
-        CodeScope scope)
-        :
-        m_theme{ theme },
-        m_content{ content },
-        m_scope{ scope }
-    {
-        build();
-    }
-
     CppCodeGenerator::CppCodeGenerator(const AppTheme& theme)
         :
-        m_theme{ theme },
-        m_content{ CodeContent::Full },
-        m_scope{ CodeScope::ClassMethod },
-        m_startsEmpty{ true }
+        m_theme{ theme }
     {
         build();
     }
@@ -379,83 +309,55 @@ namespace Themes_App
         return indent(level).write(L"}");
     }
 
-    CppCodeGenerator& CppCodeGenerator::memberName(std::wstring_view name)
-    {
-        if (m_scope == CodeScope::OutsideClass)
-            write(k_objectName).write(L".");
-        return write(name);
-    }
-
     CppCodeGenerator& CppCodeGenerator::colorsMemberName(std::wstring_view name)
     {
-        return memberName(L"colors").write(L".").write(name);
+        return write(L"theme.colors.").write(name);
     }
 
-    CppCodeGenerator& CppCodeGenerator::openMember(std::wstring_view typeName, std::wstring_view name)
-    {
-        return colorsMemberName(name).write(L" = ").write(typeName);
-    }
-
-    bool CppCodeGenerator::statesMember(bool differs) const
-    {
-        return m_content == CodeContent::Full or differs;
-    }
-
-    void CppCodeGenerator::colorMember(UiElement element)
+    void CppCodeGenerator::colorMember(const UiElement element)
     {
         const UiElementDescriptor& entry = uiElementOf(element);
-        // An element whose effect no ink names has no member of ThemeColors to state.
         if (!entry.effect)
+        {
             return;
-        if (!statesMember(m_theme.colors.*entry.effect != m_defaults.colors.*entry.effect))
-            return;
-        openMember(L"ColorEffect", entry.codeName);
+        }
+        colorsMemberName(entry.codeName).write(L" = ColorEffect");
         colorEffect(m_theme.colors.*entry.effect, 0ull, k_channelColumn);
-        closeLine();
-        newLine();
-        m_statedAnyMember = true;
+        closeLine().newLine().newLine();
     }
 
-    void CppCodeGenerator::floatMember(std::wstring_view name, float value, float defaultValue)
+    void CppCodeGenerator::floatMember(const std::wstring_view name, const float value)
     {
-        if (!statesMember(value != defaultValue))
-            return;
         colorsMemberName(name).write(L" = ").number(value);
-        closeLine().newLine();
-        m_statedAnyMember = true;
+        closeLine().newLine().newLine();
     }
 
     void CppCodeGenerator::paletteMembers()
     {
         const ThemeColors& colors = m_theme.colors;
-        floatMember(L"anchorHue", colors.anchorHue, m_defaults.colors.anchorHue);
-        if (statesMember(colors.harmonyKind != m_defaults.colors.harmonyKind))
-        {
-            const std::wstring_view harmonyName =
-                enumNames(colors.harmonyKind)[static_cast<std::size_t>(colors.harmonyKind)];
-            colorsMemberName(L"harmonyKind").write(L" = ");
-            enumValue(L"ColorHarmonyKind", harmonyName);
-            closeLine().newLine();
-            m_statedAnyMember = true;
-        }
+        floatMember(L"anchorHue", colors.anchorHue);
+        const std::wstring_view harmonyName =
+            enumNames(colors.harmonyKind)[static_cast<std::size_t>(colors.harmonyKind)];
+        colorsMemberName(L"harmonyKind").write(L" = ");
+        enumValue(L"ColorHarmonyKind", harmonyName);
+        closeLine().newLine().newLine();
         paletteHuesMember();
     }
 
     void CppCodeGenerator::paletteHuesMember()
     {
         const ThemeColors& colors = m_theme.colors;
-        if (!statesMember(colors.paletteHues != m_defaults.colors.paletteHues))
-            return;
         colorsMemberName(L"paletteHues").write(L" = {").newLine();
         for (std::size_t i = 0ull; i != colors.paletteHues.size(); ++i)
         {
             indent(1ull).number(colors.paletteHues[i]);
             if (i + 1ull != colors.paletteHues.size())
+            {
                 write(L",");
+            }
             newLine();
         }
-        write(L"}").closeLine().newLine();
-        m_statedAnyMember = true;
+        write(L"}").closeLine().newLine().newLine();
     }
 
     CppCodeGenerator& CppCodeGenerator::ruleSelector(const RuleSelector& selector)
@@ -644,20 +546,13 @@ namespace Themes_App
 
     void CppCodeGenerator::themeStyles()
     {
-        if (m_content == CodeContent::Differences)
-        {
-            addedStyles();
-            removedStyles();
-            return;
-        }
         const ControlStyleList& list = m_theme.styles.list;
         if (list.empty())
         {
-            memberName(L"styles").write(L".list = {}").closeLine();
-            m_statedAnyMember = true;
+            write(L"theme.styles.list = {}").closeLine();
             return;
         }
-        memberName(L"styles").write(L".list = {").newLine();
+        write(L"theme.styles.list = {").newLine();
         for (std::size_t i = 0ull; i != list.size(); ++i)
         {
             indent(1ull).controlStyle(list[i], 1ull);
@@ -666,84 +561,29 @@ namespace Themes_App
             newLine();
         }
         write(L"}").closeLine();
-        m_statedAnyMember = true;
-    }
-
-    // Style statements stand a blank line apart. The first follows the members' own blank line.
-    void CppCodeGenerator::addedStyles()
-    {
-        for (const ControlStyle& style : m_theme.styles.list)
-        {
-            const ControlStyle* defaultStyle = m_defaults.styles.of(style.name);
-            if (defaultStyle and *defaultStyle == style)
-                continue;
-            if (m_statedAnyStyle)
-                newLine();
-            memberName(L"styles").write(L".add(");
-            controlStyle(style, 0ull);
-            write(L")").closeLine();
-            m_statedAnyStyle = true;
-            m_statedAnyMember = true;
-        }
-    }
-
-    void CppCodeGenerator::removedStyles()
-    {
-        for (const ControlStyle& defaultStyle : m_defaults.styles.list)
-        {
-            if (m_theme.styles.of(defaultStyle.name))
-                continue;
-            if (m_statedAnyStyle)
-                newLine();
-            memberName(L"styles").write(L".remove(").write(wideLiteral(defaultStyle.name)).write(L")");
-            closeLine();
-            m_statedAnyStyle = true;
-            m_statedAnyMember = true;
-        }
-    }
-
-    void CppCodeGenerator::objectDeclaration()
-    {
-        if (m_scope != CodeScope::OutsideClass)
-            return;
-        write(L"AppTheme ").write(k_objectName).write(L"{}");
-        closeLine().newLine();
-    }
-
-    void CppCodeGenerator::headerComment()
-    {
-        switch (m_scope)
-        {
-        case CodeScope::ClassMethod:
-            write(L"// This code is to be used inside an AppTheme method").newLine();
-            write(L"// to initialize a theme compiled into an application").newLine();
-            break;
-        case CodeScope::OutsideClass:
-            write(L"// This code builds a theme compiled into an application").newLine();
-            break;
-        case CodeScope::Count:
-            break;
-        }
-        if (m_content == CodeContent::Differences)
-        {
-            write(L"// Anything left unstated keeps the framework's default").newLine();
-        }
-        newLine();
     }
 
     void CppCodeGenerator::build()
     {
-        if (!m_startsEmpty)
-            headerComment();
-        objectDeclaration();
         paletteMembers();
-        floatMember(L"darkModeFloor", m_theme.colors.darkModeFloor,
-            m_defaults.colors.darkModeFloor);
+        floatMember(L"darkModeFloor", m_theme.colors.darkModeFloor);
         for (std::size_t i = 0ull; i != k_uiElements.size(); ++i)
+        {
             colorMember(static_cast<UiElement>(i));
+        }
         themeStyles();
-        if (!m_statedAnyMember)
-            write(L"// This theme is the framework's default").newLine();
+        constexpr std::wstring_view indent{ L"        " };
+        std::wstring indented;
+        for (const auto line : m_text | std::views::split(L'\n'))
+        {
+            if (!line.empty())
+            {
+                indented.append(indent);
+                indented.append(line.begin(), line.end());
+            }
+            indented.push_back(L'\n');
+        }
+        m_text = std::move(indented);
     }
 
 }

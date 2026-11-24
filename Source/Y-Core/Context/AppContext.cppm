@@ -307,7 +307,7 @@ namespace ClaFi
         AnimationController m_animator{};
         // The application wears the default theme until it is told otherwise. The baked set
         // beside it is filled before any window exists - see connectAppThemes.
-        AppTheme m_theme{ defaultTheme() };
+        AppTheme m_theme{};
         // **What every window is painted from**: part way between the two below while a crossing
         // runs, and the incoming set once it has landed.
         BakedColors m_bakedColors{};
@@ -324,9 +324,8 @@ namespace ClaFi
         // Either factor moved in this tick; the repaint waits for the tick so it is made once.
         bool m_bakedColorsPending{ false };
         // **What is worn**, as an address and a lightness, which is what tells an edit from a
-        // crossing. Seeded with what m_theme is, so a first theme equal to it is not crossed to
-        // from itself.
-        const AppTheme* m_taken{ &defaultTheme() };
+        // crossing.
+        const AppTheme* m_taken{ nullptr };
         Lightness m_takenLightness{ k_darkLightness };
         Dom::Document<Dom::FileFormat::ClaFi> m_config;
         Dom::Section& m_interface{ m_config.childSection(k_interfaceSectionName) };

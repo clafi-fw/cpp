@@ -1321,9 +1321,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Baked.cppm">
       <Filter>Y_Core\AppTheme</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_BuiltIn.cpp">
-      <Filter>Y_Core\AppTheme</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Styles.cppm">
       <Filter>Y_Core\AppTheme</Filter>
     </ClCompile>

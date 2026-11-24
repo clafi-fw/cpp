@@ -21,7 +21,6 @@ import ClaFi.Icons.MessageIcons;
 
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.InPlaceEdit;
-import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 import ClaFi.Controls.Slider;
@@ -35,6 +34,7 @@ import ClaFi.StdActions;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
+import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -99,6 +99,12 @@ namespace Themes_App
         }
     }
 
+    void CodePage::hideContentOptions()
+    {
+        m_contentLabel.setVisible(false);
+        m_contentGroup.setVisible(false);
+    }
+
     void ThemePage::restoreViewState()
     {
         const ScopedFlag restoring{ m_restoring };
@@ -111,17 +117,6 @@ namespace Themes_App
         // The theme as the controls now show it, palette hues included, is where undo bottoms out.
         m_history.reset(m_editTheme);
         restoreView();
-    }
-
-    // **A built-in has no file of its own**, so the disk is the wrong side for one: the path it
-    // would name is never written and never read. The compiled-in colors are what it was opened
-    // from, and the manager answers a built-in name with those whatever stands on the disk.
-    bool ThemePage::readSavedDocument(Dom::DomNodeBase& into) const
-    {
-        if (!isBuiltIn())
-            return Base::readSavedDocument(into);
-        themesManager().saveTheme(pageData().name, into.as<Dom::Value<AppTheme>>());
-        return true;
     }
 
     void ThemePage::visibilityChanged()
@@ -501,33 +496,6 @@ namespace Themes_App
         edited(phase, what, at);
     }
 
-    bool ThemePage::confirmWritingToSource(Control& initiator) const
-    {
-        Text message{};
-        message << L"This rewrites " << m_builtInThemeFile.filename().wstring()
-            << L" in the framework's source tree. Are you a ClaFi developer?";
-
-        MessageDialog dialog{
-            initiator,
-            L"Write to source",
-            message,
-            MessageIcon::Question
-        };
-        dialog.add(DialogAnswer::Yes);
-        // Opens on No: Return declines, Escape dismisses, and only a deliberate move reaches Yes.
-        dialog.add(DialogAnswer::No).makeCurrentItem();
-        return dialog.execute() == DialogAnswer::Yes;
-    }
-
-    bool ThemePage::isBuiltIn() const
-    {
-        // Asked of the name, against the names the built-ins hold - the same test that keeps a
-        // user theme from taking one. The extension cannot answer it: a file the user put in the
-        // directory called Foo.theme carries the built-ins' extension and is not one of them.
-        const std::wstring stem = std::filesystem::path{ pageData().name }.stem().wstring();
-        return primaryStorage() && ThemesManager::isReservedName(stem);
-    }
-
     Hsl ThemePage::elementColor(const std::wstring_view style)
     {
         return restingSurface(m_editTheme, style, previewColorMode());
@@ -580,8 +548,13 @@ namespace Themes_App
         const Control* page = m_tabbedBox.pageControl().currentItem();
         if (page == &m_cppCodePage)
         {
-            showCode(themeToCppCode(m_editTheme, CodeOptions::content(), CodeOptions::scope()),
-                m_cppCodePage.box());
+            std::wstring_view name = pageData().name;
+            if (name.ends_with(k_themeFileExtension))
+            {
+                name.remove_suffix(k_themeFileExtension.size());
+            }
+            m_cppModule = themeToModule(m_editTheme, name);
+            showCode(m_cppModule, m_cppCodePage.box());
             return;
         }
         if (page == &m_claFiPage)
@@ -611,7 +584,7 @@ namespace Themes_App
         }
         else
         {
-            format.saveSectionToStream(*ThemesManager::statedTheme(themeNode), stream);
+            format.saveSectionToStream(*themesManager().statedTheme(themeNode), stream);
         }
         showCode(stream.str(), box);
     }
@@ -633,34 +606,37 @@ namespace Themes_App
         generateCode();
     }
 
-    void ThemePage::writeToSource(ClickEvent& event)
+    void ThemePage::exportCpp(ClickEvent& event)
     {
-        Control& button = *event.control;
-        if (!confirmWritingToSource(button))
-            return;
-
-        switch (writeBuiltInTheme(m_builtInThemeFile, m_editTheme))
+        std::wstring name = pageData().name;
+        if (name.ends_with(k_themeFileExtension))
         {
-        case SourceWrite::Written:
-            ContextMessage::show(
-                button,
-                Icons::messageText(MessageIcon::Ok,
-                    L"Written. The built-in theme from the next build")
-            );
-            break;
-        case SourceWrite::Unchanged:
-            ContextMessage::show(
-                button,
-                Icons::messageText(MessageIcon::Information,
-                    L"The source already states this theme")
-            );
-            break;
-        case SourceWrite::Failed:
-            ContextMessage::show(
-                button,
-                Icons::messageText(MessageIcon::Error, L"The source could not be written")
-            );
-            break;
+            name.resize(name.size() - k_themeFileExtension.size());
+        }
+        name.append(L".cppm");
+        const std::string source = toUtf8(m_cppModule);
+        const std::optional<std::filesystem::path> path =
+            Platform::pickSaveFile(&form(), L"Export as C++", name);
+        if (!path)
+        {
+            return;
+        }
+
+        std::ofstream stream{ *path, std::ios::binary | std::ios::trunc };
+        for (const char character : source)
+        {
+            if (character == '\n')
+            {
+                stream.put('\r');
+            }
+            stream.put(character);
+        }
+        stream.close();
+        if (!stream)
+        {
+            ContextMessage::show(*event.control,
+                Icons::messageText(MessageIcon::Error, L"The C++ module could not be saved"));
         }
     }
+
 }

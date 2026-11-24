@@ -2,9 +2,9 @@ export module ClaFi.Application.ThemesManager;
 
 export import ClaFi.Application.ThemesManager_Serializers;
 
-import ClaFi.Documents.Folder;
+import ClaFi.App.ApplicationProperties;
 
-import ClaFi.Controls.InPlaceEdit;
+import ClaFi.Documents.Folder;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
@@ -18,10 +18,7 @@ namespace ClaFi
 {
     export constexpr std::wstring_view k_themeDataAttrName{ L"ThemeData" };
 
-    export constexpr std::wstring_view k_defaultThemeName = L"Default.theme";
-
     export constexpr std::wstring_view k_themeFileExtension = L".clafitheme";
-    export constexpr std::wstring_view k_builtInThemeExtension = L".theme";
 
     // What a theme is called and how its files are named - see DocumentKind.
     export constexpr Documents::DocumentKind k_themeKind{
@@ -36,58 +33,68 @@ namespace ClaFi
     export class UserTheme
     {
     public:
-        explicit UserTheme(const std::filesystem::path&);
+        explicit UserTheme(const std::filesystem::path&, const AppTheme& defaults = {});
     public:
+        [[nodiscard]] bool readable() const { return m_readable; }
         [[nodiscard]] const std::filesystem::path& path() const { return m_path; }
         [[nodiscard]] const AppTheme& theme() const { return m_theme; }
         static void loadTheme(const Dom::Value<AppTheme>&, AppTheme&);
     private:
         const std::filesystem::path m_path;
         AppTheme m_theme{};
+        bool m_readable{ false };
     };
 
     export using UserThemePtr = std::unique_ptr<UserTheme>;
     export using UserThemeList = std::vector<UserThemePtr>;
 
-    // Reads the styles a theme file's text states into the built-in theme. See Application
-    export void addBuiltInStyles(std::wstring_view themeText);
-
-    // The theme files in the shared folder and the built-in theme. See Application
-    export class ThemesManager : public Documents::DocumentsFolder
+    export class ThemeFolder : public Documents::DocumentsFolder
     {
     public:
-        ThemesManager(const std::filesystem::path& directory, AppElementNames requiredElements);
+        ThemeFolder(const std::filesystem::path& directory, const AppTheme* legacyThemeFileDefaults);
     public:
+        [[nodiscard]] const AppTheme& themeFileDefaults() const { return m_themeFileDefaults; }
         [[nodiscard]] const UserThemeList& userThemes(); // all files, parsed in folder order
-        [[nodiscard]] bool acceptsTheme(const AppTheme&) const;
-        // The theme a file name stands for - the built-in's, or one of the user's - and nullptr
-        // where nothing does. Answered from what was last read, so a caller that may be first
-        // asks for userThemes ahead of it.
         [[nodiscard]] const AppTheme* themeByName(std::wstring_view) const;
-        // Resolves a Settings path to the built-in or a compatible user theme. See Application
-        [[nodiscard]] const AppTheme* themeByPath(std::wstring_view);
-        // The path a user theme is known by: the User root over its file's stem.
-        [[nodiscard]] static std::wstring pathOf(const UserTheme&);
-        // Whether a stem is a built-in's, which a user theme may not take. Case is not part of
-        // the answer: the file system does not tell `dark` from `Dark`.
-        [[nodiscard]] static bool isReservedName(std::wstring_view stem);
         void saveTheme(std::wstring_view themeName, Dom::Value<AppTheme>&) const;
         static void saveTheme(const AppTheme&, Dom::Value<AppTheme>&);
-        // What a theme states: the tree the framework would build stands beside the theme's own,
-        // and what differs is the answer. A file states the same, so a theme carrying nothing of
-        // its own comes back as the defaults.
-        [[nodiscard]] static std::unique_ptr<Dom::Section> statedTheme(const Dom::Section&);
+        [[nodiscard]] std::unique_ptr<Dom::Section> statedTheme(const Dom::Section&) const;
         [[nodiscard]] bool readDocument(const std::filesystem::path&,
             Dom::DomNodeBase& into) const override;
         [[nodiscard]] bool writeDocument(const Dom::DomNodeBase&,
             const std::filesystem::path&) const override;
         [[nodiscard]] bool isEdited(const std::filesystem::path&) const override;
         void drawIcon(std::wstring_view fileName, DrawIconEvent&) override;
-        void checkNameShape(Controls::AcceptEditEvent&, std::wstring_view stem) const override;
     protected:
         void filesRead(const Documents::FilePaths&) override;
     private:
-        const AppElementNames m_requiredElements;
+        const AppTheme m_themeFileDefaults;
         UserThemeList m_userThemes{};
+    };
+
+    // The application's declared and discovered themes. See Application
+    export class ThemesManager : public ThemeFolder
+    {
+    public:
+        ThemesManager(const std::filesystem::path& publisherDirectory, AppElementNames requiredElements,
+            const NamedTheme& defaultTheme, const NamedThemes& additionalThemes = {},
+            const AppTheme* legacyThemeFileDefaults = nullptr,
+            const std::filesystem::path& appConfigDirectory = {},
+            const std::filesystem::path& appExecutableDirectory = {});
+    public:
+        [[nodiscard]] const NamedTheme& defaultTheme() const { return m_defaultTheme; }
+        [[nodiscard]] const NamedThemes& additionalThemes() const { return m_additionalThemes; }
+        [[nodiscard]] ThemeFolder* fileThemeFolder(std::wstring_view root);
+        [[nodiscard]] bool acceptsTheme(const AppTheme&) const;
+        [[nodiscard]] bool offersTheme(std::wstring_view root, const UserTheme&) const;
+        [[nodiscard]] const AppTheme* themeByPath(std::wstring_view path);
+        // The Settings path of a publisher theme. See Application#themesmanager
+        [[nodiscard]] static std::wstring pathOf(const UserTheme&);
+    private:
+        const AppElementNames m_requiredElements;
+        const NamedTheme m_defaultTheme;
+        const NamedThemes m_additionalThemes;
+        ThemeFolder m_appConfigThemes;
+        ThemeFolder m_appExecutableThemes;
     };
 }

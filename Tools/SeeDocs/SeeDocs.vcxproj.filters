@@ -17,6 +17,8 @@
     <ClCompile Include="Src\SeeDocs_App.Articles.cpp">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Articles.cppm">
       <Filter>Src</Filter>
     </ClCompile>

@@ -9,6 +9,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Showcase\Shared\StarterTheme.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cppm">
       <Filter>Src</Filter>
     </ClCompile>

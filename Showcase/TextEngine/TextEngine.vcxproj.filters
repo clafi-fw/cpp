@@ -16,6 +16,8 @@
     <ClCompile Include="Src\TextEngine_Icon.cpp">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="..\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\TextEngine_Icon.cppm">
       <Filter>Src</Filter>
     </ClCompile>

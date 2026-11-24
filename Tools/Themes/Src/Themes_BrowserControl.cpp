@@ -4,6 +4,7 @@ import Themes_App.Consts;
 import Themes_App.ThemePage;
 
 import ClaFi.Application.ThemesManager;
+import ClaFi.App.Themes;
 import ClaFi.App.ThemeIcon;
 
 import ClaFi.Documents.Browser;
@@ -64,33 +65,19 @@ namespace Themes_App
         {
             return false;
         }
-        if (data->parent == &homePageData() && data->name == k_defaultPageName)
+        const std::filesystem::path file = documentFileOf(*data);
+        if (file.empty())
         {
-            if (!defaultTheme().styles.of(name))
-            {
-                return false;
-            }
+            return false;
         }
-        else
+        const UserTheme theme{ file, appThemes().themeFileDefaults() };
+        if (!theme.readable() || !theme.theme().styles.of(name))
         {
-            const std::filesystem::path file = documentFileOf(*data);
-            if (file.empty() || !UserTheme{ file }.theme().styles.of(name))
-            {
-                return false;
-            }
+            return false;
         }
 
         goToLater(Url{ themePath, styleAnchor(name) });
         return true;
-    }
-
-    void ThemesBrowser::fetchSubItems(PageData& data)
-    {
-        if (isHomePage(data))
-        {
-            addSubItem(data, k_defaultPageName);
-        }
-        Base::fetchSubItems(data);
     }
 
     void ThemesBrowser::drawTabIcon(BrowserTab& tab, DrawIconEvent& event)
@@ -113,25 +100,6 @@ namespace Themes_App
             const ThemeIconColors iconColors{ *theme };
             (settings().tabEntry(tab.id()) / k_tabIconAttrName).set(iconColors);
         }
-    }
-
-    // A built-in's page is named with the extension the compiled-in themes go by, a user's with
-    // the one a theme file carries - and both are theme pages.
-    bool ThemesBrowser::isDocumentPage(const PageData& data) const
-    {
-        return Base::isDocumentPage(data) || (data.parent == &homePageData()
-            && data.name.ends_with(k_builtInThemeExtension));
-    }
-
-    std::filesystem::path ThemesBrowser::documentFileOf(const PageData& data) const
-    {
-        // The same test that keeps a user theme from taking a built-in's name. The extension
-        // cannot answer it: a file the user drops in the directory called Foo.theme carries the
-        // built-ins' extension and is not one of them.
-        if (data.parent == &homePageData()
-            && ThemesManager::isReservedName(std::filesystem::path{ data.name }.stem().wstring()))
-            return {};
-        return Base::documentFileOf(data);
     }
 
     const AppTheme* ThemesBrowser::tabTheme(const BrowserTab& tab)

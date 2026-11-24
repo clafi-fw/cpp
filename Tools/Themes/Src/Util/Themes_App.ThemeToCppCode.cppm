@@ -15,97 +15,18 @@ namespace Themes_App
 {
     using namespace ClaFi;
 
-    // Whether the block states the whole theme, or only the members this theme moved off the
-    // framework's defaults.
     export enum class CodeContent
     {
         Differences,
-        Full,
-        Count
+        Full
     };
 
-    // Where the block is meant to be pasted: inside an AppTheme method, or outside the class,
-    // where it writes through a named object.
-    export enum class CodeScope
+    export constexpr auto enumNames(CodeContent)
     {
-        ClassMethod,
-        OutsideClass,
-        Count
-    };
+        return std::array<std::wstring_view, 2>{ L"Differences", L"Full" };
+    }
 
-    // The names the file uses, spelled to match the enumerators. What a person reads is the text
-    // of the command that states each choice, in Themes_App.CodeOptions.
-    export constexpr std::array<std::wstring_view, static_cast<std::size_t>(CodeContent::Count)>
-        k_codeContentKeys{
-            L"Differences",
-            L"Full"
-        };
-
-    export constexpr std::array<std::wstring_view, static_cast<std::size_t>(CodeScope::Count)>
-        k_codeScopeKeys{
-            L"ClassMethod",
-            L"OutsideClass"
-        };
-
-    export constexpr auto enumNames(CodeContent) { return k_codeContentKeys; }
-    export constexpr auto enumNames(CodeScope) { return k_codeScopeKeys; }
-
-    // What writing the built-in theme came to.
-    export enum class SourceWrite
-    {
-        Written,
-        Unchanged,  // the file already states this theme and is left as it stands
-        Failed
-    };
-
-    // The block that states a theme, as plain C++ source. Its channel markers line up in a
-    // monospaced style only.
-    export [[nodiscard]] std::wstring themeToCppCode(const AppTheme&, CodeContent, CodeScope);
-
-    // The whole of the built-in theme's file, stating this theme as the framework's own.
-    export [[nodiscard]] std::wstring themeToSourceFile(const AppTheme&);
-
-    // That file in the source tree this application was compiled from, or nothing without one.
-    export [[nodiscard]] std::filesystem::path builtInThemeFile();
-
-    // Writes the file in the line ends the module beside it is checked out with.
-    export [[nodiscard]] SourceWrite writeBuiltInTheme(const std::filesystem::path& file,
-        const AppTheme&);
-
-    // What stands in the built-in theme's file around the constructor's statements.
-    constexpr std::wstring_view k_sourceFileHead{
-        L"// The framework's own theme, written whole by the Themes app's Write to source.\n"
-        L"// An edit made here is lost at the next write.\n"
-        L"module ClaFi.Core.AppTheme_Theme;\n"
-        L"\n"
-        L"import ClaFi.Core.AppTheme_Colors;\n"
-        L"import ClaFi.Core.AppTheme_Metrics;\n"
-        L"import ClaFi.Core.AppTheme_Palette;\n"
-        L"import ClaFi.Core.AppTheme_Styles;\n"
-        L"import ClaFi.Core.System.UiTypes;\n"
-        L"\n"
-        L"import ClaFi.StdLib;\n"
-        L"\n"
-        L"namespace ClaFi\n"
-        L"{\n"
-        L"    AppTheme::AppTheme()\n"
-        L"    {\n" };
-
-    constexpr std::wstring_view k_sourceFileTail{
-        L"    }\n"
-        L"}\n" };
-
-    // How deep the constructor's statements stand: the namespace, then the body.
-    constexpr std::size_t k_sourceFileIndent{ 8ull };
-
-    // The module the built-in theme belongs to, whose file marks a folder as the tree's.
-    constexpr std::wstring_view k_themeModuleFileName{ L"AppTheme_Theme.cppm" };
-    constexpr std::wstring_view k_builtInThemeFileName{ L"AppTheme_BuiltIn.cpp" };
-
-    // The line end a file is checked out with, read off its first line.
-    [[nodiscard]] std::string_view lineEndOf(const std::filesystem::path& file);
-    // Everything a file holds, or nothing where there is no file to read.
-    [[nodiscard]] std::string fileBytes(const std::filesystem::path& file);
+    export [[nodiscard]] std::wstring themeToModule(const AppTheme&, std::wstring_view name);
 
     // The value a literal has to carry to rebuild a rule value. A rule holds its value
     // normalized, and an Offset normalizes by half a unit, which is enough to put the shortest
@@ -119,8 +40,6 @@ namespace Themes_App
     class CppCodeGenerator
     {
     public:
-        CppCodeGenerator(const AppTheme&, CodeContent, CodeScope);
-        // The statements of the built-in theme's constructor, whose object starts with no styles.
         explicit CppCodeGenerator(const AppTheme&);
     public:
         [[nodiscard]] std::wstring text() && { return std::move(m_text); }
@@ -168,32 +87,14 @@ namespace Themes_App
         // brace sits at, and its rules' channel markers stand further right the deeper it sits.
         CppCodeGenerator& controlStyle(const ControlStyle&, std::size_t level);
         //
-        // The member a statement writes to, carrying the object name an outside block goes
-        // through, and the palette member an AppTheme's colors stand in.
-        CppCodeGenerator& memberName(std::wstring_view name);
         CppCodeGenerator& colorsMemberName(std::wstring_view name);
-        // The head of one member statement, up to where its braced value begins.
-        CppCodeGenerator& openMember(std::wstring_view typeName, std::wstring_view name);
-        // Whether a member is stated: because it differs from the framework's defaults, or
-        // because the block states every member regardless.
-        [[nodiscard]] bool statesMember(bool differs) const;
         void colorMember(UiElement);
-        void floatMember(std::wstring_view name, float value, float defaultValue);
+        void floatMember(std::wstring_view name, float value);
         void paletteMembers();
         void paletteHuesMember();
-        // Full states every style as one list; Differences adds each style that differs from
-        // the framework's and removes each the framework has that this theme lacks.
         void themeStyles();
-        void addedStyles();
-        void removedStyles();
-        // The object an outside block writes through. A method writes through the class.
-        void objectDeclaration();
-        void headerComment();
-        //
         void build();
     private:
-        // The object an outside block writes through.
-        static constexpr std::wstring_view k_objectName{ L"theme" };
         // The column a channel marker starts at. The block is shown in a monospaced style, so
         // one column puts every marker of a rule under the one above it.
         static constexpr std::size_t k_channelColumn = 48ull;
@@ -208,15 +109,8 @@ namespace Themes_App
         static constexpr std::wstring_view k_spaces{
             L"                                                                " };
         const AppTheme& m_theme;
-        // What the framework hands out, which is what a difference is measured against.
-        const AppTheme m_defaults{};
-        CodeContent m_content;
-        CodeScope m_scope;
-        bool m_startsEmpty{ false }; // a constructor's statements: no header, no rules to clear
         std::wstring m_text{};
         std::size_t m_column{ 0ull };
-        bool m_statedAnyMember{ false };
-        bool m_statedAnyStyle{ false };
     };
 
 }

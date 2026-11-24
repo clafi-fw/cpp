@@ -1,5 +1,6 @@
 export module ClaFi.App.ApplicationProperties;
 
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -13,9 +14,17 @@ namespace ClaFi
     // Which themes an application is offered. See Application
     export enum class ThemesOffered
     {
-        StatingEveryElement, // those stating a set for every element the application names
-        Every                // every theme, whatever it states - what a theme editor takes
+        StatingEveryElement, // publisher themes stating a style for each application element
+        Every                // all readable publisher themes
     };
+
+    export struct NamedTheme
+    {
+        std::wstring name{};
+        AppTheme theme{};
+    };
+
+    export using NamedThemes = std::vector<NamedTheme>;
 
     // What an application states about itself. See Application
     export struct ApplicationProperties
@@ -30,10 +39,12 @@ namespace ClaFi
         const StyleSheet* styleSheet{ nullptr };
         // Its own elements, by name - the i-th worn as appElement(i). See Application
         AppElementNames elements{};
-        // A theme file's text stating its own styles, which join the built-in theme at start.
-        std::wstring_view builtInTheme{};
+        NamedTheme defaultTheme{};
+        NamedThemes additionalThemes{};
+        const AppTheme* legacyThemeFileDefaults{ nullptr }; // seed for sparse theme files
         ThemesOffered themesOffered{ ThemesOffered::StatingEveryElement };
         std::wstring_view linkScheme{}; // the scheme the framework registers for this application
         LinkHandler linkHandler{}; // handles application links outside the framework's routes
+        bool usePublisherThemes{ false };
     };
 }

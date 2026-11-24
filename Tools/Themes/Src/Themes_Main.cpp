@@ -1,5 +1,7 @@
 module Themes_App.Main;
 
+import ClaFiApps.StarterTheme;
+
 import Themes_App.ThemeToCppCode;
 import Themes_App.Consts;
 import Themes_App.ThemesBrowser;
@@ -38,6 +40,8 @@ namespace Themes_App
                 .tagPrefix = L"Themes-v"
             },
             .elements = k_appElements,
+            .defaultTheme = { L"Default", ClaFiApps::starterTheme() },
+            .legacyThemeFileDefaults = &ClaFiApps::starterTheme(),
             .linkScheme = k_themesLinkScheme,
             .linkHandler = [](const Url& url, IForm* source, InputStamp) {
                 if (!source || url.authority() || !url.query().empty())
@@ -48,7 +52,8 @@ namespace Themes_App
                 return &root == root.appContext().rootLoopForm()
                     && static_cast<Form<ThemesBrowser>&>(root).content()
                         .openElement(url.path(), url.fragment());
-            }
+            },
+            .usePublisherThemes = true
         };
     }
 
@@ -57,8 +62,7 @@ namespace Themes_App
         return {
             Dom::Dt::Value{ k_previewInAppAttrName, false },
             Dom::Dt::Value{ k_previewColorModeAttrName, ColorMode::Dark },
-            Dom::Dt::Value{ k_codeContentAttrName, CodeContent::Full },
-            Dom::Dt::Value{ k_codeScopeAttrName, CodeScope::ClassMethod }
+            Dom::Dt::Value{ k_codeContentAttrName, CodeContent::Full }
         };
     }
 

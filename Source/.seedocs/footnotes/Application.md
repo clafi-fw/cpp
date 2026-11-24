@@ -30,9 +30,13 @@ user chose. Write a default of the application's own only where `configFolderExi
 
 ## configSharePath
 
-`<publisher>/Share/`, beside the folders of the publisher's applications. Each of them reads its
-user themes from `<publisher>/Share/Themes`. The path ends with a separator, so a name is appended
-as it is.
+`<publisher>/Share/`, beside the folders of the publisher's applications. An application that sets
+`usePublisherThemes` connects to the `Themes` folder there. The path ends with a separator.
+
+## themesPath
+
+The connected publisher theme folder. The path is empty when the application leaves that folder
+disconnected or the platform supplies no config root.
 
 ## AppMenu
 
@@ -114,7 +118,7 @@ name. A lane of the list takes up to ten themes.
 
 **Looking tries a theme on, picking states it.** A theme the pointer or the keys reach is worn,
 and nothing is written. The list closing on another theme writes that one to the config; closing on
-the one it opened on puts the stated theme back on. The items are rebuilt when the themes folder
+the one it opened on puts the stated theme back on. The items are rebuilt when a theme folder
 changes.
 
 ## ScaleSlider
@@ -319,21 +323,34 @@ The Themes app leaves the rows these would write out of the pages they follow on
 
 Every name a baked set has an entry for, in the order the entries stand.
 
-## AppParams
+## ApplicationProperties
 
-- `elements` - the application's own elements, by name. The i-th is worn as `appElement(i)`.
-- `builtInTheme` - the text of a theme file whose styles join the built-in theme at start,
-  through addBuiltInStyles. An application's own styles live here, the framework's in the
-  framework.
-- `themesOffered` - which themes the application lists: those stating a style for every element
-  it names, or every theme. Themes opens files from the themes folder and uses the element
-  check in its Settings picker.
+- `elements` names the application's own elements. Use `appElement(i)` for the i-th name.
+- `defaultTheme` holds the caption and theme that the windowed application starts with.
+- `additionalThemes` lists the application's other in-memory themes in Settings order.
+- `legacyThemeFileDefaults` supplies fields omitted from older theme files. The manager copies
+  the pointed-to theme at construction.
+- `usePublisherThemes` connects the publisher's shared theme folder to the manager. It defaults
+  to false.
+- `themesOffered` controls whether Settings limits publisher themes to those that state a style
+  for every element the application names.
 
-## addBuiltInStyles
+## NamedTheme
 
-The text is read as a theme file is, and each style it states joins the built-in theme, replacing
-a style of the same name. Called ahead of the first bake, which is what an application's own
-elements need.
+The default's name is its Settings caption. For an additional theme, the name is also its
+Settings identifier. Keep it unique, free of slashes, and stable across releases. The path
+`App/Default` is reserved for the declared default.
+
+## ThemesOffered
+
+StatingEveryElement filters publisher themes by the application's own elements. Every offers all
+readable publisher themes. Both settings offer the application's declared themes and readable
+themes from its two `Themes` folders.
+
+## WindowApplication
+
+Supply a named default theme in ApplicationProperties. The constructor copies the default
+and additional themes into its ThemesManager before reading the saved selection.
 
 ## ControlStyle in a file
 
@@ -346,9 +363,8 @@ the theme lacks.
 
 ## appThemes
 
-**The application's one ThemesManager**, over the themes folder the publisher's applications share.
-It answers from before the first window until the application ends. Asking for it before
-connectAppThemes has run is a precondition failure, not an empty list.
+**The application's one ThemesManager** answers from before the first window until the
+application ends. Call it after connectAppThemes has run.
 
 ## connectAppThemes
 
@@ -357,8 +373,8 @@ path or color mode, or under Auto of the desktop's mode, puts on the stored them
 
 ## storedTheme
 
-**A path naming nothing answers the built-in Default.** The config keeps the path, so a renamed or
-deleted theme whose file comes back is worn again.
+**A missing saved theme falls back to the application's declared default.** The config keeps the
+path, so a theme that becomes available again can be restored.
 
 ## applyTheme
 
@@ -393,23 +409,31 @@ theme is put on**, so it keeps up with the desktop.
 
 ## ThemesManager
 
-A DocumentsFolder of theme files: the base keeps the directory, the watch and the listeners. The
-manager parses every theme file and supplies the built-in theme from the compiled-in colors.
-ThemesList uses the full file list. ThemePick uses acceptsTheme to check whether a user theme
-provides the application's required elements. Resolving a stored theme path uses the same
-compatibility check.
+The manager holds the application's default and additional themes. It discovers `.clafitheme`
+files in `Themes` beside the executable and in `Themes` inside the application's config folder.
+With `usePublisherThemes`, the manager also serves as the DocumentsFolder for the publisher's
+shared themes. `userThemes()` on the manager lists the publisher folder's files.
+
+ThemePick and themeByPath use these Settings paths.
+
+- `App/Default` selects the declared default. `App/<name>` selects an additional theme.
+- `AppExecutable/<stem>` selects a file in `Themes` beside the executable.
+- `AppConfig/<stem>` selects a file in `Themes` inside the application's config folder.
+- `User/<stem>` selects a file in the publisher's shared `Themes` folder.
+
+The folder identifies a file independently of other themes with the same name. The Themes editor
+lists theme documents from the selected document storage.
 
 ## ThemesList
 
-The themes as tiles in two expanders - the built-in, and the user's files. It answers
-IDocumentTiles, so a DocumentsHomePageBase works over it as over a flat list.
+The list shows storage folders or the selected storage's theme files as tiles. It implements
+IDocumentTiles for DocumentsHomePageBase.
 
 **The host scrolls the list.** A page puts it on its own scrolled column, and a window gives it a
 box - `createBody<ScrollBoxWith<ThemesList>>`.
 
-**A rebuild comes back to the file name**, since every tile is new. The built-in goes by
-Default.theme. selectFileNameAfterRebuild sets the file to land on when its tile does not exist
-yet, and opens the user group.
+**A rebuild restores the current file name.** Use selectFileNameAfterRebuild to select a file
+whose tile has yet to be built.
 
 **The host acts on the themes.** A tile raises a rename, a delete or an open, and the host answers
 through DocumentEditHandler, DocumentMenuHandler and the click events.
@@ -419,6 +443,5 @@ several themes. Only a user tile can be selected.
 
 ## ThemeTile
 
-**Only a user theme can be renamed** - a built-in has no file, so `userTheme()` is null. `theme()`
-is the manager's own theme, by reference, so a preview from the tile puts on that theme itself, not
-a copy. It stays valid while the list lives.
+The tile refers to the theme read from its file. The list recreates its tiles when the
+storage changes.

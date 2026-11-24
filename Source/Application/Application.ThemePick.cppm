@@ -2,7 +2,6 @@ export module ClaFi.App.ThemePick;
 
 import ClaFi.App.ThemeIcon;
 import ClaFi.App.Themes;
-import ClaFi.Application.ThemesManager;
 
 import ClaFi.Documents.Folder;
 
@@ -26,7 +25,7 @@ namespace ClaFi
     // A theme the picker lists: the colors its item is drawn from, and the path it is stated by.
     export struct ThemeEntry
     {
-        const AppTheme* theme;
+        ThemeIconColors iconColors{};
         std::wstring path;
     };
 
@@ -37,7 +36,7 @@ namespace ClaFi
         TextItems m_themeItems{};
     };
 
-    // The themes an application can wear, built-in first, then the user's own. See Application
+    // The themes available in Settings. See Application
     export class ThemePick : private ThemeItems, public ComboBox,
         public Documents::DocumentsFolder::IListener
     {
@@ -50,14 +49,15 @@ namespace ClaFi
         // The path the picker stands on, and nothing where it stands on no theme.
         [[nodiscard]] std::wstring currentPath() const;
         void setCurrentPath(std::wstring_view);
-        // Builds the items from the themes as they stand now, and comes back to the path the
-        // picker was on. See Application
         void rebuild();
     protected:
         void documentsFolderChanged() override;
         void showDropdown(Control& initiator) override;
     private:
         using ThemeEntries = std::vector<ThemeEntry>;
+    private:
+        void listenToThemeFolders(bool listen);
+        void previewTheme(std::wstring_view path);
         [[nodiscard]] const ThemeEntry& entryOf(const TextItem&) const;
         [[nodiscard]] ItemIndexValue findPath(std::wstring_view) const;
         void addTheme(const AppTheme&, std::wstring_view path, std::wstring_view name);
@@ -65,6 +65,7 @@ namespace ClaFi
         // Every theme the list holds, in the order it lists them. An item's tag is its index
         // here, so an item answers the theme it was built from.
         ThemeEntries m_themes{};
+        bool m_themeFoldersChanged{ false };
     };
 
 
@@ -99,15 +100,15 @@ namespace ClaFi
             std::forward<Args>(args)...
         }
     {
-        appThemes().listeners().insert(this);
+        listenToThemeFolders(true);
 
         onDrawItemIcon([this](DrawItemIconEvent& event) {
-            drawThemeIcon(event, *entryOf(event.item()).theme);
+            drawThemeIcon(event, entryOf(event.item()).iconColors);
         });
         // **Tried on, not stated.** The theme is taken directly rather than through the config
         // node, so nothing is written for a theme the user is only looking at.
         onPreviewItem([this](PreviewItemEvent& event) {
-            applyTheme(appContext(), *entryOf(event.item()).theme);
+            previewTheme(entryOf(event.item()).path);
         });
 
         rebuild();

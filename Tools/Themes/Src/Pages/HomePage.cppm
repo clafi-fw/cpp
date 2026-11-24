@@ -23,7 +23,6 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The themes as tiles, the built-in and the user's own, and the preview of the one looked at.
     export class HomePage : public WithPreview<Documents::DocumentsHomePage<ThemesList>>
     {
     public:

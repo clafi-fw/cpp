@@ -1,5 +1,7 @@
 module ClaFi.Tools.WhatsClip.Main;
 
+import ClaFiApps.StarterTheme;
+
 import ClaFi.Tools.WhatsClip.BytesPage;
 import ClaFi.Tools.WhatsClip.FormatView;
 import ClaFi.Tools.WhatsClip.HandlePage;
@@ -652,6 +654,9 @@ namespace ClaFi::Tools::WhatsClip
                 .tagPrefix = L"WhatsClip-v"
             },
             .styleSheet = &RepresentationPage::styles(),
+            .defaultTheme = { L"Default", ClaFiApps::starterTheme() },
+            .legacyThemeFileDefaults = &ClaFiApps::starterTheme(),
+            .usePublisherThemes = true
         };
     }
 

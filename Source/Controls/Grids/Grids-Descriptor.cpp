@@ -202,8 +202,7 @@ namespace ClaFi::Controls::Grids
             return;
         if (initiateTooltip)
         {
-            Tooltip::stopAndHide();
-            Tooltip::hoveredControlChanged();
+            Tooltip::restartHoverDelay();
         }
     }
 

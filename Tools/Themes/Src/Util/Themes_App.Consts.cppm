@@ -1,6 +1,5 @@
 export module Themes_App.Consts;
 
-import ClaFi.Application.ThemesManager;
 import ClaFi.Browser;
 import ClaFi;
 import ClaFi.Core.AppTheme_Theme;
@@ -12,19 +11,14 @@ namespace Themes_App
 {
     using namespace ClaFi;
 
-    // The built-in's page, named as its theme is: a document page with no file of its own.
-    export constexpr std::wstring_view k_defaultPageName = k_defaultThemeName;
-
     // One toggle for the whole application rather than one per tab, so it is named in the root
     // config section and every page reads the same node.
     export constexpr std::wstring_view k_previewInAppAttrName{ L"PreviewInApp" };
     // The mode every preview shows a theme in, application wide for the same reason.
     export constexpr std::wstring_view k_previewColorModeAttrName{ L"PreviewColorMode" };
 
-    // The two choices a code page offers, application wide for the same reason: one answer for
-    // every theme tab, so they are named in the root config section too.
+    // The amount of theme data shown on the file format tabs.
     export constexpr std::wstring_view k_codeContentAttrName{ L"CodeContent" };
-    export constexpr std::wstring_view k_codeScopeAttrName{ L"CodeScope" };
 
     // The view a tab's theme page shows - see ThemePage::storeView.
     export constexpr std::wstring_view k_viewAttrName{ L"View" };

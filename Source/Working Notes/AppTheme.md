@@ -9,10 +9,10 @@ color has moved.
 
 ## ThemeColors
 
-**The built-in theme is written, not edited.** `AppTheme()` states it, colors and styles, and its
-definition stands alone in `AppTheme_BuiltIn.cpp`, which the Themes app's Write to source rewrites
-whole from the theme it has open. The declarations say what each member is and carry no values, so
-a theme change rebuilds that one file rather than everything that imports the module.
+The six shipped windowed apps build the starter theme from app-side source. Their
+ApplicationProperties use the same palette and styles for the default and as the seed for
+reading sparse theme files. Current saves carry the theme's complete data. The C++ tab and
+Export as C++ share one generated module with an exported factory.
 
 ## Lightness
 

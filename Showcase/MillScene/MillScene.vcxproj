@@ -194,6 +194,8 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\MillScene_Icon.cppm" />
     <ClCompile Include="Src\MillScene_Main.cppm" />
     <ClCompile Include="Src\MillScene_Main.cpp" />

@@ -30,18 +30,10 @@ namespace ClaFi
 
     // ThemeTile
 
-    EditorMode ThemeTile::editorMode() const
-    {
-        // Only a user theme is a file, and only a file has a name to change.
-        if (!m_userTheme)
-            return EditorMode::None;
-        return DocumentTile::editorMode();
-    }
-
     void ThemeTile::drawIcon(DrawIconEvent& event)
     {
         drawThemeIconOnly(event.canvas(), event.iconRect(),
-            ThemeSampleColors{ m_linkedTheme, colorModeOf(event.lightness()) }
+            ThemeSampleColors{ theme(), colorModeOf(event.lightness()) }
             );
     }
 
@@ -49,7 +41,7 @@ namespace ClaFi
     {
         const FloatRect rect = event.controlBounds();
         drawThemeBackground(event.canvas(), rect, event.scaleF(4.0f),
-            ThemeSampleColors{ m_linkedTheme, colorModeOf(event.lightness()) },
+            ThemeSampleColors{ theme(), colorModeOf(event.lightness()) },
             event.scaledStrokeWidth(Thickness::Thin)
             );
         paintIconLayer(event);
@@ -63,7 +55,7 @@ namespace ClaFi
         DocumentTile::adjustChildPaint(event);
         if (&event.control() != indicator())
             return;
-        const ThemeSampleColors sample{ m_linkedTheme, colorModeOf(event.lightness()) };
+        const ThemeSampleColors sample{ theme(), colorModeOf(event.lightness()) };
         event.setSurfaceHsl(sample.titleHsl);
     }
 
@@ -78,18 +70,22 @@ namespace ClaFi
     DocumentTiles ThemesList::tiles()
     {
         DocumentTiles result{};
-        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
-            for (DocumentTile& tile : group->controlsAs<DocumentTile>())
-                result.push_back(&tile);
+        for (DocumentTile& tile : m_userTiles.controlsAs<DocumentTile>())
+        {
+            result.push_back(&tile);
+        }
         return result;
     }
 
     DocumentTile* ThemesList::tileByFileName(const std::wstring_view fileName)
     {
-        for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
-            for (DocumentTile& tile : group->controlsAs<DocumentTile>())
-                if (tile.fileName() == fileName)
-                    return &tile;
+        for (DocumentTile& tile : m_userTiles.controlsAs<DocumentTile>())
+        {
+            if (tile.fileName() == fileName)
+            {
+                return &tile;
+            }
+        }
         return nullptr;
     }
 
@@ -129,9 +125,6 @@ namespace ClaFi
         return &static_cast<ThemeTile*>(item)->theme();
     }
 
-    // **The file name is what the list comes back to**, not the tile: every tile here is taken down
-    // and built again, and a theme is the same theme under the same name. The built-in goes by
-    // the name its page goes by, so a tab coming up from it lands on its tile.
     void ThemesList::rebuild()
     {
         const std::wstring fileNameToStandOn = m_fileNameToSelect.empty()
@@ -139,13 +132,8 @@ namespace ClaFi
             : m_fileNameToSelect;
         m_fileNameToSelect.clear();
 
-        m_builtInTiles.clearControls();
         m_userTiles.clearControls();
 
-        if (m_storage.primary)
-        {
-            addTile(m_builtInTiles, defaultTheme(), std::filesystem::path{ k_defaultThemeName }, nullptr);
-        }
         if (m_storages)
         {
             for (const StorageTile& storage : *m_storages)
@@ -165,12 +153,12 @@ namespace ClaFi
                 m_storageThemes.clear();
                 for (const std::filesystem::path& path : m_storage.folder->files())
                 {
-                    m_storageThemes.push_back(std::make_unique<UserTheme>(path));
+                    m_storageThemes.push_back(std::make_unique<UserTheme>(path, m_themes.themeFileDefaults()));
                 }
             }
             for (const UserThemePtr& theme : *themes)
             {
-                addTile(m_userTiles, theme->theme(), theme->path(), &*theme);
+                addTile(m_userTiles, *theme);
             }
         }
 
@@ -181,16 +169,15 @@ namespace ClaFi
         emitEvent<DocumentsRebuiltEvent>(*this);
     }
 
-    ThemeTile& ThemesList::addTile(StackPanel& group, const AppTheme& theme,
-        const std::filesystem::path& file, const UserTheme* userTheme)
+    ThemeTile& ThemesList::addTile(StackPanel& group, const UserTheme& theme)
     {
         ThemeTile& tile = group.add<ThemeTile>(
-            DocumentTileData{ m_storage.folder, file },
-            ThemeTileData{ &theme, userTheme },
+            DocumentTileData{ m_storage.folder, theme.path() },
+            ThemeTileData{ &theme },
             IndicatorStyle::Check,
-            Text{ file.stem().wstring() }
+            Text{ theme.path().stem().wstring() }
         );
-        if (m_editTheme && userTheme)
+        if (m_editTheme)
         {
             tile.onAcceptEdit([this, &tile](AcceptEditEvent& event) {
                 m_editTheme(tile, event);

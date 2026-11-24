@@ -32,8 +32,7 @@ namespace ClaFi
     // What a theme tile stands for beyond its file, stated when it is built.
     export struct ThemeTileData
     {
-        const AppTheme* theme;      // the theme itself, which outlives the tile
-        const UserTheme* userTheme; // the file it came from, and nullptr for a built-in
+        const UserTheme* theme{ nullptr };
     };
 
     // A theme in a list: the palette inset in its own surface, its name under it. See Application
@@ -44,21 +43,17 @@ namespace ClaFi
         explicit ThemeTile(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"ThemeTile"; }
-        [[nodiscard]] const AppTheme& theme() const { return m_linkedTheme; }
-        // The file this tile came from, and nullptr for a built-in: a compiled-in theme is
-        // answered whatever stands on the disk, so there is no file behind it to work on.
-        [[nodiscard]] const UserTheme* userTheme() const { return m_userTheme; }
+        [[nodiscard]] const AppTheme& theme() const { return m_userTheme.theme(); }
+        [[nodiscard]] const UserTheme* userTheme() const { return &m_userTheme; }
     protected:
-        [[nodiscard]] EditorMode editorMode() const override;
         void drawIcon(DrawIconEvent&) override;
         void paintSurface(PaintEvent&) override;
         void adjustChildPaint(AdjustPaintEvent&) override;
     private:
-        const AppTheme& m_linkedTheme;
-        const UserTheme* m_userTheme{ nullptr };
+        const UserTheme& m_userTheme;
     };
 
-    // The themes as tiles, the built-in and the user's own in a section each. See Application
+    // The theme files and storage folders as tiles. See Application
     export class ThemesList : public StackView, public DocumentsFolder::IListener,
         public IDocumentTiles
     {
@@ -98,8 +93,7 @@ namespace ClaFi
         // every row after the first.
         using ThemesGroup = ExpanderWith<StackPanel>;
     private:
-        ThemeTile& addTile(StackPanel& group, const AppTheme&, const std::filesystem::path& file,
-            const UserTheme*);
+        ThemeTile& addTile(StackPanel& group, const UserTheme&);
     private:
         ThemesManager& m_themes;
         DocumentStorageView m_storage;
@@ -113,21 +107,6 @@ namespace ClaFi
         // The file to stand on after the next rebuild, named rather than held as a tile: the
         // tiles the list holds now are the ones the rebuild takes down.
         std::wstring m_fileNameToSelect{};
-
-        ThemesGroup& m_builtInGroup{ add<ThemesGroup>(
-            HostProps{
-                VerticalAlign::Top,
-                ExpanderViewMode::Divider,
-                HeaderText{ ColoredText{ InkGrade::Strong, L"Built-in Themes" } }
-            },
-            BodyProps{
-                Orientation::HorizontalWrap,
-                ItemSizing::Equal,
-                Padding{ 12.0f, 4.0f },
-                Spacing{ 4.0f }
-            }
-        ) };
-        StackPanel& m_builtInTiles{ m_builtInGroup.body() };
 
         ThemesGroup& m_userGroup{ add<ThemesGroup>(
             HostProps{
@@ -158,10 +137,8 @@ namespace ClaFi
     ThemeTile::ThemeTile(const CreateParams& params, Args&&... args)
         :
         DocumentTile{ params, std::forward<Args>(args)... },
-        // The theme the tile stands for, which outlives it.
-        m_linkedTheme{ *REQUIRE_PROPERTY(ThemeTileData).theme },
-        // The file that theme came from, and nullptr for a built-in.
-        m_userTheme{ REQUIRE_PROPERTY(ThemeTileData).userTheme }
+        // The storage must keep the parsed theme alive until the tile is rebuilt.
+        m_userTheme{ *REQUIRE_PROPERTY(ThemeTileData).theme }
     {
     }
 
@@ -195,14 +172,9 @@ namespace ClaFi
         m_tileMenu{ READ_PROPERTY(DocumentMenuHandler, nullptr) }
     {
         m_storage.folder->listeners().insert(this);
-        m_builtInGroup.setVisible(m_storage.primary);
-
         onCanFocusItem([this](CanFocusItemEvent& event) {
-            event.canFocus = event.item.parent() == &m_userTiles
-                || event.item.parent() == &m_builtInTiles;
+            event.canFocus = event.item.parent() == &m_userTiles;
         });
-        // **Only a file can be held selected.** What a selection is asked for here is a command
-        // over the themes - deleting them - and a built-in answers no such command.
         onCanSelectItem([this](CanSelectItemEvent& event) {
             event.canSelect = event.item.parent() == &m_userTiles;
         });

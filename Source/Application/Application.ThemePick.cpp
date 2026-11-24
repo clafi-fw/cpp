@@ -1,5 +1,7 @@
 module ClaFi.App.ThemePick;
 
+import ClaFi.App.ApplicationProperties;
+
 import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
@@ -25,11 +27,26 @@ namespace ClaFi
 {
     using namespace Controls;
 
+    namespace
+    {
+        struct FileThemeSource
+        {
+            std::wstring_view root;
+            std::wstring_view captionSuffix;
+        };
+
+        constexpr FileThemeSource k_fileThemeSources[] = {
+            { ThemeRoots::AppExecutable, L" (Executable folder)" },
+            { ThemeRoots::AppConfig, L" (App config)" },
+            { ThemeRoots::User, L" (Publisher)" }
+        };
+    }
+
     // ThemePick
 
     ThemePick::~ThemePick()
     {
-        appThemes().listeners().erase(this);
+        listenToThemeFolders(false);
     }
 
     std::wstring ThemePick::currentPath() const
@@ -39,8 +56,6 @@ namespace ClaFi
         return {};
     }
 
-    // **A path naming nothing is worn as the built-in** - see storedTheme - and the config keeps
-    // the path it holds, so a theme whose file comes back is stood on again.
     void ThemePick::setCurrentPath(const std::wstring_view path)
     {
         ItemIndexValue index = findPath(path);
@@ -51,27 +66,37 @@ namespace ClaFi
         setItemIndex(index.value());
     }
 
-    // **The path is what the picker comes back to**, not the item: every item here is taken down
-    // and built again, and a theme is the same theme under the same path.
     void ThemePick::rebuild()
     {
-        std::wstring pathToStandOn = currentPath();
-        // A picker standing on no theme is one being built, and the config is what it opens on.
-        if (pathToStandOn.empty())
-            pathToStandOn = appContext().themePath().get();
+        const std::wstring pathToStandOn = appContext().themePath().get();
 
         m_themes.clear();
         m_themeItems.clear();
 
-        addTheme(defaultTheme(), k_defaultThemePath, BuiltInThemes::DefaultTheme);
-
         ThemesManager& manager = appThemes();
-        for (const UserThemePtr& theme : manager.userThemes())
+        const NamedTheme& defaultTheme = manager.defaultTheme();
+        addTheme(defaultTheme.theme, k_defaultThemePath, defaultTheme.name);
+        for (const NamedTheme& theme : manager.additionalThemes())
         {
-            if (!manager.acceptsTheme(theme->theme()))
+            addTheme(theme.theme, themePathOf(ThemeRoots::App, theme.name), theme.name);
+        }
+
+        for (const FileThemeSource& source : k_fileThemeSources)
+        {
+            ThemeFolder* folder = manager.fileThemeFolder(source.root);
+            if (!folder)
+            {
                 continue;
-            const std::wstring name = theme->path().stem().wstring();
-            addTheme(theme->theme(), ThemesManager::pathOf(*theme), name);
+            }
+            for (const UserThemePtr& theme : folder->userThemes())
+            {
+                if (manager.offersTheme(source.root, *theme))
+                {
+                    const std::wstring name = theme->path().stem().wstring();
+                    const std::wstring path = themePathOf(source.root, name);
+                    addTheme(theme->theme(), path, std::wstring{ name }.append(source.captionSuffix));
+                }
+            }
         }
 
         setCurrentPath(pathToStandOn);
@@ -84,12 +109,18 @@ namespace ClaFi
     // wears are taken from them rather than from the ones this change took down.
     void ThemePick::documentsFolderChanged()
     {
+        if (droppedDown())
+        {
+            m_themeFoldersChanged = true;
+            return;
+        }
         rebuild();
         applyStoredTheme(appContext());
     }
 
     void ThemePick::showDropdown(Control& initiator)
     {
+        rebuild();
         const std::wstring openedOn = currentPath();
         ComboBox::showDropdown(initiator);
         const std::wstring picked = currentPath();
@@ -98,9 +129,44 @@ namespace ClaFi
         if (picked == openedOn)
         {
             applyStoredTheme(appContext());
-            return;
         }
-        applyThemePath(appContext(), picked);
+        else
+        {
+            applyThemePath(appContext(), picked);
+        }
+        if (m_themeFoldersChanged)
+        {
+            m_themeFoldersChanged = false;
+            rebuild();
+        }
+    }
+
+    void ThemePick::previewTheme(const std::wstring_view path)
+    {
+        if (const AppTheme* theme = appThemes().themeByPath(path))
+        {
+            applyTheme(appContext(), *theme);
+        }
+    }
+
+    void ThemePick::listenToThemeFolders(const bool listen)
+    {
+        for (const FileThemeSource& source : k_fileThemeSources)
+        {
+            ThemeFolder* folder = appThemes().fileThemeFolder(source.root);
+            if (!folder)
+            {
+                continue;
+            }
+            if (listen)
+            {
+                folder->listeners().insert(this);
+            }
+            else
+            {
+                folder->listeners().erase(this);
+            }
+        }
     }
 
     const ThemeEntry& ThemePick::entryOf(const TextItem& item) const
@@ -120,7 +186,10 @@ namespace ClaFi
         const std::wstring_view name)
     {
         const Tag entryTag{ m_themes.size() };
-        m_themes.push_back(ThemeEntry{ .theme = &theme, .path = std::wstring{ path } });
+        m_themes.push_back(ThemeEntry{
+            .iconColors = ThemeIconColors{ theme },
+            .path = std::wstring{ path }
+        });
         m_themeItems.push_back(TextItem{ entryTag, Text{ std::wstring{ name } } });
     }
 }

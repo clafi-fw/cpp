@@ -16,6 +16,8 @@
     See WhatsClip_Win32.cpp and WhatsClip_Wayland.cpp for the entry points shipped with the viewer.
   -->
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Showcase\Shared\StarterTheme.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Encodings.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Src\WhatsClip_Languages.cppm" />

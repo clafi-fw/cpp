@@ -43,6 +43,7 @@ namespace ClaFi
         static void hoveredControlChanged();
         // The pointer crossed into another zone of the control it is on - into its text or out.
         static void hoveredZoneChanged();
+        static void restartHoverDelay();
         // A key landed the focus somewhere. Heard while the keyboard alone drives.
         static void focusedControlChanged();
         // The mouse took over from the keyboard: the hover has its say from here on.
@@ -62,6 +63,7 @@ namespace ClaFi
         // The control a tooltip is asked of: the hovered one while the mouse drives, the item the
         // focus rests on while the keyboard alone does. See Control-Foundation#tooltip
         [[nodiscard]] static Control* pointedControl();
+        [[nodiscard]] static bool holdLinkedTooltipUnderPointer();
         // The control a tooltip is about has changed - to pointedControl(), or to nothing.
         static void pointedControlChanged(bool allowLinkHandoff = true);
         // Whether a tooltip up about a control this one stands in still answers for this one.

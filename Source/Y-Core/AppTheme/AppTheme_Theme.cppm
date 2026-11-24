@@ -11,8 +11,6 @@ namespace ClaFi
     export class AppTheme
     {
     public:
-        AppTheme(); // the framework's own theme, stated in AppTheme_BuiltIn.cpp
-    public:
         // The styles as a document field reads and writes them.
         [[nodiscard]] const ControlStyleList& styleList() const { return styles.list; }
         void setStyleList(const ControlStyleList& value) { styles.list = value; }
@@ -24,20 +22,15 @@ namespace ClaFi
     // The roots a theme path stands under, and what parts a root from the name. See AppTheme
     export namespace ThemeRoots
     {
-        constexpr std::wstring_view BuiltIn{ L"BuiltIn" };
+        constexpr std::wstring_view App{ L"App" };
         constexpr std::wstring_view User{ L"User" };
+        constexpr std::wstring_view AppConfig{ L"AppConfig" };
+        constexpr std::wstring_view AppExecutable{ L"AppExecutable" };
         constexpr wchar_t Separator{ L'/' };
     }
 
-    // The themes compiled into the framework, by the name they stand under. See AppTheme
-    export namespace BuiltInThemes
-    {
-        constexpr std::wstring_view DefaultTheme{ L"Default" };
-    }
-
-    // ThemeRoots::BuiltIn over BuiltInThemes::DefaultTheme, which is what an application wears
-    // where nothing else is stated. See AppTheme
-    export constexpr std::wstring_view k_defaultThemePath{ L"BuiltIn/Default" };
+    // The Settings path of the default theme declared by the application.
+    export constexpr std::wstring_view k_defaultThemePath{ L"App/Default" };
 
     // A path out of the root a theme stands under and the name it stands there by. See AppTheme
     export [[nodiscard]] std::wstring themePathOf(std::wstring_view root, std::wstring_view name);
@@ -45,13 +38,6 @@ namespace ClaFi
     export [[nodiscard]] constexpr std::wstring_view themePathRoot(std::wstring_view path);
     // The name a path stands by under its root, and the whole of it where it names no root.
     export [[nodiscard]] constexpr std::wstring_view themePathName(std::wstring_view path);
-    // The compiled-in theme of this name, or nullptr where no built-in goes by it.
-    export [[nodiscard]] AppTheme* builtInTheme(std::wstring_view name);
-
-    // The theme compiled into the framework, which BuiltInThemes::DefaultTheme names.
-    export [[nodiscard]] AppTheme& defaultTheme();
-
-
     //-----------------------------------------------------------------------------
 
 
@@ -81,17 +67,5 @@ namespace ClaFi
         return path.substr(separator + 1ull);
     }
 
-    AppTheme* builtInTheme(const std::wstring_view name)
-    {
-        if (name == BuiltInThemes::DefaultTheme)
-            return &defaultTheme();
-        return nullptr;
-    }
-
-    AppTheme& defaultTheme()
-    {
-        static AppTheme theme{};
-        return theme;
-    }
 
 }

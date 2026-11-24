@@ -552,8 +552,9 @@
             the publisher and application names. It contains the window placement, the selected theme and
             the menu settings. Before creating the folder, the Settings page asks the user for
             permission.</p>
-            <p><strong>Themes.</strong> The Settings page lists the built-in themes and stores the
-            selection in the settings file.</p>
+            <p><strong>Themes.</strong> The application declares its default theme. The Settings page
+            lists the available themes and stores the selection. The generated windowed application
+            uses the starter theme from the showcase source. See <a href="color.html#application-themes">Application Themes</a>.</p>
             <p><strong>The window frame.</strong> The framework draws the title bar, the sizing buttons and
             the frame, and applies display scaling. On desktops that support it, the window placement is
             restored when the application starts.</p>
@@ -925,6 +926,7 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             var body = pages ? 'm_homeBody' : 'body()';
             var lines = [];
             lines.push('export module ' + moduleNamespace() + '.Main;', '');
+            lines.push('import ClaFiApps.StarterTheme;');
             lines.push('import ClaFi.App.ApplicationProperties;', '');
             if (has('settings')) {
                 lines.push('import ClaFi.App.Settings;');
@@ -950,7 +952,8 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('            .name = Text{ L"' + state.name + '" },');
             lines.push('            .publisher = L"Your Name",');
             lines.push('            .description = Text{ L"A first ClaFi application." },');
-            lines.push('            .version = L"1.0.0"');
+            lines.push('            .version = L"1.0.0",');
+            lines.push('            .defaultTheme = { L"Default", ClaFiApps::starterTheme() }');
             lines.push('        };');
             lines.push('    }');
             lines.push('');
@@ -1340,7 +1343,14 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('');
             lines.push('add_executable(' + name + ' ' + name + '_Wayland.cpp)');
             lines.push('target_sources(' + name + ' PRIVATE FILE_SET CXX_MODULES FILES');
-            lines.push('    ' + name + '_Main.cppm)');
+            lines.push('    ' + name + '_Main.cppm');
+            if (!isConsole()) {
+                lines.push('    "${clafi_root}/Showcase/Shared/StarterTheme.cppm"');
+            }
+            lines.push(')');
+            if (!isConsole()) {
+                lines.push('target_sources(' + name + ' PRIVATE "${clafi_root}/Showcase/Shared/StarterTheme.cpp")');
+            }
             lines.push('target_link_libraries(' + name + ' PRIVATE ClaFi)');
             lines.push('target_compile_options(' + name + ' PRIVATE -mavx2 -mfma -pthread -Wno-unknown-pragmas)');
             return lines.join('\n');
@@ -1531,6 +1541,9 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 html.push('<li><strong>Add the module.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ Module Interface Unit</em>, name it <code>' + escapeHtml(state.name) + '_Main.cppm</code>, and click Add. Replace its contents with this:' + codeCard(moduleFile) + '</li>');
                 html.push('<li><strong>Add the entry point.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ File (.cpp)</em>, name it <code>' + escapeHtml(state.name) + '_Win32.cpp</code>, and click Add. Replace its contents with this:' + codeCard(winEntryFile) + '</li>');
                 html.push('<li><strong>Add the framework\'s shared items.</strong> In <em>Solution Explorer</em>, right-click the solution, choose <em>Add</em> &gt; <em>Existing Project...</em>, and select <code>&lt;clone&gt;\\Visual Studio Shared Items\\ClaFi.vcxitems</code>. This adds the framework to the solution; the module imports are available after the reference in the next step.</li>');
+                if (!isConsole()) {
+                    html.push('<li><strong>Add the starter theme.</strong> In the application project, choose <em>Add</em> &gt; <em>Existing Item...</em> and add <code>StarterTheme.cppm</code> and <code>StarterTheme.cpp</code> from the clone&#39;s <code>Showcase/Shared</code> folder.</li>');
+                }
                 html.push('<li><strong>Reference the framework.</strong> In <em>Solution Explorer</em>, right-click the <code>' + escapeHtml(state.name) + '</code> project, choose <em>Add</em> &gt; <em>Reference...</em>, check <code>ClaFi</code> and click OK.</li>');
                 html.push('</ol>');
                 html.push('<p class="small">Set the publisher, description and version in the module properties.</p>');

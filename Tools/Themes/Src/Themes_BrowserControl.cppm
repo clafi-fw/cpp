@@ -26,7 +26,6 @@ namespace Themes_App
     using namespace ::ClaFi::Controls;
     using namespace ::ClaFi::Browser;
 
-    // The browser over the themes: the built-in with no file of its own, and the folder's.
     export class ThemesBrowser : public Documents::DocumentsBrowser<HomePage, ThemePage>
     {
     public:
@@ -36,11 +35,8 @@ namespace Themes_App
     public:
         bool openElement(std::wstring_view themePath, std::wstring_view name);
     protected:
-        void fetchSubItems(PageData&) override;
         void drawTabIcon(BrowserTab&, DrawIconEvent&) override;
         void saveViewState(BrowserTab&) override;
-        [[nodiscard]] bool isDocumentPage(const PageData&) const override;
-        [[nodiscard]] std::filesystem::path documentFileOf(const PageData&) const override;
     private:
         using Base = Documents::DocumentsBrowser<HomePage, ThemePage>;
     private:

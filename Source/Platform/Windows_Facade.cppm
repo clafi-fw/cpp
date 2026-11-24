@@ -389,13 +389,46 @@ namespace ClaFi
 
     }
 
-    // The common item dialog in its folder mode, over the OLE apartment the window opened. A
-    // canceled dialog fails Show with ERROR_CANCELLED, and is nothing like any other failure.
+    namespace
+    {
+        [[nodiscard]] std::optional<std::filesystem::path> showFileDialog(IFileDialog& dialog,
+            const IForm* form, const std::wstring_view title, const FILEOPENDIALOGOPTIONS flags)
+        {
+            using Microsoft::WRL::ComPtr;
+            using PlatformImplementation::Windows::FormWindow;
+
+            FILEOPENDIALOGOPTIONS options = 0;
+            dialog.GetOptions(&options);
+            dialog.SetOptions(options | flags | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+            dialog.SetTitle(std::wstring{ title }.c_str());
+            const HWND owner = form
+                ? static_cast<const FormWindow&>(form->wnd_window()).handle()
+                : nullptr;
+            if (FAILED(dialog.Show(owner)))
+            {
+                return std::nullopt;
+            }
+
+            ComPtr<IShellItem> picked;
+            if (FAILED(dialog.GetResult(&picked)))
+            {
+                return std::nullopt;
+            }
+            wchar_t* name = nullptr;
+            if (FAILED(picked->GetDisplayName(SIGDN_FILESYSPATH, &name)))
+            {
+                return std::nullopt;
+            }
+            std::filesystem::path result{ name };
+            ::CoTaskMemFree(name);
+            return result;
+        }
+    }
+
     std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,
         const std::wstring_view title, const std::filesystem::path& startFolder)
     {
         using Microsoft::WRL::ComPtr;
-        using PlatformImplementation::Windows::FormWindow;
 
         ComPtr<IFileOpenDialog> dialog;
         if (FAILED(::CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER,
@@ -403,11 +436,6 @@ namespace ClaFi
         {
             return std::nullopt;
         }
-
-        FILEOPENDIALOGOPTIONS options = 0;
-        dialog->GetOptions(&options);
-        dialog->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
-        dialog->SetTitle(std::wstring{ title }.c_str());
 
         if (!startFolder.empty())
         {
@@ -418,22 +446,28 @@ namespace ClaFi
                 dialog->SetFolder(start.Get());
             }
         }
+        return showFileDialog(*dialog.Get(), form, title, FOS_PICKFOLDERS);
+    }
 
-        const HWND owner = form
-            ? static_cast<const FormWindow&>(form->wnd_window()).handle()
-            : nullptr;
-        if (FAILED(dialog->Show(owner)))
-            return std::nullopt;
+    std::optional<std::filesystem::path> Platform::pickSaveFile(const IForm* form,
+        const std::wstring_view title, const std::wstring_view suggestedName)
+    {
+        using Microsoft::WRL::ComPtr;
 
-        ComPtr<IShellItem> picked;
-        if (FAILED(dialog->GetResult(&picked)))
+        ComPtr<IFileSaveDialog> dialog;
+        if (FAILED(::CoCreateInstance(CLSID_FileSaveDialog, nullptr, CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(&dialog))))
+        {
             return std::nullopt;
-        wchar_t* name = nullptr;
-        if (FAILED(picked->GetDisplayName(SIGDN_FILESYSPATH, &name)))
-            return std::nullopt;
-        std::filesystem::path result{ name };
-        ::CoTaskMemFree(name);
-        return result;
+        }
+        const std::wstring name{ suggestedName };
+        dialog->SetFileName(name.c_str());
+        const std::wstring extension = std::filesystem::path{ name }.extension().wstring();
+        if (extension.size() > 1)
+        {
+            dialog->SetDefaultExtension(extension.c_str() + 1);
+        }
+        return showFileDialog(*dialog.Get(), form, title, FOS_OVERWRITEPROMPT);
     }
 
     std::wstring Platform::appDataPath()

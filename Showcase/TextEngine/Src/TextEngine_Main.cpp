@@ -1,5 +1,7 @@
 module TextEngine_App.Main;
 
+import ClaFiApps.StarterTheme;
+
 import TextEngine_App;
 import TextEngine_App.Code;
 import TextEngine_App.Rich;
@@ -314,6 +316,9 @@ namespace TextEngine_App
                 .tagPrefix = L"TextEngine-v"
             },
             .styleSheet = &textEngineStyles(),
+            .defaultTheme = { L"Default", ClaFiApps::starterTheme() },
+            .legacyThemeFileDefaults = &ClaFiApps::starterTheme(),
+            .usePublisherThemes = true
         };
     }
 

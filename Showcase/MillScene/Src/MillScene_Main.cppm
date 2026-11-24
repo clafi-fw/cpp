@@ -2,6 +2,8 @@ module;
 #include <cstdio>
 export module MillScene_App.Main;
 
+import ClaFiApps.StarterTheme;
+
 import MillScene_App.Icon;
 import MillScene_App.Options;
 
@@ -1791,7 +1793,10 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
     ApplicationProperties millSceneApplicationProperties()
     {
         ApplicationProperties properties = millSceneProperties(L"MillScene");
+        properties.defaultTheme = { L"Default", ClaFiApps::starterTheme() };
+        properties.legacyThemeFileDefaults = &ClaFiApps::starterTheme();
         properties.linkScheme = k_linkScheme;
+        properties.usePublisherThemes = true;
         return properties;
     }
 

@@ -83,8 +83,7 @@ namespace ClaFi
         void finalize();
     private:
         std::filesystem::path& initializeConfigPath(const ApplicationProperties&);
-        // The elements a theme has to state to be offered - none, for an application taking every
-        // theme.
+        // The elements a publisher theme must state to appear in Settings.
         [[nodiscard]] static AppElementNames requiredElementsOf(const ApplicationProperties&);
         // Tells of a newer release at start, where Check automatically is on.
         void connectUpdateNotice();
@@ -150,6 +149,17 @@ namespace ClaFi
     // adds under it. The file system reads the result back, so the separator is its own.
     constexpr wchar_t k_pathSeparator{ std::filesystem::path::preferred_separator };
 
+    constexpr std::wstring_view k_themesFolderName{ L"Themes" };
+
+    [[nodiscard]] std::filesystem::path themesDirectoryIn(const std::wstring_view directory)
+    {
+        if (directory.empty())
+        {
+            return {};
+        }
+        return std::filesystem::path{ directory } / k_themesFolderName;
+    }
+
     // WindowApplicationBase
 
     WindowApplicationBase::WindowApplicationBase(Platform& platform,
@@ -182,12 +192,14 @@ namespace ClaFi
                 std::forward<Section>(schema)
             }
         },
-        m_themesManager{ m_themesPath, requiredElementsOf(properties) }
+        m_themesManager{
+            m_themesPath, requiredElementsOf(properties), properties.defaultTheme,
+            properties.additionalThemes, properties.legacyThemeFileDefaults,
+            themesDirectoryIn(m_configFolder), themesDirectoryIn(Platform::executableDirectory())
+        }
     {
         // Ahead of the config, which may hold a text naming one of them.
         StyleSheet::setApplicationSheet(properties.styleSheet);
-        // Ahead of the first bake, which initialize makes.
-        addBuiltInStyles(properties.builtInTheme);
     }
 
     // The sheet the application stated may be gone already, and nothing reads through it now.
@@ -313,12 +325,14 @@ namespace ClaFi
         // **What the publisher's applications share stands under** Share, apart from their own
         // folders, so an application named after one of them takes no directory it shares.
         constexpr std::wstring_view k_shareFolderName = L"Share";
-        constexpr std::wstring_view k_themesFolderName = L"Themes";
         m_configSharePath = m_configPublisherPath;
         m_configSharePath.append(k_shareFolderName);
         m_configSharePath.push_back(k_pathSeparator);
-        m_themesPath = m_configSharePath;
-        m_themesPath.append(k_themesFolderName);
+        if (properties.usePublisherThemes && !sysPath.empty())
+        {
+            m_themesPath = m_configSharePath;
+            m_themesPath.append(k_themesFolderName);
+        }
         return m_configFilePath;
     }
 

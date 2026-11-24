@@ -17,6 +17,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cppm" />
+    <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\PascalScripts_Browser.cppm">
       <Filter>Src</Filter>
     </ClCompile>

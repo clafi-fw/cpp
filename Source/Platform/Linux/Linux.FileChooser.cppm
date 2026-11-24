@@ -6,27 +6,34 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PlatformImplementation::Linux
 {
-    // One folder asked of the desktop's file chooser through the XDG portal. See Platform
-    export class FolderRequest
+    // The operation requested from the desktop's file chooser.
+    export enum class FileChooserAction
+    {
+        PickFolder,
+        SaveFile
+    };
+
+    // One request to the desktop's file chooser through the XDG portal. See Platform
+    export class FileChooserRequest
     {
     public:
         using Answer = std::optional<std::filesystem::path>;
     public:
         // Opens the dialog, over the window the handle names where it names one.
-        FolderRequest(std::string_view parentWindow, std::string_view title,
-            const std::filesystem::path& startFolder);
-        ~FolderRequest();
-        FolderRequest(const FolderRequest&) = delete;
-        FolderRequest& operator=(const FolderRequest&) = delete;
+        FileChooserRequest(std::string_view parentWindow, std::string_view title, FileChooserAction,
+            const std::filesystem::path& startFolder, std::string_view suggestedName);
+        ~FileChooserRequest();
+        FileChooserRequest(const FileChooserRequest&) = delete;
+        FileChooserRequest& operator=(const FileChooserRequest&) = delete;
     public:
         [[nodiscard]] bool settled() const { return m_connection == nullptr; }
         [[nodiscard]] int fd() const { return m_fd; }   // the socket the answer comes on
         void dispatch();   // reads what the bus has sent, a hang-up included
-        // The folder picked; nothing where the dialog was canceled or no chooser answered.
+        // The chosen path, or no value if the chooser returned none.
         [[nodiscard]] const Answer& answer() const { return m_answer; }
     private:
-        void ask(std::string_view parentWindow, std::string_view title,
-            const std::filesystem::path& startFolder);
+        void ask(std::string_view parentWindow, std::string_view title, FileChooserAction,
+            const std::filesystem::path& startFolder, std::string_view suggestedName);
         void watchResponse(std::string path);
         void take(DBusMessage*);
         void takeResponse(DBusMessage*);
