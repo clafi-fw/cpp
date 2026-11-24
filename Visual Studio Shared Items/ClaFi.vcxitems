@@ -55,8 +55,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemeIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemePick.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesManager.cpp" />

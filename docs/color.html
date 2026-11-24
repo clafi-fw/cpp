@@ -367,16 +367,16 @@ its config beside the theme's path, and every theme is applied in that mode.
 <tr><td><code>ColorModeSetting::Light</code></td><td>Light, regardless of what the desktop requests.</td></tr>
 </table>
 
-<p>A setting is a choice, and a <code>ColorMode</code> is a side. The setting is read into a mode when
-a theme is applied, so the paint path receives a <code>ColorMode</code> and never Auto.
-<code>wornColorMode</code> performs that reading and returns which side the application is on:</p>
+<p><code>WindowApplicationBase::themes()</code> gives access to the application's
+<code>ThemesManager</code>. The manager reads the saved color mode setting when it applies a theme.
+<code>resolvedColorMode()</code> returns Dark or Light. Under Auto, it returns the desktop's mode.</p>
 
 <pre><code><span class="cm">// The user's choice, stated the way a mode button states it. The config node's change puts</span>
 <span class="cm">// the theme on again, and the application crosses to the side the choice names.</span>
-<span class="fn">applyColorMode</span>(<span class="fn">appContext</span>(), <span class="tp">ColorModeSetting</span>::Auto);
+application.<span class="fn">themes</span>().<span class="fn">setColorMode</span>(<span class="tp">ColorModeSetting</span>::Auto);
 
 <span class="cm">// The side the application is drawn on - under Auto, the desktop's.</span>
-<span class="tp">ColorMode</span> mode = <span class="fn">wornColorMode</span>(<span class="fn">appContext</span>());</code></pre>
+<span class="tp">ColorMode</span> mode = application.<span class="fn">themes</span>().<span class="fn">resolvedColorMode</span>();</code></pre>
 
 <p><strong>Auto follows the desktop while the application runs.</strong> A change of the desktop's
 mode switches every window to the other side of the theme, as a click on a mode button does, with no
@@ -397,25 +397,25 @@ yet. The config is loaded before any application code runs, so a default written
 choice would override the Settings page on every start:</p>
 
 <pre><code><span class="kw">if</span> (!application.<span class="fn">configFolderExists</span>())
-    <span class="fn">applyColorMode</span>(application.<span class="fn">context</span>(), <span class="tp">ColorModeSetting</span>::Light);</code></pre>
+    application.<span class="fn">themes</span>().<span class="fn">setColorMode</span>(<span class="tp">ColorModeSetting</span>::Light);</code></pre>
 
 <p>Code outside the theme's reach, such as a picture chosen for each side or a scene with its own
 colors, listens on <code>Platform::events()</code> for a change of the desktop's mode. The event
 carries no payload; the listener calls <code>Platform::systemColorMode()</code> again. The event is
 raised whatever the setting holds, so a listener that needs the side the application is drawn on
-calls <code>wornColorMode</code>:</p>
+calls <code>resolvedColorMode()</code> on the application's manager:</p>
 
 <pre><code><span class="cm">// A member of the listener, so the connection goes when the listener does.</span>
 <span class="tp">ScopedEventConnection</span> m_desktopMode{
     <span class="tp">Platform</span>::<span class="fn">events</span>().<span class="fn">connect</span>&lt;<span class="tp">SystemColorModeEvent</span>&gt;([<span class="kw">this</span>](<span class="tp">SystemColorModeEvent</span>&amp;) {
-        <span class="fn">pickPicture</span>(<span class="fn">wornColorMode</span>(<span class="fn">appContext</span>()));
+        <span class="fn">pickPicture</span>(m_themes.<span class="fn">resolvedColorMode</span>());
     })
 };</code></pre>
 
 <div class="info">
 <strong>Module imports:</strong> <code>ColorModeSetting</code> is provided by
-<code>ClaFi.Core.System.UiTypes</code>, <code>applyColorMode</code> and <code>wornColorMode</code>
-by <code>ClaFi.App.Themes</code>, and <code>Platform</code> and <code>SystemColorModeEvent</code>
+<code>ClaFi.Core.System.UiTypes</code>, <code>ThemesManager</code>
+by <code>ClaFi.Application.ThemesManager</code>, and <code>Platform</code> and <code>SystemColorModeEvent</code>
 by <code>ClaFi.Core.Context.FormContext</code>. A file that reads the config node itself -
 <code>appContext().colorMode()</code> - also imports <code>ClaFi.Core.Dom_StdSerializers</code> and
 <code>ClaFi.Core.AppTheme_Colors</code>: the setting's serializer and its names are declared
@@ -566,9 +566,9 @@ spelling in a document.</p>
     Kept in the file by name: <code>ColorMode=Auto</code>.</td></tr>
 <tr><td><code>AppContext::colorMode()</code></td><td>That node. A change to it applies the stored theme
     again.</td></tr>
-<tr><td><code>applyColorMode(AppContext&amp;, ColorModeSetting)</code></td><td>States the choice in the
+<tr><td><code>ThemesManager::setColorMode(ColorModeSetting)</code></td><td>States the choice in the
     config, which keeps it between sessions where the user allowed storing.</td></tr>
-<tr><td><code>wornColorMode(const AppContext&amp;)</code></td><td>The side the application is drawn on:
+<tr><td><code>ThemesManager::resolvedColorMode()</code></td><td>The side the application is drawn on:
     the setting's, or the desktop's under Auto. Queried each time rather than cached, so it follows
     the desktop.</td></tr>
 <tr><td><code>Platform::systemColorMode()</code></td><td>The mode the desktop requests applications to be
@@ -928,7 +928,7 @@ style, and 1 - a surface that fades in at full size - everywhere else.</p>
             <li><strong>Take <code>controlContext().inkHsl</code> when an effect comes next</strong>, and make the last step the one that produces a <code>Color</code>.</li>
             <li><strong>State a look for the user being on a control once, on <code>Hot</code></strong> - it is the mouse over the control or the keys on it, each gated on its device. <code>Focused</code> alone applies to the focus a click keeps while the pointer moves elsewhere.</li>
             <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what is separate from the interface.</li>
-            <li><strong>Call <code>wornColorMode</code> to find the side the application is on.</strong> Under Auto the answer is the desktop's, and it changes while the application runs.</li>
+            <li><strong>Call <code>ThemesManager::resolvedColorMode()</code> to find the side the application is on.</strong> Under Auto the answer is the desktop's, and it changes while the application runs.</li>
         </ul>
     </div>
     <div class="rule-card donts">

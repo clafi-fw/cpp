@@ -166,7 +166,7 @@ namespace ClaFi
         //
         // --- Switching themes ---:
         // **The application puts this theme on**, crossing to it over AnimationSlots::ThemeSwitch.
-        // Baking and resolving are answered above the core - see connectAppThemes - so the sets
+        // Baking and resolving are answered by ThemesManager, so the sets
         // arrive already made, every color of which has a half way, which is what the crossing
         // rests on.
         //
@@ -306,7 +306,7 @@ namespace ClaFi
         const IForm* m_rootLoopForm{ nullptr };
         AnimationController m_animator{};
         // The application wears the default theme until it is told otherwise. The baked set
-        // beside it is filled before any window exists - see connectAppThemes.
+        // beside it is filled by ThemesManager before any window exists.
         AppTheme m_theme{};
         // **What every window is painted from**: part way between the two below while a crossing
         // runs, and the incoming set once it has landed.
@@ -489,10 +489,6 @@ namespace ClaFi
         });
     }
 
-    // **No handler on the theme nodes.** A path is resolved against the themes on the disk as well
-    // as against the one compiled in, and reading a theme file is not the core's work - see
-    // connectAppThemes, which is what answers a change of either.
-    //
     // The Performance section requires a GPU backend. The UpdateCheck section requires an update
     // source.
     Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuBackend,

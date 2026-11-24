@@ -4,6 +4,7 @@ module;
 export module ClaFi.App.Settings;
 
 import ClaFi.App.ThemePick;
+import ClaFi.Application.ThemesManager;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.CheckBox;
@@ -71,7 +72,7 @@ namespace ClaFi
     export class SettingsPage : public Controls::Panel
     {
     public:
-        explicit SettingsPage(const CreateParams&, std::wstring_view optionAnchor = {});
+        explicit SettingsPage(const CreateParams&, ThemesManager&, std::wstring_view optionAnchor = {});
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"SettingsPage"; }
     private:

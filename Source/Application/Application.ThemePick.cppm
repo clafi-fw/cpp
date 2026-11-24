@@ -1,7 +1,7 @@
 export module ClaFi.App.ThemePick;
 
 import ClaFi.App.ThemeIcon;
-import ClaFi.App.Themes;
+import ClaFi.Application.ThemesManager;
 
 import ClaFi.Documents.Folder;
 
@@ -42,7 +42,7 @@ namespace ClaFi
     {
     public:
         template<typename... Args>
-        explicit ThemePick(const CreateParams&, Args&&...);
+        explicit ThemePick(const CreateParams& params, ThemesManager& themes, Args&&... args);
         ~ThemePick() override;
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"ThemePick"; }
@@ -65,6 +65,7 @@ namespace ClaFi
         // Every theme the list holds, in the order it lists them. An item's tag is its index
         // here, so an item answers the theme it was built from.
         ThemeEntries m_themes{};
+        ThemesManager& m_manager;
         bool m_themeFoldersChanged{ false };
     };
 
@@ -83,7 +84,7 @@ namespace ClaFi
     // ThemePick
 
     template<typename... Args>
-    ThemePick::ThemePick(const CreateParams& params, Args&&... args)
+    ThemePick::ThemePick(const CreateParams& params, ThemesManager& themes, Args&&... args)
         :
         ThemeItems{},
         ComboBox{
@@ -98,7 +99,8 @@ namespace ClaFi
             k_themeItemIconSize,
             ItemsLaneSize{ k_themesPerLane, LaneSizing::UpTo },
             std::forward<Args>(args)...
-        }
+        },
+        m_manager{ themes }
     {
         listenToThemeFolders(true);
 

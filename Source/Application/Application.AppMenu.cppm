@@ -1,5 +1,7 @@
 export module ClaFi.App.AppMenu;
 
+import ClaFi.Application.ThemesManager;
+
 import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.TabStrip;
 
@@ -7,6 +9,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
@@ -16,7 +19,7 @@ namespace ClaFi
     export class AppMenu : public Controls::TabbedBox
     {
     public:
-        explicit AppMenu(const CreateParams&, std::wstring_view settingsAnchor = {});
+        explicit AppMenu(const CreateParams&, ThemesManager&, std::wstring_view settingsAnchor = {});
         std::wstring_view diagnosticText() const override { return L"AppMenu"; }
         // The page the menu was left on, which is the page the next one opens.
         [[nodiscard]] std::wstring_view pageCaption() const { return m_pageCaption; }
@@ -47,8 +50,8 @@ namespace ClaFi
     // What the backstage keeps of itself: the page it was last left on.
     export [[nodiscard]] Dom::Dt::Section createAppMenuConfigSchema();
 
-    // Puts the menu under every AppButton, once per application. See Application
-    export void connectAppMenu(AppContext&, std::wstring_view linkScheme, LinkHandler);
+    export [[nodiscard]] ScopedEventConnection connectAppMenu(AppContext&, ThemesManager&,
+        std::wstring_view linkScheme, LinkHandler);
 
     // Adds a command of the application's own below its pages. See Application
     export void connectAppCommand(std::wstring_view caption, DrawIconFunc drawIcon, EndIcon,

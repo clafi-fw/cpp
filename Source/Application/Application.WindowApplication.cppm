@@ -6,7 +6,6 @@ export import ClaFi.App.CommandLine;
 
 import ClaFi.App.AppMenu;
 import ClaFi.App.Notices;
-import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
 import ClaFi.StdActions.Transfer;
@@ -64,7 +63,6 @@ namespace ClaFi
         const std::wstring_view configSubPath() { return m_configSubPath; }
         const std::wstring& configFileName() const { return m_configFileName; }
         const std::wstring& themesPath() const { return m_themesPath; }
-        // The themes this application can wear. One per application, and what appThemes answers.
         [[nodiscard]] ThemesManager& themes() { return m_themesManager; }
         void saveConfig(bool evenIfNotExists);
         Dom::DocumentBase& config() { return m_context.config(); }
@@ -106,6 +104,7 @@ namespace ClaFi
         // Built over the path above, which initializeConfigPath has filled in by the time the
         // context is constructed.
         ThemesManager m_themesManager;
+        ScopedEventConnection m_appMenuConnection{};
         NoticeHandle m_updateNotice{};
         // Whether the check made at start is still to answer - its answer alone is told.
         bool m_startAnswerAwaited{ false };
@@ -193,7 +192,7 @@ namespace ClaFi
             }
         },
         m_themesManager{
-            m_themesPath, requiredElementsOf(properties), properties.defaultTheme,
+            m_context, m_themesPath, requiredElementsOf(properties), properties.defaultTheme,
             properties.additionalThemes, properties.legacyThemeFileDefaults,
             themesDirectoryIn(m_configFolder), themesDirectoryIn(Platform::executableDirectory())
         }
@@ -238,7 +237,8 @@ namespace ClaFi
         // references, and the tables would be filled in some builds and empty in others.
         StdActions::registerTransferFormats(m_context.platform().clipboard());
         // The application menu under every AppButton.
-        connectAppMenu(m_context, properties.linkScheme, properties.linkHandler);
+        m_appMenuConnection = connectAppMenu(
+            m_context, m_themesManager, properties.linkScheme, properties.linkHandler);
         // The notices over the main window, from the moment it takes the root loop.
         connectNotices(m_context);
         // Built before the config is read, so a line logged while reading it has somewhere to
@@ -260,7 +260,7 @@ namespace ClaFi
         // **Before the config is read**, so that the theme the file names is carried in by the load
         // itself rather than applied a second time after it. No window exists yet, so what the
         // node states is what the first one opens in - see AppContext::takeTheme.
-        connectAppThemes(m_context, m_themesManager);
+        m_themesManager.restoreSelectedTheme();
         // Every write of the config is on record, whoever asked for it.
         config().connectEvent([](Dom::SaveEvent& event) {
             diagnosticLog(std::format(L"config written {}", event.sender().path().wstring()));

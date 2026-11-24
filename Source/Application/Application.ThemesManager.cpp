@@ -3,18 +3,24 @@ module ClaFi.Application.ThemesManager;
 import ClaFi.App.ApplicationProperties;
 
 import ClaFi.App.ThemeIcon;
+import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Documents.Folder;
 
 import ClaFi.Dom.Formats.ClaFi;
 
+import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
+import ClaFi.Core.System.Events;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -30,6 +36,18 @@ namespace ClaFi
         Dom::Value<AppTheme> section{ nullptr, defaults };
         const Dom::FileFormat::ClaFi ff;
         m_readable = ff.loadSectionFromFile(section, path);
+        if (m_readable)
+        {
+            loadTheme(section, m_theme);
+        }
+    }
+
+    UserTheme::UserTheme(const std::filesystem::path& path, const Documents::DocumentsFolder& folder)
+        :
+        m_path{ path }
+    {
+        Dom::Value<AppTheme> section{ nullptr, AppTheme{} };
+        m_readable = folder.readDocument(path, section);
         if (m_readable)
         {
             loadTheme(section, m_theme);
@@ -131,13 +149,14 @@ namespace ClaFi
             m_userThemes.push_back(std::make_unique<UserTheme>(file, m_themeFileDefaults));
     }
 
-    ThemesManager::ThemesManager(const std::filesystem::path& publisherDirectory,
+    ThemesManager::ThemesManager(AppContext& context, const std::filesystem::path& publisherDirectory,
         const AppElementNames requiredElements, const NamedTheme& defaultTheme,
         const NamedThemes& additionalThemes, const AppTheme* legacyThemeFileDefaults,
         const std::filesystem::path& appConfigDirectory,
         const std::filesystem::path& appExecutableDirectory)
         :
         ThemeFolder{ publisherDirectory, legacyThemeFileDefaults },
+        m_context{ context },
         m_requiredElements{ requiredElements },
         m_defaultTheme{ defaultTheme },
         m_additionalThemes{ additionalThemes },
@@ -161,6 +180,25 @@ namespace ClaFi
                 noReach("An additional theme must have a unique Settings name without a slash.");
             }
         }
+
+        m_themePathConnection = ScopedEventConnection{
+            m_context.themePath().connectEvent([this](Dom::ChangeEvent&) {
+                restoreSelectedTheme();
+            })
+        };
+        m_colorModeConnection = ScopedEventConnection{
+            m_context.colorMode().connectEvent([this](Dom::ChangeEvent&) {
+                restoreSelectedTheme();
+            })
+        };
+        m_systemColorModeConnection = ScopedEventConnection{
+            Platform::events().connect<SystemColorModeEvent>([this](SystemColorModeEvent&) {
+                if (m_context.colorMode().get() == ColorModeSetting::Auto)
+                {
+                    restoreSelectedTheme();
+                }
+            })
+        };
     }
 
     ThemeFolder* ThemesManager::fileThemeFolder(const std::wstring_view root)
@@ -221,5 +259,56 @@ namespace ClaFi
     std::wstring ThemesManager::pathOf(const UserTheme& theme)
     {
         return themePathOf(ThemeRoots::User, theme.path().stem().wstring());
+    }
+
+    ColorMode ThemesManager::resolvedColorMode() const
+    {
+        switch (m_context.colorMode().get())
+        {
+            case ColorModeSetting::Dark:
+                return ColorMode::Dark;
+            case ColorModeSetting::Light:
+                return ColorMode::Light;
+            case ColorModeSetting::Auto:
+                break;
+        }
+        return Platform::systemColorMode();
+    }
+
+    void ThemesManager::setColorMode(const ColorModeSetting mode)
+    {
+        m_context.colorMode().set(mode);
+    }
+
+    void ThemesManager::selectTheme(const std::wstring_view path)
+    {
+        m_context.themePath().set(std::wstring{ path });
+    }
+
+    void ThemesManager::restoreSelectedTheme()
+    {
+        applyTheme(selectedTheme());
+    }
+
+    void ThemesManager::applyTheme(const AppTheme& theme)
+    {
+        applyTheme(theme, resolvedColorMode());
+    }
+
+    void ThemesManager::applyTheme(const AppTheme& theme, const ColorMode mode)
+    {
+        const AppElementNames appElements = m_context.appElements();
+        m_context.takeTheme(theme, bake(theme, mode, appElements),
+            resolveStyleMetrics(theme, appElements));
+    }
+
+    const AppTheme& ThemesManager::selectedTheme()
+    {
+        const std::wstring path = m_context.themePath().get();
+        if (const AppTheme* theme = themeByPath(path))
+        {
+            return *theme;
+        }
+        return m_defaultTheme.theme;
     }
 }

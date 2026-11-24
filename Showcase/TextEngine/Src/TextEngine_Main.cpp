@@ -27,7 +27,7 @@ import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.App.ApplicationProperties;
 import ClaFi.App.WindowApplication;
-import ClaFi.App.Themes;
+import ClaFi.Application.ThemesManager;
 
 import ClaFi.StdActions;
 
@@ -327,7 +327,7 @@ namespace TextEngine_App
         // The settings folder supplies the saved color mode when it exists.
         if (!application.configFolderExists())
         {
-            applyColorMode(application.context(), ColorModeSetting::Light);
+            application.themes().setColorMode(ColorModeSetting::Light);
         }
     }
 

@@ -133,6 +133,7 @@ namespace ClaFi
         m_fileNameToSelect.clear();
 
         m_userTiles.clearControls();
+        m_storageThemes.clear();
 
         if (m_storages)
         {
@@ -143,22 +144,12 @@ namespace ClaFi
         }
         else
         {
-            const UserThemeList* themes = &m_storageThemes;
-            if (m_storage.folder == &m_themes)
+            const FilePaths& files = m_storage.folder->files();
+            m_storageThemes.reserve(files.size());
+            for (const std::filesystem::path& path : files)
             {
-                themes = &m_themes.userThemes();
-            }
-            else
-            {
-                m_storageThemes.clear();
-                for (const std::filesystem::path& path : m_storage.folder->files())
-                {
-                    m_storageThemes.push_back(std::make_unique<UserTheme>(path, m_themes.themeFileDefaults()));
-                }
-            }
-            for (const UserThemePtr& theme : *themes)
-            {
-                addTile(m_userTiles, *theme);
+                m_storageThemes.push_back(std::make_unique<UserTheme>(path, *m_storage.folder));
+                addTile(m_userTiles, *m_storageThemes.back());
             }
         }
 

@@ -2,7 +2,6 @@ module ClaFi.App.ThemePick;
 
 import ClaFi.App.ApplicationProperties;
 
-import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
 import ClaFi.Controls.ComboBox;
@@ -73,24 +72,23 @@ namespace ClaFi
         m_themes.clear();
         m_themeItems.clear();
 
-        ThemesManager& manager = appThemes();
-        const NamedTheme& defaultTheme = manager.defaultTheme();
+        const NamedTheme& defaultTheme = m_manager.defaultTheme();
         addTheme(defaultTheme.theme, k_defaultThemePath, defaultTheme.name);
-        for (const NamedTheme& theme : manager.additionalThemes())
+        for (const NamedTheme& theme : m_manager.additionalThemes())
         {
             addTheme(theme.theme, themePathOf(ThemeRoots::App, theme.name), theme.name);
         }
 
         for (const FileThemeSource& source : k_fileThemeSources)
         {
-            ThemeFolder* folder = manager.fileThemeFolder(source.root);
+            ThemeFolder* folder = m_manager.fileThemeFolder(source.root);
             if (!folder)
             {
                 continue;
             }
             for (const UserThemePtr& theme : folder->userThemes())
             {
-                if (manager.offersTheme(source.root, *theme))
+                if (m_manager.offersTheme(source.root, *theme))
                 {
                     const std::wstring name = theme->path().stem().wstring();
                     const std::wstring path = themePathOf(source.root, name);
@@ -115,7 +113,7 @@ namespace ClaFi
             return;
         }
         rebuild();
-        applyStoredTheme(appContext());
+        m_manager.restoreSelectedTheme();
     }
 
     void ThemePick::showDropdown(Control& initiator)
@@ -128,11 +126,11 @@ namespace ClaFi
         // not written, so a list closed on the theme it opened on leaves the config's on.
         if (picked == openedOn)
         {
-            applyStoredTheme(appContext());
+            m_manager.restoreSelectedTheme();
         }
         else
         {
-            applyThemePath(appContext(), picked);
+            m_manager.selectTheme(picked);
         }
         if (m_themeFoldersChanged)
         {
@@ -143,9 +141,9 @@ namespace ClaFi
 
     void ThemePick::previewTheme(const std::wstring_view path)
     {
-        if (const AppTheme* theme = appThemes().themeByPath(path))
+        if (const AppTheme* theme = m_manager.themeByPath(path))
         {
-            applyTheme(appContext(), *theme);
+            m_manager.applyTheme(*theme);
         }
     }
 
@@ -153,7 +151,7 @@ namespace ClaFi
     {
         for (const FileThemeSource& source : k_fileThemeSources)
         {
-            ThemeFolder* folder = appThemes().fileThemeFolder(source.root);
+            ThemeFolder* folder = m_manager.fileThemeFolder(source.root);
             if (!folder)
             {
                 continue;

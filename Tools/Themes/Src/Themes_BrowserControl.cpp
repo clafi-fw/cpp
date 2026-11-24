@@ -1,13 +1,17 @@
 module Themes_App.ThemesBrowser;
 
 import Themes_App.Consts;
+import Themes_App.HomePage;
 import Themes_App.ThemePage;
 
 import ClaFi.Application.ThemesManager;
-import ClaFi.App.Themes;
 import ClaFi.App.ThemeIcon;
 
 import ClaFi.Documents.Browser;
+import ClaFi.Documents.Folder;
+import ClaFi.Documents.HomePage;
+import ClaFi.Documents.List;
+import ClaFi.Documents.Page;
 
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
@@ -70,7 +74,7 @@ namespace Themes_App
         {
             return false;
         }
-        const UserTheme theme{ file, appThemes().themeFileDefaults() };
+        const UserTheme theme = { file, storageFolder(*data) };
         if (!theme.readable() || !theme.theme().styles.of(name))
         {
             return false;
@@ -80,12 +84,34 @@ namespace Themes_App
         return true;
     }
 
+    Documents::DocumentsHomePageBase& ThemesBrowser::createHomePage(BrowserTab& tab)
+    {
+        return tab.createPage<HomePage>(
+            &m_themes,
+            Tag{ Documents::k_homePageTag },
+            &folder(),
+            listingView(*tab.pageData()),
+            Documents::StorageTilesView{ storageTilesFor(*tab.pageData()) }
+        );
+    }
+
+    Documents::DocumentPage& ThemesBrowser::createDocumentPage(BrowserTab& tab)
+    {
+        const PageData& data = *tab.pageData();
+        return tab.createPage<ThemePage>(
+            &m_themes,
+            Tag{ Documents::k_documentPageTag },
+            &folder(),
+            Documents::DocumentStorageView{ &storageFolder(data), isHomePage(*data.parent) }
+        );
+    }
+
     void ThemesBrowser::drawTabIcon(BrowserTab& tab, DrawIconEvent& event)
     {
         const PageData* data = tab.pageData();
         if (!data || !isDocumentPage(*data))
         {
-            Base::drawTabIcon(tab, event);
+            DocumentsBrowserBase::drawTabIcon(tab, event);
             return;
         }
         drawThemeIcon(event, tabIconColors(tab));

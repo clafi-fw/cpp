@@ -59,7 +59,8 @@ under the pointer. Its floor fits the Settings page with every section open.
 ## connectAppMenu
 
 WindowApplicationBase calls it during initialization. It connects the menu action and registers
-the app's declared link scheme.
+the app's declared link scheme. Keep the returned connection for the lifetime of the menu action
+binding.
 
 ## ApplicationProperties
 
@@ -93,7 +94,7 @@ menu opens, so every option is read where it lives.
 
 **The bar is always shown**, so a section opening or closing moves nothing across the page.
 
-- **Theme** - a ThemePick, and a button for each color mode setting - see applyColorMode. A theme
+- **Theme** - a ThemePick and a button for each color mode setting. A theme
   tried on goes when the menu closes.
 - **Scale** - a ScaleSlider, a percent per unit, writing AppContext::scale, and every window takes
   it. The readout shows the percent that was taken.
@@ -304,8 +305,7 @@ name in the theme, resolved and baked, or by nothing where the theme states none
 **Every element's sizes, laid out as bake lays the rules out**: the framework's tokens in
 UiElement order, then the application's own. Each name is answered by ThemeStyles
 resolvedMetrics, settled - see settle - and an element whose style the theme lacks holds the
-defaults. Both are made beside each other as a theme is put on - see connectAppThemes - and
-AppContext takes them together.
+defaults. ThemesManager resolves both when it applies the theme. AppContext takes them together.
 
 ## settle
 
@@ -361,55 +361,48 @@ apart, across then down (`Padding=8 4`), a border its weight's name (`Border=Thi
 file is the whole list, so a theme states every style it has, and a style a file leaves out is one
 the theme lacks.
 
-## appThemes
+## WindowApplicationBase themes
 
-**The application's one ThemesManager** answers from before the first window until the
-application ends. Call it after connectAppThemes has run.
+The windowed application owns the manager. Pass it to controls that list or preview themes.
 
-## connectAppThemes
+## ThemesManager applyTheme
 
-ApplicationBase calls it, before the config is read. From then on a change of the config's theme
-path or color mode, or under Auto of the desktop's mode, puts on the stored theme.
+Puts a theme on without writing the config - the route a preview takes. Without a mode it is worn
+in the mode resolvedColorMode answers.
 
-## storedTheme
+## ThemesManager restoreSelectedTheme
+
+Call it when a preview ends.
+
+## ThemesManager selectedTheme
 
 **A missing saved theme falls back to the application's declared default.** The config keeps the
 path, so a theme that becomes available again can be restored.
 
-## applyTheme
-
-Puts a theme on without writing the config - the route a preview takes. Without a mode it is worn
-in the mode wornColorMode answers.
-
-## applyStoredTheme
-
-Call it wherever a theme was worn that the config does not state - the menu closing over a
-preview, the Themes application turning its preview off.
-
-## applyThemePath
+## ThemesManager selectTheme
 
 **Writing the path is choosing the theme**, and it is kept between sessions where the user allowed
-storing. A path equal to the stored one changes nothing, so take a preview back with
-applyStoredTheme.
+storing. Use restoreSelectedTheme to end a preview when the selected path is already stored.
 
-## applyColorMode
+## ThemesManager setColorMode
 
-Writes the setting the way applyThemePath writes a path, and the stored theme is put on in the new
-mode.
+Writes the setting and applies the selected theme in the new mode.
 
 ## AppContext::colorMode
 
-**The mode is the application's, not the theme's**, so every theme is worn in it. Write it with
-applyColorMode, and ask wornColorMode for the mode Auto means.
+**The application has a single color mode setting.** Write it with ThemesManager setColorMode and
+ask ThemesManager resolvedColorMode for the mode Auto means.
 
-## wornColorMode
+## ThemesManager resolvedColorMode
 
 Auto answers with the desktop's mode - see Platform::systemColorMode. **It is asked each time a
 theme is put on**, so it keeps up with the desktop.
 
 ## ThemesManager
 
-The manager holds the application's default and additional themes. It discovers `.clafitheme`
+The manager holds the application's default and additional themes. It applies the selected theme
+when the config path or mode changes. Under Auto it also follows changes to the desktop mode.
+The manager discovers `.clafitheme`
 files in `Themes` beside the executable and in `Themes` inside the application's config folder.
 With `usePublisherThemes`, the manager also serves as the DocumentsFolder for the publisher's
 shared themes. `userThemes()` on the manager lists the publisher folder's files.
@@ -426,8 +419,9 @@ lists theme documents from the selected document storage.
 
 ## ThemesList
 
-The list shows storage folders or the selected storage's theme files as tiles. It implements
-IDocumentTiles for DocumentsHomePageBase.
+The list shows storage folders or the selected storage's theme files as tiles. Pass a
+DocumentStorageView to supply the folder and its document reader. The list implements IDocumentTiles
+for DocumentsHomePageBase.
 
 **The host scrolls the list.** A page puts it on its own scrolled column, and a window gives it a
 box - `createBody<ScrollBoxWith<ThemesList>>`.

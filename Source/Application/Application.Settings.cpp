@@ -4,7 +4,7 @@ module;
 module ClaFi.App.Settings;
 
 import ClaFi.App.ThemePick;
-import ClaFi.App.Themes;
+import ClaFi.Application.ThemesManager;
 
 import ClaFi.Icons.DeleteIcon;
 import ClaFi.Icons.MoonIcon;
@@ -355,7 +355,8 @@ namespace ClaFi
     {
     }
 
-    SettingsPage::SettingsPage(const CreateParams& params, const std::wstring_view optionAnchor)
+    SettingsPage::SettingsPage(const CreateParams& params, ThemesManager& themes,
+        const std::wstring_view optionAnchor)
         :
         // The room around the options is the column's own, and the divider is what parts it from
         // the foot, so the panel between them adds nothing of its own.
@@ -376,6 +377,7 @@ namespace ClaFi
         ) },
         m_themeCaption{ m_themeRow.add<RowCaption>(L"Theme:") },
         m_themePick{ m_themeRow.add<ThemePick>(
+            themes,
             // Its metrics too: a tool button's grow the surface in, and a button's stands at rest.
             UiElement::Button,
             MaxSize{ k_themesWidth, k_maxFloat },
@@ -481,16 +483,14 @@ namespace ClaFi
         m_footerDivider{ m_footer.add<Divider>() },
         m_keepSettings{ m_footer.add<CheckBox>(L"Keep settings on this PC") }
     {
-        // **The mode is stated, not tried on.** A click writes the config like a pick from the
-        // list, and the node's change carries it to the theme - see connectAppThemes.
         for (ToolButton* button : { &m_autoButton, &m_darkButton, &m_lightButton })
         {
             button->onGetState([this](GetStateEvent& event) {
                 event.state.selected =
                     event.control.tag<ColorModeSetting>() == appContext().colorMode().get();
             });
-            button->onClick([this](ClickEvent& event) {
-                applyColorMode(appContext(), event.control->tag<ColorModeSetting>());
+            button->onClick([this, &themes](ClickEvent& event) {
+                themes.setColorMode(event.control->tag<ColorModeSetting>());
                 m_autoButton.invalidateState();
                 m_darkButton.invalidateState();
                 m_lightButton.invalidateState();

@@ -437,7 +437,7 @@ stores one, and an application can set its own first-run default - the TextEngin
 Light. To fix it, set Auto:
 </p>
 
-<pre><code><span class="fn">applyColorMode</span>(<span class="fn">appContext</span>(), <span class="tp">ColorModeSetting</span>::Auto);</code></pre>
+<pre><code>application.<span class="fn">themes</span>().<span class="fn">setColorMode</span>(<span class="tp">ColorModeSetting</span>::Auto);</code></pre>
 
 <h4>Windows is asked for its app mode</h4>
 
@@ -472,7 +472,7 @@ is no preference, and the GNOME portal returns it when its default light theme i
                 records the user's choice.</li>
             <li>State a first-run default only where the application needs a particular mode, and
                 only where <code>configFolderExists()</code> is false.</li>
-            <li>Call <code>wornColorMode</code> for the mode the application is drawn in.</li>
+            <li>Call <code>ThemesManager::resolvedColorMode()</code> for the mode the application is drawn in.</li>
         </ul>
     </div>
     <div class="rule-card donts">

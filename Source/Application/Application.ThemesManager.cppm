@@ -8,9 +8,12 @@ import ClaFi.Documents.Folder;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
+import ClaFi.Core.System.Events;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
@@ -34,6 +37,7 @@ namespace ClaFi
     {
     public:
         explicit UserTheme(const std::filesystem::path&, const AppTheme& defaults = {});
+        UserTheme(const std::filesystem::path& path, const Documents::DocumentsFolder& folder);
     public:
         [[nodiscard]] bool readable() const { return m_readable; }
         [[nodiscard]] const std::filesystem::path& path() const { return m_path; }
@@ -76,7 +80,8 @@ namespace ClaFi
     export class ThemesManager : public ThemeFolder
     {
     public:
-        ThemesManager(const std::filesystem::path& publisherDirectory, AppElementNames requiredElements,
+        ThemesManager(AppContext& context, const std::filesystem::path& publisherDirectory,
+            AppElementNames requiredElements,
             const NamedTheme& defaultTheme, const NamedThemes& additionalThemes = {},
             const AppTheme* legacyThemeFileDefaults = nullptr,
             const std::filesystem::path& appConfigDirectory = {},
@@ -90,11 +95,22 @@ namespace ClaFi
         [[nodiscard]] const AppTheme* themeByPath(std::wstring_view path);
         // The Settings path of a publisher theme. See Application#themesmanager
         [[nodiscard]] static std::wstring pathOf(const UserTheme&);
+        [[nodiscard]] ColorMode resolvedColorMode() const;
+        void setColorMode(ColorModeSetting mode);
+        void selectTheme(std::wstring_view path);
+        void restoreSelectedTheme();
+        void applyTheme(const AppTheme& theme);
+        void applyTheme(const AppTheme& theme, ColorMode mode);
+        [[nodiscard]] const AppTheme& selectedTheme();
     private:
+        AppContext& m_context;
         const AppElementNames m_requiredElements;
         const NamedTheme m_defaultTheme;
         const NamedThemes m_additionalThemes;
         ThemeFolder m_appConfigThemes;
         ThemeFolder m_appExecutableThemes;
+        ScopedEventConnection m_themePathConnection{};
+        ScopedEventConnection m_colorModeConnection{};
+        ScopedEventConnection m_systemColorModeConnection{};
     };
 }

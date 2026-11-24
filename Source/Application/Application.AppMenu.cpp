@@ -2,7 +2,7 @@ module ClaFi.App.AppMenu;
 
 import ClaFi.App.Information;
 import ClaFi.App.Settings;
-import ClaFi.App.Themes;
+import ClaFi.Application.ThemesManager;
 
 import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
@@ -34,6 +34,7 @@ import ClaFi.Core.Dom_StdSerializers;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Url;
 import ClaFi.Core.System.Utils;
@@ -44,8 +45,8 @@ namespace ClaFi
 {
     using namespace Controls;
 
-    static void openAppMenu(ActionClickEvent&);
-    static bool showAppMenu(FormBase&, Control* presenter, std::wstring_view settingsAnchor);
+    static bool showAppMenu(FormBase&, Control* presenter, ThemesManager&,
+        std::wstring_view settingsAnchor);
 
     // A command an application asked for, as it stated it.
     struct AppCommand
@@ -81,17 +82,25 @@ namespace ClaFi
 
     // connectAppMenu
 
-    void connectAppMenu(AppContext& context, const std::wstring_view linkScheme,
-        LinkHandler linkHandler)
+    ScopedEventConnection connectAppMenu(AppContext& context, ThemesManager& themes,
+        const std::wstring_view linkScheme, LinkHandler linkHandler)
     {
-        appMenuAction().onClick([](ActionClickEvent& event) {
-            openAppMenu(event);
-        });
+        ScopedEventConnection menuConnection{ appMenuAction().onClick(
+            [&context, &themes](ActionClickEvent& event) {
+                if (&event.form.appContext() == &context)
+                {
+                    showAppMenu(event.form, event.presenter, themes, {});
+                }
+            })
+        };
         if (linkScheme.empty())
-            return;
+        {
+            return menuConnection;
+        }
 
         const bool registered = context.registerLinkHandler(linkScheme,
-            [applicationLinks = std::move(linkHandler)](const Url& url, IForm* source, InputStamp stamp) {
+            [&themes, applicationLinks = std::move(linkHandler)](
+                const Url& url, IForm* source, InputStamp stamp) {
                 if (url.authority() == L"settings" && url.path().empty() && url.query().empty())
                 {
                     if (!source)
@@ -102,7 +111,7 @@ namespace ClaFi
                         Action& action = appMenuAction();
                         Control* presenter = action.presenterIn(form);
                         return action.enabled(form, presenter)
-                            && showAppMenu(form, presenter, url.fragment());
+                            && showAppMenu(form, presenter, themes, url.fragment());
                     }
                     openAppMenuPage(form, AppMenu::k_settingsPageCaption, stamp);
                     return true;
@@ -110,7 +119,10 @@ namespace ClaFi
                 return applicationLinks && applicationLinks(url, source, stamp);
             });
         if (!registered)
+        {
             noReach("Application link scheme is invalid or already registered");
+        }
+        return menuConnection;
     }
 
     // connectAppCommand
@@ -146,18 +158,14 @@ namespace ClaFi
         action.invoke(form, action.presenterIn(form), stamp);
     }
 
-    void openAppMenu(ActionClickEvent& event)
-    {
-        showAppMenu(event.form, event.presenter, {});
-    }
-
-    bool showAppMenu(FormBase& form, Control* presenter, const std::wstring_view settingsAnchor)
+    bool showAppMenu(FormBase& form, Control* presenter, ThemesManager& themes,
+        const std::wstring_view settingsAnchor)
     {
         form.closeActivePopup();
         if (form.activePopup())
             return false;
 
-        Form menu{ form.createPopup<AppMenu>(presenter, settingsAnchor) };
+        Form menu{ form.createPopup<AppMenu>(presenter, themes, settingsAnchor) };
         // Under the button that opened it; a shortcut has none, so the menu takes the middle.
         menu.setPlacement(presenter ? FormPlacement::BottomLeft : FormPlacement::Default);
         menu.execute();
@@ -166,7 +174,7 @@ namespace ClaFi
         // over without stating it, so what the config names is what the application is left in -
         // and where nothing was tried on this is the theme it already has, which crosses to
         // itself and shows nothing. See ThemePick
-        applyStoredTheme(form.appContext());
+        themes.restoreSelectedTheme();
         return true;
     }
 
@@ -197,7 +205,8 @@ namespace ClaFi
 
     // AppMenu
 
-    AppMenu::AppMenu(const CreateParams& params, const std::wstring_view settingsAnchor)
+    AppMenu::AppMenu(const CreateParams& params, ThemesManager& themes,
+        const std::wstring_view settingsAnchor)
         :
         // **A floor, not a size**: a stated preference stands **in place of** the measurement - see
         // Control::calculate - and the menu has to be measured, or the page control's work below
@@ -254,7 +263,7 @@ namespace ClaFi
 
         // The strip takes a button beside its tabs the way a title bar's does.
         addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::draw);
-        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(settingsAnchor),
+        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(themes, settingsAnchor),
             Icons::GearIcon::draw);
 
         if (settingsAnchor.empty())

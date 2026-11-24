@@ -2,7 +2,6 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.App.ThemesList;
 
-import ClaFi.App.Themes;
 import ClaFi.Application.ThemesManager;
 
 import ClaFi.Documents.Folder;
@@ -95,7 +94,6 @@ namespace ClaFi
     private:
         ThemeTile& addTile(StackPanel& group, const UserTheme&);
     private:
-        ThemesManager& m_themes;
         DocumentStorageView m_storage;
         const StorageTiles* m_storages;
         UserThemeList m_storageThemes{};
@@ -159,11 +157,8 @@ namespace ClaFi
             DragMode::EasySelect,
             std::forward<Args>(args)...
         },
-        // The application's own manager: a themes list is built over nothing else, whatever
-        // folder prop a host hands its tiles.
-        m_themes{ appThemes() },
-        // The application theme picker uses the primary view when it has no browser storage.
-        m_storage{ READ_PROPERTY(DocumentStorageView, (DocumentStorageView{ &m_themes, true })) },
+        // The storage to read and watch for changes.
+        m_storage{ REQUIRE_PROPERTY(DocumentStorageView) },
         // Browser home supplies one tile per configured folder.
         m_storages{ READ_PROPERTY(StorageTilesView, StorageTilesView{}).tiles },
         // The host's answer to a name typed over a tile, where it wants one.

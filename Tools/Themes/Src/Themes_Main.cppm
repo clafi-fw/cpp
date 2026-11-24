@@ -73,6 +73,8 @@ namespace Themes_App
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
     int ThemesApplication<PlatformType, GpuBackend>::run()
     {
-        return Base::run(this->themes(), k_mainFormMinSize, k_mainFormPreferredSize);
+        const std::unique_ptr<Form<ThemesBrowser>> form = this->createMainForm(
+            this->themes(), UiElement::Dialog, k_mainFormMinSize, k_mainFormPreferredSize);
+        return form->execute();
     }
 }

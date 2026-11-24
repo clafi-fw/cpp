@@ -6,7 +6,6 @@ import Themes_App.PreviewPanel;
 
 import ClaFi.Application.ThemesManager;
 import ClaFi.Application.ThemesManager_Elements;
-import ClaFi.App.Themes;
 
 import ClaFi.Documents.BasePage;
 
@@ -30,6 +29,7 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -56,9 +56,9 @@ namespace Themes_App
     {
     public:
         template<typename... Args>
-        explicit WithPreview(const CreateParams&, Args&&...);
+        explicit WithPreview(const CreateParams& params, Args&&... args);
     public:
-        [[nodiscard]] ThemesManager& themesManager() const { return appThemes(); }
+        [[nodiscard]] ThemesManager& themesManager() const { return m_themes; }
         void restoreViewState() override;
     protected:
         // The mode every preview shows a theme in. It belongs to no theme, so moving it edits none.
@@ -74,6 +74,7 @@ namespace Themes_App
         // The note stands while the node edits sizes and the application is not previewing them.
         void refreshSizesNote();
     private:
+        ThemesManager& m_themes;
         StackPanel& m_rightToolBar{ this->topPanel().template createRightBar<StackPanel>(
             Orientation::Horizontal,
             FocusScope::Yes,
@@ -142,14 +143,15 @@ namespace Themes_App
     template<typename... Args>
     WithPreview<PageBase>::WithPreview(const CreateParams& params, Args&&... args)
         :
-        PageBase{ params, std::forward<Args>(args)... }
+        PageBase{ params, std::forward<Args>(args)... },
+        m_themes{ *Props::require<ThemesManager*>(args...) }
     {
         m_previewInAppButton.onClick([this](ClickEvent& event) {
             PreviewState::s_inApp = !PreviewState::s_inApp;
             (this->settings().appConfig() / k_previewInAppAttrName).set(PreviewState::s_inApp);
             invalidatePreview();
             if (!PreviewState::s_inApp)
-                applyStoredTheme(this->appContext());
+                themesManager().restoreSelectedTheme();
             refreshSizesNote();
             event.control->invalidateState();
         });
@@ -240,7 +242,7 @@ namespace Themes_App
         if (PreviewState::s_inApp)
         {
             if (m_previewTheme)
-                applyTheme(this->appContext(), *m_previewTheme, PreviewState::s_colorMode);
+                themesManager().applyTheme(*m_previewTheme, PreviewState::s_colorMode);
             this->form().invalidate();
         }
         else if (m_previewPanel.visible())
@@ -276,7 +278,7 @@ namespace Themes_App
         }
 
         if (!PreviewState::s_inApp)
-            applyStoredTheme(this->appContext());
+            themesManager().restoreSelectedTheme();
         refreshSizesNote();
         invalidatePreview();
     }

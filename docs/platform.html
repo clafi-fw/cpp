@@ -665,12 +665,13 @@
                     platform is fully constructed at the end of this step.</td></tr>
                 <tr><td>2</td><td><code>ApplicationBase</code> is built on it: the config path, the
                     <code>AppContext</code> holding a <code>Platform&amp;</code> and the GPU backend's factory where
-                    the application named one, the <code>ThemesManager</code>.</td></tr>
+                    the application named one, then the <code>ThemesManager</code>. The manager subscribes to theme,
+                    color mode, and desktop appearance changes.</td></tr>
                 <tr><td>3</td><td><code>Application</code>'s constructor body calls
                     <code>ApplicationBase::initialize()</code>: the application id is stated to the platform, the
                     standard actions and the transfer formats are registered - the paste action connecting to the
                     platform's clipboard - the app menu is connected, the diagnostic log is built and given the
-                    platform's <code>diagnosticLines</code>, the themes are connected, the config is read.</td></tr>
+                    platform's <code>diagnosticLines</code>, the initial theme is applied, and the config is read.</td></tr>
                 <tr><td>4</td><td>The application's own members and its <code>run()</code>: forms are built, each
                     asking the platform for its window and the context for a backend to draw it, and the main form's
                     loop runs on the platform's event loop.</td></tr>
@@ -681,8 +682,9 @@
                     the user allowed it, and the diagnostic log is released. The function runs once however many
                     times it is called, so an application whose own members the save reaches calls it from its own
                     destructor first.</td></tr>
-                <tr><td>7</td><td><code>ApplicationBase</code>'s members are destroyed: the themes manager and its
-                    watch, then the context, whose destructor stops the theme crossing.</td></tr>
+                <tr><td>7</td><td><code>WindowApplicationBase</code> releases the menu action connection,
+                    the themes manager with its connections and folder watches, then the context, whose
+                    destructor stops the theme crossing.</td></tr>
                 <tr><td>8</td><td>The platform is destroyed, its members in reverse order: the clipboard flushes
                     or hands its selection back, the timers stop, the display or the windows manager closes.</td></tr>
             </table>

@@ -109,15 +109,10 @@ first, kept short by a stated height that cuts the tiles off.
 `ItemSizing::Equal` is what keeps a lane's surplus from piling up at the right: the row is cut into
 equal shares and each tile stands in the middle of its own, at the size it always had - a
 DocumentTile takes the share of the lane it is handed, and the share is a box rather than a size.
-The built-in theme takes the first share, so Default stands in the column the first user tile
-does.
-
 ## ThemeTile
 
-**The theme a tile holds is the manager's own, by reference**, and that is load bearing: what an
-application is wearing is an address - AppContext::takeTheme compares it to tell an edit from a
-switch - so a tile's theme is what a preview names, and it stands still for as long as the list
-does.
+ThemesList owns the parsed themes and clears its tiles before releasing them. The selected
+storage reads the files, including defaults for fields omitted from legacy files.
 
 ## connectAppPage
 
@@ -130,30 +125,13 @@ page is free to be a list where the Settings page is a column of small answers.
 Changing `token` changes the file format: an unrecognized key is discarded with a SchemaErrorEvent,
 so a theme saved under the old spelling loses those rules rather than failing to load.
 
-## connectAppThemes
-
-**What makes the config's Theme and ColorMode nodes mean anything.** `AppContext` holds the path and
-the mode and states no handler - resolving a path reads the themes directory, which is not the
-core's work - so this connects each node's change to `applyStoredTheme` and applies what the
-nodes already hold. `ApplicationBase::initialize` calls it **before** the config is loaded, so the
-theme and the mode a file names are carried in by the load itself rather than applied a second
-time after it, and no window exists yet - which is what makes the first window open in that
-theme rather than cross to it. See AppContext::takeTheme
-
-**The desktop is read here too.** Under Auto the desktop's mode is part of the setting, so this also
-connects `Platform::events()`: a SystemColorModeEvent puts the stored theme on again where the
-config states Auto, which crosses the lightness the way a click on a mode button does, and
-changes nothing where a mode is stated outright.
-
-Once per application, and never taken down: the node outlives every window.
-
 ## ThemesManager
 
-The four overrides read and write a theme the way the tab config holds it, as a Dom node.
-readDocument seeds the node with the defaults and loads the file over them, because a file states
-only what it changes; writeDocument writes what differs from the defaults, statedTheme. isEdited
-is that same difference asked of a file: a theme that states nothing is one nobody has touched.
-drawIcon looks the theme up by file name, and the built-in's page is named with its own name -
-Default.theme - so a crumb, a tab and a tile draw the built-in through the same call as a user's
-theme. checkNameShape adds the built-in names to what the base refuses: a user theme under one of
-them would never be read.
+WindowApplicationBase builds the manager after AppContext and destroys it first. The manager owns
+the connections to the theme path, color mode, and desktop mode. Their destruction disconnects
+them while both the config and the platform event source still stand.
+
+WindowApplicationBase::initialize applies the initial theme before loading config. The path and
+mode changes during the load use the same handlers as changes from Settings. The first window
+opens with the resolved theme in place. AppContext takes the baked colors and metrics and runs
+transitions once windows are listening.

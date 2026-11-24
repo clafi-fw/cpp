@@ -1885,12 +1885,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemeIcon.cppm">
       <Filter>Application</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cpp">
-      <Filter>Application</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Themes.cppm">
-      <Filter>Application</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ThemesList.cpp">
       <Filter>Application</Filter>
     </ClCompile>
