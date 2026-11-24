@@ -5,6 +5,7 @@ export module ClaFi.Controls.PromptDialog;
 
 export import ClaFi.Controls.Base.MessageBoxBase;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.Foundation;
@@ -37,6 +38,7 @@ namespace ClaFi::Controls
         /// canceling answer.
         bool execute();
     protected:
+        [[nodiscard]] Button& acceptButton() { return m_acceptButton; }
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Offers the text and answers whether it was taken. A refusal does not settle anything:
@@ -44,8 +46,9 @@ namespace ClaFi::Controls
         // standing for. askedBy is the control the commit came from - the answer pressed, or the
         // box a Return was pressed in - and it is what a handler's own question stands on.
         [[nodiscard]] bool offerText(Control& askedBy);
-        void buildAnswers();
+        Button& buildAnswers();
     private:
+        Button& m_acceptButton;
         bool m_accepted{ false };
     };
 

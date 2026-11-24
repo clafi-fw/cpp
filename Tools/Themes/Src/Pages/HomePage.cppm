@@ -53,8 +53,12 @@ namespace Themes_App
         list().onPreview([this](PreviewEvent&) {
             invalidatePreview();
         });
-        // A show enters the page at the list, and the list starts on its first theme.
+        // A show enters the page at the list, and the list starts on its first tile.
         setCurrentItem(list());
-        list().tiles().front()->makeCurrentItem();
+        const Documents::DocumentTiles tiles = list().tiles();
+        if (!tiles.empty())
+        {
+            tiles.front()->makeCurrentItem();
+        }
     }
 }

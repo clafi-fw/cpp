@@ -253,6 +253,8 @@ namespace ClaFi::Browser
         PageControl& pageControl() const { return m_pageControl; }
         // The page on screen, and nothing when no tab is selected.
         [[nodiscard]] BrowserPage* currentPage();
+        [[nodiscard]] virtual std::optional<std::wstring> canonicalPagePath(std::wstring_view) const
+            { return std::nullopt; }
         virtual void initPageData(PageData&) {};
         // Names the pages under this one, with addSubItem() for each of them. Called before a
         // crumb drops its list, unless that page is already marked Fetched.
@@ -297,6 +299,7 @@ namespace ClaFi::Browser
         // recorded.
         // A tab not selected gets its page as it is selected. See Browser
         void rebuildPage(BrowserTab&);
+        void setPageTitle(PageData&, std::wstring title);
         // Gives a page itself a new name - what it stands for is renamePage's business - and puts
         // the tree right: every tab and history entry at or under it follows to the new path.
         void renamePageData(PageData&, std::wstring_view newName);

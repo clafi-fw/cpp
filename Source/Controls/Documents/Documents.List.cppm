@@ -31,6 +31,20 @@ namespace ClaFi::Documents
     {
         DocumentsFolder* folder;        // the folder the file stands in, which draws the mark
         std::filesystem::path path;     // the file the tile stands for
+        bool storage{ false };
+    };
+
+    export struct StorageTile
+    {
+        DocumentsFolder* folder;
+        std::wstring id;
+    };
+
+    export using StorageTiles = std::vector<StorageTile>;
+
+    export struct StorageTilesView
+    {
+        const StorageTiles* tiles{};
     };
 
     // A document in the list: its mark over its name, which is the file's. See Documents
@@ -41,8 +55,9 @@ namespace ClaFi::Documents
         explicit DocumentTile(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"DocumentTile"; }
-        [[nodiscard]] DocumentsFolder& folder() const { return m_folder; }
-        [[nodiscard]] const std::filesystem::path& path() const { return m_path; }
+        [[nodiscard]] DocumentsFolder& folder() const { return *m_data.folder; }
+        [[nodiscard]] const std::filesystem::path& path() const { return m_data.path; }
+        [[nodiscard]] DocumentsFolder* storage() const { return m_data.storage ? m_data.folder : nullptr; }
         [[nodiscard]] std::wstring fileName() const;
         [[nodiscard]] std::wstring stem() const;
     protected:
@@ -51,8 +66,7 @@ namespace ClaFi::Documents
     private:
         using Base = WithInPlaceEdit<Button>;
     private:
-        DocumentsFolder& m_folder;
-        const std::filesystem::path m_path;
+        const DocumentTileData m_data;
     };
 
     export using DocumentTiles = std::vector<DocumentTile*>;
@@ -63,6 +77,32 @@ namespace ClaFi::Documents
     // A tile is about to raise a menu. Connected to the tile rather than reached from the list: a
     // context popup is answered where it is raised and travels no further.
     export using DocumentMenuHandler = std::function<void(DocumentTile&, ContextPopupEvent&)>;
+
+    export void drawStorageIcon(DrawIconEvent&);
+
+    export template<typename Parent>
+    DocumentTile& addStorageTile(Parent& parent, const StorageTile& storage,
+        const DocumentMenuHandler& menu)
+    {
+        std::wstring hint = storage.folder->directory().wstring();
+        if (storage.folder->readOnly())
+        {
+            hint.append(L" (read-only)");
+        }
+        DocumentTile& tile = parent.template add<DocumentTile>(
+            DocumentTileData{ storage.folder, std::filesystem::path{ storage.id }, true },
+            IndicatorStyle::Check,
+            Text{ storage.folder->name() },
+            TooltipText{ hint }
+        );
+        if (menu)
+        {
+            tile.onContextPopup([menu, &tile](ContextPopupEvent& event) {
+                menu(tile, event);
+            });
+        }
+        return tile;
+    }
 
     // What a home page works over: tiles keyed by file name, in a view. See Documents
     export class IDocumentTiles
@@ -84,6 +124,7 @@ namespace ClaFi::Documents
         // The file to stand on once the tiles have been built afresh - for a document whose file is
         // written but whose tile does not exist yet. Spent by the rebuild that reads it.
         virtual void selectFileNameAfterRebuild(std::wstring_view) = 0;
+        virtual void rebuild() {}
     };
 
     // The tiles have been built afresh, and stand on whichever they were asked to.
@@ -112,13 +153,14 @@ namespace ClaFi::Documents
         void selectFileNameAfterRebuild(std::wstring_view) override;
         // Builds every tile from the folder as it stands now, and comes back to the file the list
         // was on.
-        void rebuild();
+        void rebuild() override;
     protected:
         void documentsFolderChanged() override { rebuild(); }
     private:
         DocumentTile& addTile(const std::filesystem::path&);
     private:
         DocumentsFolder& m_folder;
+        const StorageTiles* m_storages;
         // What a tile's own name is kept on, and nothing where the list does not rename. A tile
         // with no handler connected offers no Rename at all - see WithInPlaceEdit.
         DocumentEditHandler m_editDocument{};
@@ -165,9 +207,8 @@ namespace ClaFi::Documents
             HorizontalAlign::Fill,
             std::forward<Args>(args)...
         },
-        // The folder the file stands in, which draws the mark and outlives the tile.
-        m_folder{ *REQUIRE_PROPERTY(DocumentTileData).folder },
-        m_path{ REQUIRE_PROPERTY(DocumentTileData).path } // the file the tile stands for
+        // The folder that owns the file or storage outlives the tile.
+        m_data{ REQUIRE_PROPERTY(DocumentTileData) }
     {
         setPadding(k_documentTilePadding);
     }
@@ -201,11 +242,17 @@ namespace ClaFi::Documents
         },
         // The folder the list shows, which outlives it.
         m_folder{ *REQUIRE_PROPERTY(DocumentsFolder*) },
+        // A browser home lists storage folders in the document grid.
+        m_storages{ READ_PROPERTY(StorageTilesView, StorageTilesView{}).tiles },
         // The host's answer to a name typed over a tile, where it wants one.
         m_editDocument{ READ_PROPERTY(DocumentEditHandler, nullptr) },
         // The host's answer to a tile raising its menu, where it wants one.
         m_tileMenu{ READ_PROPERTY(DocumentMenuHandler, nullptr) }
     {
+        if (m_storages)
+        {
+            setPlaceHolderText(Text{ ColoredText{ InkGrade::Subtle, L"No storages" } });
+        }
         m_folder.listeners().insert(this);
         rebuild();
     }

@@ -79,7 +79,7 @@ namespace ClaFi
     {
         DocumentTiles result{};
         for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
-            for (ThemeTile& tile : group->controlsAs<ThemeTile>())
+            for (DocumentTile& tile : group->controlsAs<DocumentTile>())
                 result.push_back(&tile);
         return result;
     }
@@ -87,17 +87,15 @@ namespace ClaFi
     DocumentTile* ThemesList::tileByFileName(const std::wstring_view fileName)
     {
         for (StackPanel* group : { &m_builtInTiles, &m_userTiles })
-            for (ThemeTile& tile : group->controlsAs<ThemeTile>())
+            for (DocumentTile& tile : group->controlsAs<DocumentTile>())
                 if (tile.fileName() == fileName)
                     return &tile;
         return nullptr;
     }
 
-    // Only a tile can be the current item - canFocusItem admits nothing else here - so the cast
-    // is the same one previewedTheme makes.
     DocumentTile* ThemesList::currentTile() const
     {
-        return static_cast<ThemeTile*>(currentItem());
+        return static_cast<DocumentTile*>(currentItem());
     }
 
     std::wstring ThemesList::currentFileName() const
@@ -124,8 +122,10 @@ namespace ClaFi
         Control* item = previewItem();
         if (!item)
             item = currentItem();
-        if (!item)
+        if (!item || static_cast<const DocumentTile*>(item)->storage())
+        {
             return nullptr;
+        }
         return &static_cast<ThemeTile*>(item)->theme();
     }
 
@@ -146,22 +146,32 @@ namespace ClaFi
         {
             addTile(m_builtInTiles, defaultTheme(), std::filesystem::path{ k_defaultThemeName }, nullptr);
         }
-        const UserThemeList* themes = &m_storageThemes;
-        if (m_storage.folder == &m_themes)
+        if (m_storages)
         {
-            themes = &m_themes.userThemes();
+            for (const StorageTile& storage : *m_storages)
+            {
+                addStorageTile(m_userTiles, storage, m_tileMenu);
+            }
         }
         else
         {
-            m_storageThemes.clear();
-            for (const std::filesystem::path& path : m_storage.folder->files())
+            const UserThemeList* themes = &m_storageThemes;
+            if (m_storage.folder == &m_themes)
             {
-                m_storageThemes.push_back(std::make_unique<UserTheme>(path));
+                themes = &m_themes.userThemes();
             }
-        }
-        for (const UserThemePtr& theme : *themes)
-        {
-            addTile(m_userTiles, theme->theme(), theme->path(), &*theme);
+            else
+            {
+                m_storageThemes.clear();
+                for (const std::filesystem::path& path : m_storage.folder->files())
+                {
+                    m_storageThemes.push_back(std::make_unique<UserTheme>(path));
+                }
+            }
+            for (const UserThemePtr& theme : *themes)
+            {
+                addTile(m_userTiles, theme->theme(), theme->path(), &*theme);
+            }
         }
 
         // A tile is as many lines of name as it needs inside a fixed width, so a list built

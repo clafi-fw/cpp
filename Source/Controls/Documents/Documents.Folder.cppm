@@ -56,6 +56,9 @@ namespace ClaFi::Documents
         [[nodiscard]] std::set<IListener*>& listeners() { return m_listeners; }
         // Empty where the platform names no folder, and then nothing is ever written.
         [[nodiscard]] const std::filesystem::path& directory() const { return m_directory; }
+        [[nodiscard]] std::wstring name() const;
+        [[nodiscard]] const std::wstring& customName() const { return m_name; }
+        void setName(std::wstring_view name);
         [[nodiscard]] const DocumentKind& kind() const { return m_kind; }
         [[nodiscard]] bool available() const { return m_available; }
         [[nodiscard]] bool readOnly() const { return m_readOnly; }
@@ -71,6 +74,7 @@ namespace ClaFi::Documents
         [[nodiscard]] std::wstring fileNameOf(std::wstring_view stem) const;
         [[nodiscard]] bool canWrite() const;
         [[nodiscard]] bool canWriteFile(const std::filesystem::path&) const;
+        [[nodiscard]] std::filesystem::path directoryForDeletion() const;
         [[nodiscard]] bool saveDocument(const Dom::DomNodeBase&, const std::filesystem::path&);
         [[nodiscard]] bool deleteFile(const std::filesystem::path&) const;
         // Makes the folder where there is none yet, and answers whether it had to.
@@ -108,6 +112,7 @@ namespace ClaFi::Documents
     private:
         std::filesystem::path m_directory;
         std::filesystem::path m_resolvedDirectory{};
+        std::wstring m_name{};
         DocumentKind m_kind;
         DocumentTemplates m_templates{};
         std::optional<DirWatch> m_dirWatcher{};
@@ -125,4 +130,6 @@ namespace ClaFi::Documents
         DocumentsFolder* folder;
         bool primary;
     };
+
+    export [[nodiscard]] std::wstring storageName(const std::filesystem::path&);
 }

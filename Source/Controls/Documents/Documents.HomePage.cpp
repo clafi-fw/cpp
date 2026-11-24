@@ -12,6 +12,7 @@ import ClaFi.Browser.Control;
 import ClaFi.Icons.DeleteIcon;
 
 import ClaFi.Controls.InPlaceEdit;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.SplitButton;
@@ -35,13 +36,28 @@ namespace ClaFi::Documents
         m_tiles->setCurrentFileName(fileNameOfPage(value));
     }
 
+    void DocumentsHomePageBase::rebuildStorageTiles(const std::wstring_view selection)
+    {
+        m_newButton.invalidateState();
+        m_exploreButton.invalidateState();
+        if (!m_storageTiles || !m_tiles)
+        {
+            return;
+        }
+        if (!selection.empty())
+        {
+            m_tiles->selectFileNameAfterRebuild(selection);
+        }
+        m_tiles->rebuild();
+    }
+
     // **The tile the user is on**, which a right click has just moved the current item to, so the
     // browser's Open and Open in new tab are about the tile the menu was raised from as well as
     // about the one the keyboard stands on.
     std::wstring DocumentsHomePageBase::pathToOpen()
     {
         const std::wstring fileName = m_tiles->currentFileName();
-        if (primaryStorage())
+        if (m_storageTiles || primaryStorage())
         {
             return pagePathOfDocument(fileName);
         }
@@ -70,6 +86,11 @@ namespace ClaFi::Documents
         });
 
         view.onSelectionChange([](SelectionChangeEvent&) {
+            StdActions::del.invalidateState();
+        });
+        view.onCurrentItemChange([this](CurrentItemChangeEvent&) {
+            m_propertiesButton.invalidateState();
+            m_exploreButton.invalidateState();
             StdActions::del.invalidateState();
         });
         view.connectEvent([this](DocumentsRebuiltEvent&) {
@@ -120,16 +141,31 @@ namespace ClaFi::Documents
             renameAfterAlign(m_fileNameToRename);
     }
 
-    void DocumentsHomePageBase::showStorages()
+    DocumentsFolder* DocumentsHomePageBase::selectedStorage() const
+    {
+        const DocumentTile* tile = m_tiles ? m_tiles->currentTile() : nullptr;
+        DocumentsFolder* storage = tile ? tile->storage() : nullptr;
+        return storage && storage->available() ? storage : nullptr;
+    }
+
+    DocumentsFolder* DocumentsHomePageBase::folderToExplore() const
+    {
+        return m_storageTiles ? selectedStorage() : &storageFolder();
+    }
+
+    void DocumentsHomePageBase::editStorage(DocumentsFolder* storage)
     {
         auto& browser = static_cast<DocumentsBrowserBase&>(tab().browserControl());
-        browser.showStorages(pageData(), m_storagesButton);
-        m_newButton.invalidateState();
-        m_exploreButton.invalidateState();
+        Control& button = storage ? m_propertiesButton : static_cast<Control&>(m_newButton);
+        browser.editStorage(button, storage);
     }
 
     bool DocumentsHomePageBase::canDeleteSelectedFiles() const
     {
+        if (m_storageTiles)
+        {
+            return selectedStorage() != nullptr;
+        }
         const auto& selection = m_tiles->view().selection();
         return storageFolder().canWrite() && !selection.empty()
             && std::ranges::all_of(selection, [this](const Control* item) {
@@ -185,7 +221,10 @@ namespace ClaFi::Documents
     void DocumentsHomePageBase::showTileMenu(DocumentTile& tile, ContextPopupEvent& event)
     {
         Menu menu{ tile };
-        menu.addToCommandBar(StdActions::rename);
+        if (!tile.storage())
+        {
+            menu.addToCommandBar(StdActions::rename);
+        }
         menu.addToCommandBar(StdActions::del);
         menu.add(Browser::Actions::Open);
         menu.add(Browser::Actions::OpenInNewTab);
@@ -234,6 +273,15 @@ namespace ClaFi::Documents
 
     void DocumentsHomePageBase::deleteSelectedFiles(Control& initiator)
     {
+        if (m_storageTiles)
+        {
+            if (DocumentsFolder* storage = selectedStorage())
+            {
+                auto& browser = static_cast<DocumentsBrowserBase&>(tab().browserControl());
+                browser.removeStorage(initiator, *storage);
+            }
+            return;
+        }
         if (!canDeleteSelectedFiles() || !confirmDeleting(initiator))
             return;
 

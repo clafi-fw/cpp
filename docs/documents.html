@@ -311,17 +311,23 @@
 <p>A document browser opens and edits one kind of file across a set of filesystem folders.</p>
 
 <h2 id="storages">Document storages</h2>
-<p>The <strong>Storages</strong> menu on a document listing opens a configured folder. Its commands
-add a folder or change, remove, or set read-only access on the folder being shown. Removing a storage
-removes its entry and leaves the folder and its files on disk.</p>
-<p>When application settings are enabled, the browser keeps storage paths and access settings there.
-Each added storage has its own path segment in the browser, so files with the same name open independently.
+<p>Home shows storage folders as tiles. <strong>Add storage</strong> opens a popup with editable
+<strong>Name</strong> and <strong>Location</strong> fields, a <strong>Browse</strong> button, and a
+<strong>Read-only</strong> checkbox. Name defaults to the folder name. Select a storage tile and
+press <strong>Properties</strong> to edit it. The popup opens under the button.</p>
+<p><strong>Delete</strong> asks whether to remove the storage from the application or also delete
+the folder and its contents from disk. The first option leaves the files on disk. Disk deletion is
+available for writable folders that contain no other registered storage.</p>
+<p>When application settings are enabled, the browser keeps storage names, locations, and access
+settings there.
+Each storage has its own path segment in the browser, so files with the same name open independently.
 Changing a storage's folder gives the replacement a new path segment. An open tab keeps the file it
 was opened on and can save a copy after its original storage is detached.</p>
-<p>A read-only storage supports opening documents. The browser protects the storage from New, Rename,
-Delete and Save. Save as uses the current storage when it is writable, then tries the primary storage
-and the remaining storages in order. The name prompt identifies the destination when it uses another
-storage.</p>
+<p>A read-only storage supports opening documents. The browser blocks New, Rename, and Delete in
+that storage. Save falls back to Save As for read-only documents. In Save As, the destination picker
+shows each writable storage's name and location. The current storage is selected when it is writable,
+and a sole writable storage is selected automatically. OK becomes available once a storage is
+selected.</p>
 
 <h2 id="application">Building a document browser</h2>
 <p>Import <code>ClaFi.Documents</code>. Derive a <code>DocumentsFolder</code> to define the file format,
@@ -331,8 +337,11 @@ The application constructor adds storage settings to the root schema.</p>
 <p><code>DocumentsBrowser</code> takes the application's home-page and document-page types. Pages
 receive the format folder through <code>folder()</code> and the folder they show through
 <code>storageFolder()</code>. Custom lists can read the <code>DocumentStorageView</code> construction
-property for the folder and for the flag that identifies the main home view. A custom browser can use
-<code>documentPath</code> to get a browser path from a storage and a filename.</p>
+property for the folder and for the flag that identifies the main home view. On home,
+<code>StorageTilesView</code> supplies the current storage entries. Custom lists can render them with
+<code>addStorageTile</code> and implement <code>IDocumentTiles::rebuild</code> to refresh them after a
+change. A custom browser can use <code>documentPath</code> to get a browser path from a storage and a
+filename.</p>
 
 <h2 id="files">Working with files</h2>
 <p>Use <code>DocumentsFolder::saveDocument</code>, <code>createFile</code>, <code>renameFile</code>,

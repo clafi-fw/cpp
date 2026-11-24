@@ -82,7 +82,7 @@ namespace ClaFi
         [[nodiscard]] const AppTheme* previewedTheme() const;
         // Builds every tile from the themes as they stand now, and comes back to the file the
         // list was on. See Application
-        void rebuild();
+        void rebuild() override;
     protected:
         void documentsFolderChanged() override { rebuild(); }
     private:
@@ -103,6 +103,7 @@ namespace ClaFi
     private:
         ThemesManager& m_themes;
         DocumentStorageView m_storage;
+        const StorageTiles* m_storages;
         UserThemeList m_storageThemes{};
         // What a tile's own name is kept in, and nothing where the list does not rename. A tile
         // with no handler connected offers no Rename at all - see WithInPlaceEdit.
@@ -132,7 +133,7 @@ namespace ClaFi
             HostProps{
                 VerticalAlign::Top,
                 ExpanderViewMode::Divider,
-                HeaderText{ ColoredText{ InkGrade::Strong, L"Additional Themes" } }
+                HeaderText{ ColoredText{ InkGrade::Strong, m_storages ? L"Storages" : L"Additional Themes" } }
             },
             BodyProps{
                 Orientation::HorizontalWrap,
@@ -186,6 +187,8 @@ namespace ClaFi
         m_themes{ appThemes() },
         // The application theme picker uses the primary view when it has no browser storage.
         m_storage{ READ_PROPERTY(DocumentStorageView, (DocumentStorageView{ &m_themes, true })) },
+        // Browser home supplies one tile per configured folder.
+        m_storages{ READ_PROPERTY(StorageTilesView, StorageTilesView{}).tiles },
         // The host's answer to a name typed over a tile, where it wants one.
         m_editTheme{ READ_PROPERTY(DocumentEditHandler, nullptr) },
         // The host's answer to a tile raising its menu, where it wants one.

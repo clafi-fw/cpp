@@ -4,6 +4,7 @@ export module ClaFi.Documents.Browser;
 
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.HomePage;
+import ClaFi.Documents.List;
 import ClaFi.Documents.Page;
 
 import ClaFi.Browser.Control;
@@ -16,6 +17,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -38,6 +40,8 @@ namespace ClaFi::Documents
     export class DocumentsBrowserBase : public BrowserControl
     {
     public:
+        using WritableStorages = std::vector<DocumentsFolder*>;
+    public:
         template<typename... Args>
         explicit DocumentsBrowserBase(const CreateParams&, Args&&...);
         ~DocumentsBrowserBase() override;
@@ -46,10 +50,12 @@ namespace ClaFi::Documents
         [[nodiscard]] DocumentsFolder& folder() const { return m_folder; }
         [[nodiscard]] static Dom::Dt::Section storageSettingsSchema();
         [[nodiscard]] DocumentsFolder& storageFolder(const PageData&) const;
-        [[nodiscard]] DocumentsFolder* saveAsStorage(const PageData&) const;
+        [[nodiscard]] WritableStorages writableStorages() const;
         [[nodiscard]] std::wstring documentPath(const DocumentsFolder&, std::wstring_view fileName) const;
-        void showStorages(const PageData&, Control& owner);
+        void editStorage(Control& owner, DocumentsFolder* storage);
+        void removeStorage(Control& owner, DocumentsFolder& storage);
     protected:
+        [[nodiscard]] std::optional<std::wstring> canonicalPagePath(std::wstring_view) const override;
         void initPageData(PageData&) override;
         void fetchSubItems(PageData&) override;
         IconSize pageIconSize(PageData&) override;
@@ -64,6 +70,8 @@ namespace ClaFi::Documents
         [[nodiscard]] virtual DocumentsHomePageBase& createHomePage(BrowserTab&) = 0;
         [[nodiscard]] virtual DocumentPage& createDocumentPage(BrowserTab&) = 0;
         [[nodiscard]] static bool isHomePage(const PageData&);
+        [[nodiscard]] DocumentStorageView listingView(const PageData&) const;
+        [[nodiscard]] const StorageTiles* storageTilesFor(const PageData&) const;
         // Whether a page is a document: one named with the kind's extension, unless a derived
         // browser knows others.
         [[nodiscard]] virtual bool isDocumentPage(const PageData&) const;
@@ -80,14 +88,23 @@ namespace ClaFi::Documents
         [[nodiscard]] static bool isStoragePage(const PageData&);
         [[nodiscard]] const StorageEntry* storageEntry(std::wstring_view id) const;
         [[nodiscard]] std::unique_ptr<DocumentsFolder> makeStorage(
-            const std::filesystem::path&, bool readOnly) const;
-        void addStorage(const std::filesystem::path& path, bool readOnly);
+            const std::filesystem::path& path, bool readOnly, std::wstring_view name = {}) const;
+        [[nodiscard]] std::wstring addStorage(const std::filesystem::path& path, bool readOnly,
+            std::wstring_view name);
         void storeStorages();
-        void editStorage(Control& owner, DocumentsFolder*);
+        void collectStorageTiles();
+        void refreshStoragePages();
+        void storageChanged(std::wstring_view selection);
+        [[nodiscard]] std::wstring storagePathError(std::filesystem::path& path,
+            const DocumentsFolder* editedStorage) const;
+        [[nodiscard]] std::filesystem::path storageToDelete(const DocumentsFolder&) const;
     private:
         DocumentsFolder& m_folder;
         StorageEntries m_storages{};
         std::unique_ptr<DocumentsFolder> m_missingStorage{};
+        StorageTiles m_storageTiles{};
+        std::wstring m_storageToSelect{};
+        UiTimer m_storageRefresh{};
         std::size_t m_nextStorageId{ 1 };
     };
 
@@ -126,7 +143,8 @@ namespace ClaFi::Documents
         return tab.createPage<HomePageType>(
             Tag{ k_homePageTag },
             &folder(),
-            DocumentStorageView{ &storageFolder(*tab.pageData()), isHomePage(*tab.pageData()) }
+            listingView(*tab.pageData()),
+            StorageTilesView{ storageTilesFor(*tab.pageData()) }
         );
     }
 

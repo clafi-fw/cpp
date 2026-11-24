@@ -522,6 +522,8 @@ namespace ClaFi::Controls
         },
         TextItemsContainer{ ownItems, sharedItems, std::forward<Args>(args)... },
         INIT_PROPERTY(editorMode),
+        // The face shows the prompt while the list has no selection.
+        m_placeHolderText{ READ_PROPERTY(PlaceHolderText, PlaceHolderText{}) },
         // The size the items of the popup list draw their icons at.
         m_itemsIconSize{ READ_PROPERTY(ItemsIconSize, s_defaultIconSize) },
         // How those items lay an icon out against their text.

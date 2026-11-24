@@ -47,6 +47,7 @@ namespace ClaFi::Controls
         // field rather than about the text: a message stands on the middle's own surface, an
         // answer is drawn as something to write in.
         [[nodiscard]] MessageBoxBody& field() { return m_box; }
+        [[nodiscard]] Panel& messagePanel() { return m_content; }
         // Adds an answer to the row. They read left to right in the order they arrive.
         //
         // **The first answer is what the dialog opens on.** Return and Space run the focused

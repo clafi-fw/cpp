@@ -3,6 +3,7 @@ module ClaFi.Documents.Page;
 import ClaFi.Documents.BasePage;
 import ClaFi.Documents.Browser;
 import ClaFi.Documents.Folder;
+import ClaFi.Documents.List;
 import ClaFi.Documents.Utils;
 
 import ClaFi.Browser.Control;
@@ -10,24 +11,88 @@ import ClaFi.Browser.PageData;
 
 import ClaFi.Icons.MessageIcons;
 
+import ClaFi.Controls.Button;
+import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.InPlaceEdit;
+import ClaFi.Controls.Label;
 import ClaFi.Controls.MessageDialog;
+import ClaFi.Controls.Panel;
 import ClaFi.Controls.PromptDialog;
+import ClaFi.Controls.TextItems;
 
 import ClaFi.StdActions;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Url;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
 namespace ClaFi::Documents
 {
     using namespace Controls;
+
+    namespace
+    {
+        constexpr float k_maxSaveAsFieldWidth = 520.0f;
+
+        class SaveAsDialog final : public PromptDialog
+        {
+        public:
+            SaveAsDialog(Control& owner, std::wstring_view title, std::wstring_view name,
+                TextItems&& destinations, ItemIndexValue initialDestination);
+        public:
+            [[nodiscard]] ItemIndexValue destination() const { return m_destination.itemIndex(); }
+        private:
+            Panel& m_fields;
+            ComboBox& m_destination;
+        };
+
+        SaveAsDialog::SaveAsDialog(Control& owner, const std::wstring_view title,
+            const std::wstring_view name, TextItems&& destinations,
+            const ItemIndexValue initialDestination)
+            :
+            PromptDialog{ owner, title, name },
+            m_fields{ messagePanel().createTopBar<Panel>(Spacing{ 4.0f }) },
+            m_destination{ m_fields.createBody<ComboBox>(
+                std::move(destinations),
+                UiElement::Button,
+                ButtonViewMode::LeftIcon,
+                ItemsViewMode{ ButtonViewMode::LeftIcon },
+                IconSize{ 24.0f },
+                ItemsIconSize{ 24.0f },
+                ItemIndex{ initialDestination },
+                PlaceHolderText{ ColoredText{ InkGrade::Muted, L"Choose a storage" } },
+                MinSize{ 300.0f, 0.0f },
+                MaxSize{ k_maxSaveAsFieldWidth, k_maxFloat },
+                DropdownMaxSize{ 680.0f, 240.0f }
+            ) }
+        {
+            box().setMaxSize({ k_maxSaveAsFieldWidth, k_maxFloat });
+            m_fields.createTopBar<Label>(L"Save in");
+            m_fields.createBottomBar<Label>(L"Name");
+            m_destination.onDrawItemIcon([](DrawItemIconEvent& event) {
+                drawStorageIcon(event);
+            });
+            acceptButton().onGetState([this](GetStateEvent& event) {
+                event.state.enabled = destination().has_value();
+                event.stopPropagation();
+            });
+            m_destination.onChange([this](ComboBoxChangeEvent&) {
+                acceptButton().invalidateState();
+            });
+            if (!initialDestination)
+            {
+                m_destination.makeCurrentItem();
+            }
+        }
+    }
 
     bool DocumentPage::hasUnsavedEdits() const
     {
@@ -53,9 +118,7 @@ namespace ClaFi::Documents
             ContextMessage::show(initiator, notSavedText());
             return false;
         }
-        // **A page with no file of its own saves as.** The work still has to land somewhere and the
-        // user is being asked before it is lost, so the command that can keep it is the one to
-        // offer. It writes the file and no more: the tab is already on its way somewhere else.
+        // Save As writes the copy without navigating because the tab is already leaving this page.
         return !saveAsFile(initiator).empty();
     }
 
@@ -91,10 +154,10 @@ namespace ClaFi::Documents
         return canSaveEdits() && storageFolder().canWriteFile(documentFile());
     }
 
-    DocumentsFolder* DocumentPage::saveAsStorage() const
+    bool DocumentPage::canSaveAs() const
     {
         const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
-        return browser.saveAsStorage(pageData());
+        return !browser.writableStorages().empty();
     }
 
     bool DocumentPage::writeDocument() const
@@ -130,8 +193,9 @@ namespace ClaFi::Documents
 
     std::wstring DocumentPage::saveAsFile(Control& initiator) const
     {
-        DocumentsFolder* storage = saveAsStorage();
-        if (!storage)
+        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
+        const DocumentsBrowserBase::WritableStorages storages = browser.writableStorages();
+        if (storages.empty())
         {
             ContextMessage::show(initiator, Text{ L"Add or enable a writable storage to save a copy." });
             return {};
@@ -140,25 +204,44 @@ namespace ClaFi::Documents
         // The prompt opens on the name this page already stands under - the name the user is
         // working from, and the one they are about to vary.
         const std::wstring currentStem = std::filesystem::path{ pageData().name }.stem().wstring();
-        std::wstring title = std::wstring{ L"Save " }.append(kind.noun).append(L" as");
-        if (storage != &storageFolder())
+        const std::wstring title = std::wstring{ L"Save " }.append(kind.noun).append(L" as");
+        TextItems destinations{};
+        ItemIndexValue initialDestination{};
+        for (DocumentsFolder* storage : storages)
         {
-            title.append(L" in ").append(storage->directory().wstring());
+            const std::wstring path = storage->directory().wstring();
+            if (storage == &storageFolder() || storages.size() == 1)
+            {
+                initialDestination = destinations.size();
+            }
+            destinations.emplace_back(
+                Text{ storage->name(), k_endLine, ColoredText{ InkGrade::Muted, path } },
+                TooltipText{ path }
+            );
         }
-        PromptDialog dialog{
+        DocumentsFolder* storage{};
+        SaveAsDialog dialog{
             initiator,
             title,
             currentStem,
-            MessageIcon::Question
+            std::move(destinations),
+            initialDestination
         };
-        dialog.onAccept([this, storage](AcceptEditEvent& event) {
+        dialog.onAccept([this, &dialog, &storages, &storage](AcceptEditEvent& event) {
+            const ItemIndexValue destination = dialog.destination();
+            if (!destination)
+            {
+                event.refuse(L"Choose a storage for the copy.");
+                return;
+            }
             const std::wstring stem{ event.text.plainText() };
             folder().checkNameShape(event, stem);
             if (event.refused())
                 return;
 
-            const std::filesystem::path path = storage->fileOf(storage->fileNameOf(stem));
-            if (!storage->canWriteFile(path))
+            DocumentsFolder& selected = *storages[*destination];
+            const std::filesystem::path path = selected.fileOf(selected.fileNameOf(stem));
+            if (!selected.canWriteFile(path))
             {
                 event.refuse(L"This file cannot be written.");
                 return;
@@ -168,10 +251,12 @@ namespace ClaFi::Documents
             // thing the user may well have meant, and the one who typed the name is the only one
             // who can say whether they did.
             std::error_code errorCode;
-            if (!std::filesystem::exists(path, errorCode))
-                return;
-            if (!confirmReplacing(event.askedBy, stem))
+            if (std::filesystem::exists(path, errorCode) && !confirmReplacing(event.askedBy, stem))
+            {
                 event.refuse();
+                return;
+            }
+            storage = &selected;
         });
         if (!dialog.execute())
             return {};
@@ -182,7 +267,6 @@ namespace ClaFi::Documents
             ContextMessage::show(initiator, notSavedText());
             return {};
         }
-        const auto& browser = static_cast<const DocumentsBrowserBase&>(browserControl());
         return browser.documentPath(*storage, fileName);
     }
 

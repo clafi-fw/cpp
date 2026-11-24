@@ -461,7 +461,7 @@ namespace ClaFi::Browser
 
     BrowserTab* BrowserControl::restoreTab(const std::wstring_view id, const Visit& visit)
     {
-        PageData* pageData = m_homePageData.findOrAdd(visit.url.path(), m_addPageDataCallback);
+        PageData* pageData = findPageData(visit.url.path());
         if (!pageData)
             return nullptr;
         BrowserTab& tab = m_tabs.add<BrowserTab>();
@@ -536,6 +536,10 @@ namespace ClaFi::Browser
 
     PageData* BrowserControl::findPageData(std::wstring_view path)
     {
+        if (const std::optional<std::wstring> canonical = canonicalPagePath(path))
+        {
+            return m_homePageData.findOrAdd(*canonical, m_addPageDataCallback);
+        }
         return m_homePageData.findOrAdd(path, m_addPageDataCallback);
     }
 
@@ -945,6 +949,16 @@ namespace ClaFi::Browser
         const Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
         tab.m_backVisits = visitsIn(tabConfig, ConfigNames::BackVisits);
         tab.m_forwardVisits = visitsIn(tabConfig, ConfigNames::ForwardVisits);
+        for (BrowserTab::Visits* visits : { &tab.m_backVisits, &tab.m_forwardVisits })
+        {
+            for (Visit& visit : *visits)
+            {
+                if (const std::optional<std::wstring> path = canonicalPagePath(visit.url.path()))
+                {
+                    visit.url = Url{ *path, visit.url.fragment() };
+                }
+            }
+        }
     }
 
     void BrowserControl::storeHistory(const BrowserTab& tab) const
@@ -1203,6 +1217,27 @@ namespace ClaFi::Browser
         }
         if (tab.selected() && tab.pageData())
             goTo(*tab.pageData(), tab.anchor(), tab);
+    }
+
+    void BrowserControl::setPageTitle(PageData& pageData, std::wstring title)
+    {
+        if (pageData.title == title)
+        {
+            return;
+        }
+        pageData.title = std::move(title);
+        for (BrowserTab& tab : tabs())
+        {
+            if (tab.pageData() == &pageData)
+            {
+                storeTabSettings(tab);
+                tab.invalidate();
+            }
+        }
+        if (m_selectedPageData && isPageUnder(*m_selectedPageData, pageData))
+        {
+            pagePathChanged();
+        }
     }
 
     void BrowserControl::pagePathChanged()

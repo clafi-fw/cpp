@@ -52,7 +52,7 @@ namespace ClaFi::Documents
         static constexpr IconSize k_toolButtonIconSize{ 18.0f };
     private:
         [[nodiscard]] bool canWriteBack() const;
-        [[nodiscard]] DocumentsFolder* saveAsStorage() const;
+        [[nodiscard]] bool canSaveAs() const;
         // Writes the page's work to its own file, and answers whether it got there.
         [[nodiscard]] bool writeDocument() const;
         [[nodiscard]] Text notSavedText() const; // what a write that did not get there says
@@ -115,11 +115,11 @@ namespace ClaFi::Documents
         onGetActionState([this](GetActionStateEvent& event) {
             if (&event.action == &StdActions::save)
             {
-                event.claim({ .enabled = canSaveEdits() ? canWriteBack() : saveAsStorage() != nullptr });
+                event.claim({});
             }
             else if (&event.action == &StdActions::saveAs)
             {
-                event.claim({ .enabled = saveAsStorage() != nullptr });
+                event.claim({ .enabled = canSaveAs() });
             }
         });
 
@@ -135,15 +135,8 @@ namespace ClaFi::Documents
                 ? *event.presenter
                 : m_saveButton;
 
-            // **Save on a page with no file of its own is save as.** The work has somewhere to go
-            // and the press said to put it there, so the command that can reach the disk is the one
-            // that runs.
-            if (isSave && canSaveEdits())
+            if (isSave && canWriteBack())
             {
-                if (!canWriteBack())
-                {
-                    return;
-                }
                 // A write leaves nothing on screen to say it happened - the page looks exactly as
                 // it did - so the command says so itself, beside the button that ran it.
                 const std::wstring_view noun = folder().kind().noun;

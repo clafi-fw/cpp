@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Documents.HomePage;
 
 import ClaFi.Documents.BasePage;
@@ -14,6 +16,7 @@ import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
+import ClaFi.Icons.GearIcon;
 import ClaFi.Icons.OpenInExplorerIcon;
 import ClaFi.Icons.PlusMark;
 
@@ -44,6 +47,7 @@ namespace ClaFi::Documents
         explicit DocumentsHomePageBase(const CreateParams&, Args&&...);
     public:
         void selectItemByPagePath(std::wstring_view);
+        void rebuildStorageTiles(std::wstring_view selection);
     protected:
         std::wstring pathToOpen() override;
         // Works the page over these tiles from here on. Called once, by the page that built them.
@@ -52,11 +56,14 @@ namespace ClaFi::Documents
         // tile's menu carries Rename, Delete, Open and Open in new tab.
         [[nodiscard]] DocumentEditHandler editHandler();
         [[nodiscard]] DocumentMenuHandler menuHandler();
+        [[nodiscard]] const StorageTiles* storageTiles() const { return m_storageTiles; }
         // What the page owes tiles that have just been built afresh: the tile a new document is
         // waiting to be named on. A derived page adds what it owes, after this.
         virtual void documentsRebuilt();
     private:
-        void showStorages();
+        [[nodiscard]] DocumentsFolder* selectedStorage() const;
+        [[nodiscard]] DocumentsFolder* folderToExplore() const;
+        void editStorage(DocumentsFolder*);
         [[nodiscard]] bool canDeleteSelectedFiles() const;
         // Asks for the tile under `fileName` to be renamed once the pass that lays it out has run.
         void renameAfterAlign(std::wstring_view fileName);
@@ -83,6 +90,7 @@ namespace ClaFi::Documents
         [[nodiscard]] bool confirmDeleting(Control& initiator);
     private:
         static constexpr IconSize k_buttonIconSize{ 18.0f };
+        const StorageTiles* m_storageTiles;
         // The tiles the page works over, and nullptr until the page that built them connects
         // them - which every command here runs after.
         IDocumentTiles* m_tiles{ nullptr };
@@ -97,7 +105,7 @@ namespace ClaFi::Documents
             k_buttonIconSize,
             ButtonViewMode::LeftIcon,
             Button::OnDrawIcon{ Icons::PlusMark::draw },
-            Text{ L"New ", folder().kind().noun }
+            m_storageTiles ? Text{ L"Add storage" } : Text{ L"New ", folder().kind().noun }
         ) };
         Divider& m_dividerAfterNew{ toolBar().add<Divider>(Padding{ 4.0f }) };
         // The words and the icon come from the action. Mouse only leaves the focus, and with it
@@ -116,7 +124,13 @@ namespace ClaFi::Documents
             Button::OnDrawIcon{ Icons::OpenInExplorerIcon::draw },
             L"Open folder"
         ) };
-        Button& m_storagesButton{ toolBar().add<ToolButton>(L"Storages") };
+        Button& m_propertiesButton{ toolBar().add<ToolButton>(
+            k_buttonIconSize,
+            ButtonViewMode::LeftIcon,
+            Button::OnDrawIcon{ Icons::GearIcon::draw },
+            MouseFocus::Keep,
+            L"Properties"
+        ) };
     };
 
     export template<IsDocumentTiles ListType = DocumentsList>
@@ -145,20 +159,30 @@ namespace ClaFi::Documents
     template<typename... Args>
     DocumentsHomePageBase::DocumentsHomePageBase(const CreateParams& params, Args&&... args)
         :
-        DocumentsBasePage{ params, std::forward<Args>(args)... }
+        DocumentsBasePage{ params, std::forward<Args>(args)... },
+        // The application home is the listing over the browser's registered folders.
+        m_storageTiles{ READ_PROPERTY(StorageTilesView, StorageTilesView{}).tiles }
     {
         m_newButton.onClick([this](ClickEvent&) {
+            if (m_storageTiles)
+            {
+                editStorage(nullptr);
+                return;
+            }
             const DocumentTemplates& templates = folder().templates();
             createNewFile(templates.empty() ? nullptr : &templates.front());
         });
         m_newButton.onDropdown([this](DropdownEvent& event) {
-            showTemplates(event);
+            if (!m_storageTiles)
+            {
+                showTemplates(event);
+            }
         });
-        if (folder().templates().size() < 2ull)
+        if (m_storageTiles || folder().templates().size() < 2ull)
             m_newButton.secondaryPart()->setVisible(false);
         // A folder the platform could not name is nowhere to make a file.
         m_newButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = storageFolder().canWrite();
+            event.state.enabled = m_storageTiles || storageFolder().canWrite();
             event.stopPropagation();
         });
         // Connected here rather than given to the timer as a construction property: MSVC rejects
@@ -168,19 +192,27 @@ namespace ClaFi::Documents
         });
 
         m_exploreButton.onClick([this](ClickEvent&) {
-            if (storageFolder().available())
+            if (const DocumentsFolder* storage = folderToExplore())
             {
-                Platform::shellExecute(form(), storageFolder().directory().wstring());
+                Platform::shellExecute(form(), storage->directory().wstring());
             }
         });
         m_exploreButton.onGetState([this](GetStateEvent& event) {
             std::error_code errorCode;
-            event.state.enabled = storageFolder().available()
-                && std::filesystem::is_directory(storageFolder().directory(), errorCode);
+            const DocumentsFolder* storage = folderToExplore();
+            event.state.enabled = storage && storage->available()
+                && std::filesystem::is_directory(storage->directory(), errorCode);
             event.stopPropagation();
         });
-        m_storagesButton.onClick([this](ClickEvent&) {
-            showStorages();
+        m_propertiesButton.onGetState([this](GetStateEvent& event) {
+            event.state.enabled = selectedStorage() != nullptr;
+            event.stopPropagation();
+        });
+        m_propertiesButton.onClick([this](ClickEvent&) {
+            if (DocumentsFolder* storage = selectedStorage())
+            {
+                editStorage(storage);
+            }
         });
     }
 
@@ -199,7 +231,8 @@ namespace ClaFi::Documents
             BodyProps{
                 &storageFolder(),
                 DocumentStorageView{ &storageFolder(), primaryStorage() },
-                SelectionMode::Multi,
+                StorageTilesView{ storageTiles() },
+                storageTiles() ? SelectionMode::None : SelectionMode::Multi,
                 DragMode::EasySelect,
                 editHandler(),
                 menuHandler()

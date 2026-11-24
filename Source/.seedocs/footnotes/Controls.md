@@ -333,6 +333,9 @@ beside one that comes up, and may need the second bar too.
 
 ## PromptDialog
 
+**Derived prompts can set the availability of OK through `acceptButton()`.** Return in the text
+box uses the same availability.
+
 **A handler may refuse the answer** with AcceptEditEvent::refuse, and the dialog stays up with the
 reason under the box. **It may ask a question of its own** first, owned by askedBy, so it stacks on
 top. Told no there, it refuses with no reason, and the dialog stays as the user left it.

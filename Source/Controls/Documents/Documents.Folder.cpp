@@ -69,6 +69,16 @@ namespace ClaFi::Documents
         watchDirectory();
     }
 
+    std::wstring DocumentsFolder::name() const
+    {
+        return m_name.empty() ? storageName(m_directory) : m_name;
+    }
+
+    void DocumentsFolder::setName(const std::wstring_view name)
+    {
+        m_name = name;
+    }
+
     void DocumentsFolder::setReadOnly(const bool readOnly)
     {
         m_readOnly = readOnly;
@@ -129,6 +139,24 @@ namespace ClaFi::Documents
         const std::filesystem::file_status status = std::filesystem::symlink_status(path, error);
         return status.type() == std::filesystem::file_type::not_found
             || (!error && std::filesystem::is_regular_file(status));
+    }
+
+    std::filesystem::path DocumentsFolder::directoryForDeletion() const
+    {
+        if (!canWrite() || !m_directory.is_absolute() || !directoryUnchanged()
+            || m_resolvedDirectory == m_resolvedDirectory.root_path())
+        {
+            return {};
+        }
+        std::error_code error;
+        std::filesystem::path path = m_directory.lexically_normal();
+        if (!path.has_filename())
+        {
+            path = path.parent_path();
+        }
+        const std::filesystem::file_status status = std::filesystem::symlink_status(path, error);
+        return !error && std::filesystem::is_directory(status) ? m_resolvedDirectory
+            : std::filesystem::path{};
     }
 
     bool DocumentsFolder::saveDocument(const Dom::DomNodeBase& document,
@@ -365,5 +393,15 @@ namespace ClaFi::Documents
     {
         for (IListener* listener : m_listeners)
             listener->documentsFolderChanged();
+    }
+
+    std::wstring storageName(const std::filesystem::path& path)
+    {
+        std::filesystem::path folder = path;
+        if (!folder.has_filename() && folder != folder.root_path())
+        {
+            folder = folder.parent_path();
+        }
+        return folder.has_filename() ? folder.filename().wstring() : folder.wstring();
     }
 }

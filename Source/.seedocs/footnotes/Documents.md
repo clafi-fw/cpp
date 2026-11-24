@@ -99,7 +99,11 @@ of the page's own then stands over the browser's.
 them with editHandler and menuHandler. Every command waits for that connection.
 
 - New makes a file from the first template, or an empty one, and opens an editor over its tile.
-- Storages opens a folder or lets the user add, change, remove or set the access of a storage.
+- Add storage opens the properties dialog from the browser home. Properties opens it for the
+  current storage tile. Name defaults to the folder name. Location can be typed or browsed, and
+  Read-only states the storage's access.
+- Delete on a storage asks whether to remove its registration or also delete its folder and contents.
+  The disk option is available for writable folders that contain no other registered storage.
 - Delete serves the tool bar button, the Delete key and the menu item alike, over the selection. It
   asks once, and only where isEdited says a selected file holds work.
 - Open acts on the current tile. A right mouse click makes the tile under the pointer current.
@@ -107,14 +111,15 @@ them with editHandler and menuHandler. Every command waits for that connection.
 
 ## DocumentsHomePage
 
-With the default DocumentsList it is the whole home page of a flat list of documents.
+With the default DocumentsList it shows a flat list of storage tiles on home and document tiles
+inside a storage. `StorageTilesView` supplies the current entries on home.
 
 ## DocumentPage
 
 - Save writes the page's file and says so beside the button.
 - Save as writes under a new name and takes the tab there, leaving the original as it was.
-- A read-only storage allows opening documents and disables Save. Save as uses a writable storage
-  when one is configured.
+- Save uses Save As when the page's file is read-only. The dialog lists writable storages and asks
+  for the destination and name.
 - A name already taken asks before replacing the file.
 - A page with no file of its own answers no to canSaveEdits, and its Save works as Save as.
 
@@ -143,8 +148,9 @@ and a key inside a box still reaches the box.
 
 ## DocumentsBrowserBase
 
-**The home crumb's strip lists the primary files and extra storages.** Each extra storage has a
-stable path segment and a crumb whose strip lists its own files. Both strips fetch on every drop.
+**The home crumb's strip lists the configured storages.** Each storage has a path segment and a
+crumb whose strip lists its own files. Both strips fetch on every drop. A primary document's
+unqualified path resolves to that document inside the primary storage.
 
 **A page holds its page data by reference**, so a tab that moves to another gets a new page, even
 of the same kind.

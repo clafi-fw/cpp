@@ -2,12 +2,19 @@ module ClaFi.Documents.List;
 
 import ClaFi.Documents.Folder;
 
+import ClaFi.Icons.FolderIcon;
+
 import ClaFi.Controls.InPlaceEdit;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -20,22 +27,43 @@ namespace ClaFi::Documents
 
     std::wstring DocumentTile::fileName() const
     {
-        return m_path.filename().wstring();
+        return path().filename().wstring();
     }
 
     std::wstring DocumentTile::stem() const
     {
-        return m_path.stem().wstring();
+        return path().stem().wstring();
     }
 
     EditorMode DocumentTile::editorMode() const
     {
-        return m_folder.canWriteFile(m_path) ? Base::editorMode() : EditorMode::None;
+        return !storage() && folder().canWriteFile(path()) ? Base::editorMode() : EditorMode::None;
     }
 
     void DocumentTile::drawIcon(DrawIconEvent& event)
     {
-        m_folder.drawIcon(fileName(), event);
+        if (storage())
+        {
+            drawStorageIcon(event);
+            return;
+        }
+        folder().drawIcon(fileName(), event);
+    }
+
+    void drawStorageIcon(DrawIconEvent& event)
+    {
+        const FloatRect rect = event.iconRect();
+        const float size = std::min(rect.width(), rect.height());
+        const FloatPoint center = rect.center();
+        const FloatRect folder = {
+            center.x - size * 0.43f,
+            center.y - size * 0.35f,
+            center.x + size * 0.43f,
+            center.y + size * 0.32f
+        };
+        Graphics::PixelPath outline;
+        Icons::FolderIcon::addOutline(outline, folder);
+        event.canvas().fillPath(outline, event.inkRgb(InkWell::Orange));
     }
 
     // DocumentsRebuiltEvent
@@ -103,8 +131,20 @@ namespace ClaFi::Documents
         m_fileNameToSelect.clear();
 
         clearControls();
-        for (const std::filesystem::path& file : m_folder.files())
-            addTile(file);
+        if (m_storages)
+        {
+            for (const StorageTile& storage : *m_storages)
+            {
+                addStorageTile(*this, storage, m_tileMenu);
+            }
+        }
+        else
+        {
+            for (const std::filesystem::path& file : m_folder.files())
+            {
+                addTile(file);
+            }
+        }
 
         // A tile is as many lines of name as it needs inside a fixed width, so a list built
         // afresh is a new height. Asked for, not laid out from here.

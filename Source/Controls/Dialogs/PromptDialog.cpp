@@ -2,6 +2,7 @@ module ClaFi.Controls.PromptDialog;
 
 import ClaFi.Icons.MessageIcons;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.Foundation;
@@ -33,19 +34,14 @@ namespace ClaFi::Controls
         :
         // The value is what the user is being asked to change, so it goes in as the plain run
         // of characters it is: nothing about it is marked, and the box is about to be typed in.
-        MessageBoxBase{ owner, title, Text{ value }, iconPainter }
+        MessageBoxBase{ owner, title, Text{ value }, iconPainter },
+        m_acceptButton{ buildAnswers() }
     {
-        // Here the text is what the user gives back, so the box is drawn as a field: a surface of
-        // its own over the one the question is written on, at the border and radius every other
-        // input carries. The properties are set one at a time rather than through setMetrics,
-        // which would take the widths the base sized the field to with it.
         const ControlMetrics& inputMetrics = styleMetrics(UiElement::Button);
-        field().setStyle(UiElement::Section);
-        field().setBorder(inputMetrics.border);
-        field().setRadius(inputMetrics.radius);
-        field().setPadding(inputMetrics.padding);
-
-        buildAnswers();
+        box().setStyle(UiElement::Section);
+        box().setBorder(inputMetrics.border);
+        box().setRadius(inputMetrics.radius);
+        box().setPadding(inputMetrics.padding);
 
         // The answer is the text, so the box is where this dialog opens - not on OK, which
         // addAnswer named first. It goes after the answers for that reason: it is the last word
@@ -79,6 +75,10 @@ namespace ClaFi::Controls
         if (event.key == Keys::Return && !event.modifiers.shift && box().isFocused())
         {
             event.handled = true;
+            if (!m_acceptButton.enabled())
+            {
+                return;
+            }
             // No answer was pressed, so the box is what asked - which is also where the value a
             // handler may have a question about was typed.
             if (offerText(box()))
@@ -106,9 +106,9 @@ namespace ClaFi::Controls
         return true;
     }
 
-    void PromptDialog::buildAnswers()
+    Button& PromptDialog::buildAnswers()
     {
-        addAnswer(DialogAnswer::Ok, [this](ClickEvent& event) {
+        Button& accept = addAnswer(DialogAnswer::Ok, [this](ClickEvent& event) {
             // The answer that was pressed is what asked, so a handler with a question of its own
             // hangs it there - on top of this dialog, at the button the user just pressed.
             if (offerText(*event.control))
@@ -121,6 +121,7 @@ namespace ClaFi::Controls
         addAnswer(DialogAnswer::Cancel, [](ClickEvent& event) {
             event.closeForm();
         });
+        return accept;
     }
 
 }
