@@ -14,8 +14,9 @@ SeeDocsCli check [folder]                       reports deviations, exit code 1 
 SeeDocs [folder]                                opens the project the folder stands for
 ```
 
-- **The folder** is a project's own, the one its `Project.cfg` stands in. For the framework, that
-  is `Source/.seedocs`. SeeDocsCli takes the working directory when the folder is left out.
+- **The folder** is the one that contains `Project.cfg`. For the framework, open the separate
+  [ClaFi SeeDocs project](https://github.com/clafi-fw/seedocs-project). SeeDocsCli uses the
+  working directory when the folder is left out.
 - **A scan with `--out`** takes any folder, read as the one source folder of a project of ClaFi
   modules in the SeeLinks syntax.
 - **`--time`** prints how long each step of the scan took, then the write of the database and the
@@ -100,10 +101,9 @@ A path stands as it was typed, and is read as a folder when the sources are read
 
 ### A project inside its sources
 
-A project's folder may stand inside the tree it reads, as the framework's does in
-`Source/.seedocs`. It names the tree as `..`, the way any project names a folder, and the dot that
-starts its name keeps it out of the scan. Commands name the project's folder itself:
-`SeeDocsCli check Source/.seedocs` checks the framework.
+A project may also live inside the source tree it reads. For example, a project in a
+`.seedocs` folder directly under its source root can set `Path=..`. The scanner skips folders
+whose names start with a dot. Run `SeeDocsCli check` from the folder containing `Project.cfg`.
 
 ## How it reads
 
@@ -1381,11 +1381,12 @@ beside the shared ones.
 The CMake target `SeeDocs` builds the window on Wayland, beside the other applications. The CMake
 target `SeeDocsCli` builds the scanner on Linux, with or without a platform layer. The Dom, the
 Syntax lexer and the text file reader reach no further down than `UiTypes`, so a `check` runs
-wherever the tree is checked out:
+wherever the tree is checked out. Set `project_folder` to the ClaFi SeeDocs project folder
+before running the check.
 
 ```
 cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
       -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target SeeDocsCli
-./build/SeeDocsCli check Source/.seedocs
+./build/SeeDocsCli check "$project_folder"
 ```

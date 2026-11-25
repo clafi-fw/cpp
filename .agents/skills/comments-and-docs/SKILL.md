@@ -5,7 +5,7 @@ description: "Apply the ClaFi rules for comments and documentation - code commen
 
 # Comments and Documentation
 
-These rules cover every word written for a reader of the ClaFi tree: comments in code, the footnotes under `Source/.seedocs/footnotes/`, the working notes under `Source/Working Notes/`, the manuals under `docs/`, and copy for sites and install guides. Every rule is binding. Apply them silently in what you write, and do not explain them unless asked.
+These rules cover every word written for a reader of the ClaFi tree: comments in code, the footnotes in the separate ClaFi SeeDocs project, the working notes under `Source/Working Notes/`, the manuals under `docs/`, and copy for sites and install guides. Every rule is binding. Apply them silently in what you write, and do not explain them unless asked.
 
 ## Clarity First
 
@@ -14,7 +14,7 @@ ClaFi stands for Clarity First, and clarity is the first priority of every rule 
 ## 1. Where the Words Go
 
 - **A comment** stands beside the declaration or the line it is about. Section 3 says when one is written at all.
-- **A footnote** holds what does not fit on a declaration's optional single comment line: what a thing is and does, and the rules a caller keeps. There is one note per subsystem, `Source/.seedocs/footnotes/<Stem>.md`, and SeeDocs reads it into the generated reference.
+- **A footnote** holds what does not fit on a declaration's optional single comment line: what a thing is and does, and the rules a caller keeps. There is one note per subsystem, `footnotes/<Stem>.md` in the ClaFi SeeDocs project, and SeeDocs reads it into the generated reference.
 - **A working note** holds the authors' side under the same stem in `Source/Working Notes/`: why it is so, how it is done inside, what happened. No tool reads it.
 - **A manual** is a self-contained HTML page in `docs/`, one per subsystem, with a lower-case file name and no suffix (`dom.html`, `events.html`, `textengine.html`), listed in `index.html`. Footnotes and working notes are raw material for manuals, not manuals.
 - **Site and guide copy** is what a visitor reads before using the framework or an application. Section 6 covers it.
@@ -72,7 +72,7 @@ These rules hold for every kind of text in section 1.
   DECLARE_PROPERTY(SelectionMode, selectionMode, SelectionMode::None)
   ```
 
-- **Run the checker.** `SeeDocsCli check Source/.seedocs`, built from `Tools/SeeDocs` (its README has the build lines), reports every comment that breaks the length and placement rules on the declarations it reads, and every `See` that names a note or a heading the footnotes do not have.
+- **Run the checker.** Run `SeeDocsCli check` from the ClaFi SeeDocs project folder. Build instructions are in `Tools/SeeDocs/README.md`. The checker reports every comment that breaks the length and placement rules on the declarations it reads, and every `See` that names a note or a heading the footnotes do not have.
 
 ## 4. Footnotes and Working Notes
 
