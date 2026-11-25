@@ -14,9 +14,8 @@ SeeDocsCli check [folder]                       reports deviations, exit code 1 
 SeeDocs [folder]                                opens the project the folder stands for
 ```
 
-- **The folder** is the one that contains `Project.cfg`. For the framework, open the separate
-  [ClaFi SeeDocs project](https://github.com/clafi-fw/seedocs-project). SeeDocsCli uses the
-  working directory when the folder is left out.
+- **The folder** is the one that contains `Project.cfg`. SeeDocsCli uses the working directory
+  when the folder is left out.
 - **A scan with `--out`** takes any folder, read as the one source folder of a project of ClaFi
   modules in the SeeLinks syntax.
 - **`--time`** prints how long each step of the scan took, then the write of the database and the
@@ -38,8 +37,12 @@ into the sources.
 
 ## Projects
 
-A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
-`Documents/SeeDocs`. The folder holds everything SeeDocs keeps of the project:
+A SeeDocs project holds the intermediate files authors use to build and publish a documentation
+portal. ClaFi authors maintain the framework's [SeeDocs project](https://github.com/clafi-fw/seedocs-project)
+in its own repository.
+
+Authors can keep a project in any folder. SeeDocs offers `Documents/SeeDocs`. A project can contain
+the following files and folders.
 
 - `Project.cfg` - the project's properties, its sidebar among them
 - `Surface.cfg` - the database the scanner writes

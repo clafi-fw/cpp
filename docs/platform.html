@@ -791,10 +791,9 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
     .<span class="fn">connect</span>&lt;<span class="tp">Transfer</span>::<span class="tp">ClipboardChangeEvent</span>&gt;([&amp;](<span class="tp">Transfer</span>::<span class="tp">ClipboardChangeEvent</span>&amp;) {
         <span class="fn">refresh</span>();
     }) };</pre>
-            <p>Where only a form is at hand, <code>form-&gt;context().clipboard()</code> returns the same object. The
-            clipboard's own manual is <a href="https://github.com/clafi-fw/seedocs-project/blob/main/footnotes/Transfer.md">the Transfer footnote in the ClaFi SeeDocs project</a>. One
-            instance exists per process; it is a member of the platform, and it is constructed before the first
-            window and destroyed after the last.</p>
+            <p>Where only a form is at hand, <code>form-&gt;context().clipboard()</code> returns the same object.
+            The platform owns one clipboard per process. It constructs the clipboard before the first
+            window and destroys it after the last.</p>
 
             <h3 id="animator-from-above">Animations</h3>
             <p>A control runs its animations through <code>Control::animate</code>, which reaches the application's
