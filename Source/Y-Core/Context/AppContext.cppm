@@ -135,6 +135,9 @@ namespace ClaFi
         // Whether a newer release is published - asked only when the user asks.
         [[nodiscard]] UpdateCheck& updateCheck() { return m_updateCheck; }
         [[nodiscard]] const UpdateCheck& updateCheck() const { return m_updateCheck; }
+        // A link that opens a file or folder, with the path as its default caption. See Context
+        template<typename... Caption>
+        [[nodiscard]] Text fileLink(const std::filesystem::path&, Caption&&...);
         bool registerLinkHandler(std::wstring_view scheme, LinkHandler);
         bool openLink(std::wstring_view target, IForm* source = nullptr, InputStamp stamp = {}) const;
         bool openLink(const Url&, IForm* source = nullptr, InputStamp stamp = {}) const;
@@ -297,6 +300,7 @@ namespace ClaFi
         AppElementNames m_appElements;
         InformationParagraphs m_information{};
         std::map<std::wstring, LinkHandler, std::less<>> m_linkHandlers{};
+        std::set<std::wstring, std::less<>> m_fileLinks{};
         UpdateCheck m_updateCheck;
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
         // backend needs no factory here: the core owns that type.
@@ -446,6 +450,32 @@ namespace ClaFi
         m_animator.clearTickEndListener(this);
     }
 
+    template<typename... Caption>
+    Text AppContext::fileLink(const std::filesystem::path& path, Caption&&... caption)
+    {
+        Text label{};
+        if constexpr (sizeof...(Caption) == 0)
+        {
+            label << path.wstring();
+        }
+        else
+        {
+            (label << ... << std::forward<Caption>(caption));
+        }
+        if (path.empty() || path.native().find(std::filesystem::path::value_type{}) != path.native().npos)
+        {
+            return label;
+        }
+        std::error_code error;
+        std::filesystem::path target = std::filesystem::absolute(path, error);
+        if (error)
+        {
+            return label;
+        }
+        const auto entry = m_fileLinks.emplace(target.make_preferred().wstring()).first;
+        return Text{ LinkText{ *entry, label } };
+    }
+
     bool AppContext::registerLinkHandler(const std::wstring_view scheme, LinkHandler handler)
     {
         std::wstring spelling{ scheme };
@@ -459,6 +489,12 @@ namespace ClaFi
     bool AppContext::openLink(const std::wstring_view target, IForm* source,
         const InputStamp stamp) const
     {
+        const auto file = m_fileLinks.find(target);
+        if (file != m_fileLinks.end())
+        {
+            Platform::shellExecute(source, *file);
+            return true;
+        }
         if (Url::schemeOf(target).empty())
             return false;
         const std::optional<Url> url = Url::Parse(target);

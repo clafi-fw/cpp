@@ -567,7 +567,9 @@ both and still opens nothing has a different cause.
 <div class="faq">
 <h3 id="file-link">Why does a file: link do nothing?</h3>
 
-<p class="faq-a">Handle it in <code>OnLinkClick</code>.</p>
+<p class="faq-a">For a file or folder your application presents, use
+<code>text &lt;&lt; context.fileLink(path);</code>. To interpret a <code>file:</code> URL supplied in
+a document, handle it in <code>OnLinkClick</code>.</p>
 
 <details class="faq-more">
 <summary>Why</summary>
@@ -578,15 +580,14 @@ The symptom is a link that is underlined under the pointer, with the pointer sho
 click follows it and nothing opens.
 </p>
 
-<h4>The box opens three schemes</h4>
+<h4>How a link is opened</h4>
 
 <p>
-A followed link raises <code>OnLinkClick</code> with its target. If no handler stops the event, the
-box opens the target through the shell, but only when it starts with <code>http:</code>,
-<code>https:</code> or <code>mailto:</code>. Text can come from a file or from the clipboard and
-name anything, and the shell runs whatever program it is given, so every other target -
-<code>file:</code>, a bare path, a scheme of the application's own - goes nowhere until the
-application handles it:
+A followed link raises <code>OnLinkClick</code> with its target. If the event continues, the
+application opens paths it has registered through <code>fileLink</code> and URLs with registered
+schemes. The built-in URL handlers cover <code>http:</code>, <code>https:</code> and
+<code>mailto:</code>. A document or the clipboard can supply a <code>file:</code> URL. An
+application can interpret such a URL in its link handler.
 </p>
 
 <pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {

@@ -75,16 +75,14 @@ namespace ClaFi
     {
         enum class FolderDisplayPurpose
         {
-            ToDisplay,    // a tooltip, which takes no click
+            ToDisplay,
             ToCreate,     // the folder is still to be made, and only the system's part stands
             ToDelete      // the folder is asking to be deleted
         };
     }
 
     // The config folder as text: the system's part muted, the application's in spot ink.
-    [[nodiscard]] static Text folderText(const AppContext&, FolderDisplayPurpose);
-    // Opens a folder a question names in the system's file manager.
-    static void openLinkedFolder(LinkClickEvent&);
+    [[nodiscard]] static Text folderText(AppContext&, FolderDisplayPurpose);
 
     // What a page of options is drawn to: the room around the column, the gap between one
     // section and the next, and the gap between two options inside one.
@@ -150,7 +148,7 @@ namespace ClaFi
 
     // **The system's part is the platform's application data root**, the floor deleteConfigFolder
     // stops at. Each ink is given inside the link, which keeps the link's own ink off it.
-    Text folderText(const AppContext& context, const FolderDisplayPurpose purpose)
+    Text folderText(AppContext& context, const FolderDisplayPurpose purpose)
     {
         const std::wstring folder = context.configFolder().wstring();
         const std::wstring root = Platform::appDataPath();
@@ -167,24 +165,17 @@ namespace ClaFi
             systemPart
         } };
         Text path{ ColoredText{ InkWell::spotInk(), appPart } };
-        if (toCreate)
-            path << LinkText{ std::wstring{ systemPart }, systemWords };
-        else
-            path << systemWords;
-
         Text result{};
         result << VSpace{ 8.0f } << L"\n" << TextIndent{ 12.0f };
-        if (toDelete)
-            result << LinkText{ folder, path };
+        if (toCreate)
+        {
+            result << path << context.fileLink(systemPart, systemWords);
+        }
         else
-            result << path;
+        {
+            result << context.fileLink(folder, path, systemWords);
+        }
         return result;
-    }
-
-    void openLinkedFolder(LinkClickEvent& event)
-    {
-        event.stopPropagation();
-        Platform::shellExecute(nullptr, event.target);
     }
 
     // connectAppPage
@@ -240,7 +231,6 @@ namespace ClaFi
             message,
             MessageIcon::Question
         };
-        dialog.onLinkClick(openLinkedFolder);
         dialog.add(DialogAnswer::Ok);
         dialog.add(DialogAnswer::Cancel);
         if (dialog.execute() != DialogAnswer::Ok)
@@ -652,7 +642,6 @@ namespace ClaFi
             message,
             Icons::DeleteIcon::drawSettingsDelete
         };
-        dialog.onLinkClick(openLinkedFolder);
         dialog.add(DialogAnswer::Yes);
         dialog.add(DialogAnswer::Cancel);
         if (dialog.execute() != DialogAnswer::Yes)

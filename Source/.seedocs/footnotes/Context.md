@@ -2,6 +2,12 @@
 
 The words that do not fit above a declaration.
 
+## AppContext fileLink
+
+`text << context.fileLink(path)` shows the path and opens it with the desktop's default handler.
+Supply text or styled text after the path for a custom caption. The application remembers the
+absolute target, so a later change of working directory leaves the link pointing to the same item.
+
 ## AppContext registerLinkHandler
 
 **A scheme has one handler per application.** Register a scheme without its colon. Letter case
@@ -12,7 +18,7 @@ false.
 
 **The handler receives the URL, the originating form, and the input stamp.** A call without a
 form passes a null pointer. The result is true when the registered handler accepts the URL.
-An unregistered scheme, a scheme-less target, or an invalid spelling returns false.
+A path registered by `fileLink` opens through the desktop. Other scheme-less targets return false.
 
 ## FrameMargins
 

@@ -663,6 +663,11 @@ editor command field in SeeDocs. Applications name a Settings control through
     <span class="st">L"guide"</span>, <span class="st">L"/getting started"</span>, <span class="st">L"setup"</span>);
 text &lt;&lt; <span class="tp">LinkText</span>{ url.<span class="fn">str</span>(), <span class="st">L"Setup"</span> };</code></pre>
 
+<p>Use <code>text &lt;&lt; context.fileLink(path);</code> for a file or folder. A folder opens in the
+file manager and a document opens in its associated application. The path supplies the caption by
+default. For a custom caption, use <code>text &lt;&lt; context.fileLink(path, L"Open folder");</code>.
+The same link works in a tooltip. The application remembers the absolute path when it creates the link.</p>
+
 <p>A scheme is registered without its colon. Registration is case-insensitive and returns
 false when the scheme is already registered or the registration is invalid. A handler returns
 true when it accepts the URL. The source form may be null for a programmatic call. Other schemes
