@@ -586,6 +586,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PlusMark.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\PropertiesIcon.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\QuestionIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
@@ -623,6 +626,9 @@
       <Filter>Icons</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SideBar.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SlidersIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SunIcon.cppm">

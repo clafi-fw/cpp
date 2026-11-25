@@ -18,6 +18,7 @@ import ClaFi.Icons.SaveIcon;
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.SaturationIcon;
 import ClaFi.Icons.LuminosityIcon;
+import ClaFi.Icons.SlidersIcon;
 
 import ClaFi.Documents.Page;
 
@@ -262,6 +263,9 @@ namespace Themes_App
 
         Tab& m_designTab{ m_tabbedBox.strip().addTab(
             L"Design",
+            IconSize{ 16.0f },
+            ButtonViewMode::LeftIcon,
+            Tab::OnDrawIcon{ Icons::SlidersIcon::draw },
             Page{ m_designPage }
         )
             .select()

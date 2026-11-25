@@ -67,8 +67,11 @@ namespace ClaFi::Documents
         constexpr std::wstring_view k_name = L"Name";
         constexpr std::wstring_view k_location = L"Location";
         constexpr std::wstring_view k_readOnly = L"ReadOnly";
+        constexpr std::wstring_view k_fromDefaults = L"FromDefaults";
+        constexpr std::wstring_view k_removed = L"Removed";
         using StorageSettings = Dom::Sequence<Dom::Section>;
         using StoragePathValidator = std::function<std::wstring(std::filesystem::path&)>;
+        using ReadOnlyLocation = std::function<bool(const std::filesystem::path&)>;
         using StoragePropertiesForm = Form<PanelBase>;
 
         PromptBox& addStorageField(Panel& panel, const std::wstring_view value)
@@ -89,11 +92,11 @@ namespace ClaFi::Documents
             StoragePropertiesDialog(Control& owner, std::wstring_view title,
                 const std::filesystem::path& location, std::wstring_view name,
                 const std::filesystem::path& startFolder,
-                bool readOnly, StoragePathValidator validate);
+                bool readOnly, StoragePathValidator validate, ReadOnlyLocation);
         public:
             [[nodiscard]] const std::filesystem::path& location() const { return m_acceptedLocation; }
             [[nodiscard]] const std::wstring& customName() const { return m_acceptedName; }
-            [[nodiscard]] bool readOnly() const { return m_readOnly.checked() == Checked::Yes; }
+            [[nodiscard]] bool userReadOnly() const { return m_userReadOnly; }
             [[nodiscard]] bool readyToClose() override;
         protected:
             void nestedKeyDown(KeyDownEvent&) override;
@@ -104,6 +107,7 @@ namespace ClaFi::Documents
             void accept();
         private:
             StoragePathValidator m_validate;
+            ReadOnlyLocation m_readOnlyLocation;
             std::filesystem::path m_startFolder;
             std::filesystem::path m_acceptedLocation{};
             std::wstring m_acceptedName{};
@@ -114,7 +118,9 @@ namespace ClaFi::Documents
             Panel& m_locationField;
             Panel& m_locationRow;
             PromptBox& m_location;
-            CheckBox2& m_readOnly;
+            CheckBox& m_readOnly;
+            bool m_userReadOnly;
+            bool m_requiresReadOnly{};
             Button* m_ok{};
             bool m_browsing{ false };
         };
@@ -146,7 +152,7 @@ namespace ClaFi::Documents
             const std::wstring_view title, const std::filesystem::path& location,
             const std::wstring_view name,
             const std::filesystem::path& startFolder, const bool readOnly,
-            StoragePathValidator validate)
+            StoragePathValidator validate, ReadOnlyLocation readOnlyLocation)
             :
             StoragePropertiesForm{
                 owner.appContext(),
@@ -159,6 +165,7 @@ namespace ClaFi::Documents
                 Spacing{ 0.0f }
             },
             m_validate{ std::move(validate) },
+            m_readOnlyLocation{ std::move(readOnlyLocation) },
             m_startFolder{ startFolder },
             m_useFolderName{ name.empty() },
             m_content{ createBody<Panel>(UiElement::Page, Padding{ 12.0f }, Spacing{ 8.0f }) },
@@ -167,8 +174,9 @@ namespace ClaFi::Documents
             m_locationField{ m_content.createBody<Panel>(Spacing{ 4.0f }) },
             m_locationRow{ m_locationField.createBody<Panel>(Spacing{ 8.0f }) },
             m_location{ addStorageField(m_locationRow, location.wstring()) },
-            m_readOnly{ m_content.createBottomBar<CheckBox2>(
-                L"Read-only", readOnly ? Checked::Yes : Checked::No) }
+            m_readOnly{ m_content.createBottomBar<CheckBox>(L"Read-only") },
+            m_userReadOnly{ readOnly },
+            m_requiresReadOnly{ m_readOnlyLocation(location) }
         {
             setAutoFit(AutoFit::Yes);
             setDropdownClearance(1.0f);
@@ -209,6 +217,15 @@ namespace ClaFi::Documents
             m_location.onTextEdit([this](TextEditEvent&) {
                 locationChanged();
             });
+            m_readOnly.onGetState([this](GetStateEvent& event) {
+                event.state.selected = m_userReadOnly || m_requiresReadOnly;
+                event.state.enabled = !m_requiresReadOnly;
+                event.stopPropagation();
+            });
+            m_readOnly.onClick([this](ClickEvent&) {
+                m_userReadOnly = !m_userReadOnly;
+                m_readOnly.invalidateState();
+            });
             PromptBox& first = location.empty() ? m_location : m_name;
             first.makeCurrentItem();
             first.selectAll();
@@ -238,9 +255,11 @@ namespace ClaFi::Documents
 
         void StoragePropertiesDialog::locationChanged()
         {
+            const std::filesystem::path location{ m_location.text().plainText() };
+            m_requiresReadOnly = m_readOnlyLocation(location);
+            m_readOnly.invalidateState();
             if (m_useFolderName)
             {
-                const std::filesystem::path location{ m_location.text().plainText() };
                 m_name.text() = Text{ storageName(location) };
                 m_name.invalidateFormAlign();
             }
@@ -473,7 +492,8 @@ namespace ClaFi::Documents
         m_storages.push_back({
             .id = std::wstring{ k_primaryStorageId },
             .folder = makeStorage(m_folder.directory(), primaryReadOnly || m_folder.readOnly(),
-                primaryName)
+                primaryName),
+            .userReadOnly = primaryReadOnly
         });
         m_missingStorage = makeStorage({}, true);
         m_missingStorage->detach();
@@ -498,19 +518,46 @@ namespace ClaFi::Documents
                 {
                     continue;
                 }
+                const bool fromDefaults = (entry / k_fromDefaults).get<bool>();
+                const bool removed = (entry / k_removed).get<bool>();
+                const bool inactiveDefault = fromDefaults && !removed && !storageDefault(path);
                 const bool duplicatePath = std::ranges::any_of(m_storages, [&path](const StorageEntry& item) {
                     return item.folder->available() && sameDirectory(item.folder->directory(), path);
                 });
-                if (duplicatePath)
+                if (duplicatePath && !removed && !inactiveDefault)
                 {
                     continue;
                 }
+                const bool userReadOnly = (entry / k_readOnly).get<bool>();
                 m_storages.push_back({
                     .id = std::move(id),
-                    .folder = makeStorage(path, (entry / k_readOnly).get<bool>(),
-                        (entry / k_name).get<std::wstring>())
+                    .folder = makeStorage(path, userReadOnly,
+                        (entry / k_name).get<std::wstring>()),
+                    .userReadOnly = userReadOnly,
+                    .fromDefaults = fromDefaults,
+                    .inactiveDefault = inactiveDefault
                 });
+                if (removed || inactiveDefault)
+                {
+                    m_storages.back().folder->detach();
+                }
             }
+        }
+        bool addedDefaults = false;
+        for (const StorageDefault& storage : m_folder.defaultStorages())
+        {
+            if (!storage.location.is_absolute() || std::ranges::any_of(m_storages, [&storage](const StorageEntry& entry) {
+                return sameDirectory(entry.folder->directory(), storage.location);
+            }))
+            {
+                continue;
+            }
+            addStorage(storage.location, false, {}).fromDefaults = true;
+            addedDefaults = true;
+        }
+        if (addedDefaults)
+        {
+            storeStorages(config);
         }
         collectStorageTiles();
         m_storageRefresh.onTick([this](TimerEvent&) {
@@ -534,7 +581,9 @@ namespace ClaFi::Documents
                     Value{ k_name, L"" },
                     Value{ k_location, L"" },
                     Value{ ConfigNames::Path, L"" },
-                    Value{ k_readOnly, false }
+                    Value{ k_readOnly, false },
+                    Value{ k_fromDefaults, false },
+                    Value{ k_removed, false }
                 }
             }
         };
@@ -580,15 +629,21 @@ namespace ClaFi::Documents
     void DocumentsBrowserBase::editStorage(Control& owner, DocumentsFolder* storage)
     {
         const std::filesystem::path path = storage ? storage->directory() : std::filesystem::path{};
+        const auto edited = std::ranges::find_if(m_storages, [storage](const StorageEntry& entry) {
+            return entry.folder.get() == storage;
+        });
         StoragePropertiesDialog dialog{
             owner,
             storage ? L"Storage properties" : L"Add storage",
             path,
             storage ? std::wstring_view{ storage->customName() } : std::wstring_view{},
             m_folder.directory(),
-            storage && storage->readOnly(),
+            edited != m_storages.end() && edited->userReadOnly,
             [this, storage](std::filesystem::path& selected) {
                 return storagePathError(selected, storage);
+            },
+            [this](const std::filesystem::path& location) {
+                return requiresReadOnly(location);
             }
         };
         dialog.execute();
@@ -599,23 +654,21 @@ namespace ClaFi::Documents
 
         if (storage && sameDirectory(storage->directory(), dialog.location()))
         {
-            storage->setName(dialog.customName());
-            storage->setReadOnly(dialog.readOnly());
-            for (const StorageEntry& entry : m_storages)
+            const StorageDefault* preset = storageDefault(path);
+            storage->setName(dialog.customName().empty() && preset ? preset->name : dialog.customName());
+            storage->setReadOnly(dialog.userReadOnly() || requiresReadOnly(dialog.location()));
+            if (edited != m_storages.end())
             {
-                if (entry.folder.get() == storage)
+                edited->userReadOnly = dialog.userReadOnly();
+                if (PageData* page = homePageData().findSubItem(edited->id))
                 {
-                    if (PageData* page = homePageData().findSubItem(entry.id))
-                    {
-                        setPageTitle(*page, storage->name());
-                    }
-                    break;
+                    setPageTitle(*page, storage->name());
                 }
             }
             storageChanged({});
             return;
         }
-        const std::wstring id = addStorage(dialog.location(), dialog.readOnly(), dialog.customName());
+        const std::wstring id = addStorage(dialog.location(), dialog.userReadOnly(), dialog.customName()).id;
         if (storage)
         {
             storage->detach();
@@ -953,15 +1006,39 @@ namespace ClaFi::Documents
         return entry == m_storages.end() ? nullptr : &*entry;
     }
 
+    const StorageDefault* DocumentsBrowserBase::storageDefault(const std::filesystem::path& path) const
+    {
+        if (!path.is_absolute())
+        {
+            return nullptr;
+        }
+        for (const StorageDefault& storage : m_folder.defaultStorages())
+        {
+            if (sameDirectory(storage.location, path))
+            {
+                return &storage;
+            }
+        }
+        return nullptr;
+    }
+
+    bool DocumentsBrowserBase::requiresReadOnly(const std::filesystem::path& path) const
+    {
+        const StorageDefault* preset = storageDefault(path);
+        return (preset && preset->readOnly)
+            || (m_folder.readOnly() && sameDirectory(m_folder.directory(), path));
+    }
+
     std::unique_ptr<DocumentsFolder> DocumentsBrowserBase::makeStorage(
         const std::filesystem::path& path, const bool readOnly, const std::wstring_view name) const
     {
-        auto storage = std::make_unique<BrowserStorage>(m_folder, path, readOnly);
-        storage->setName(name);
+        const StorageDefault* preset = storageDefault(path);
+        auto storage = std::make_unique<BrowserStorage>(m_folder, path, readOnly || requiresReadOnly(path));
+        storage->setName(name.empty() && preset ? std::wstring_view{ preset->name } : name);
         return storage;
     }
 
-    std::wstring DocumentsBrowserBase::addStorage(const std::filesystem::path& path,
+    DocumentsBrowserBase::StorageEntry& DocumentsBrowserBase::addStorage(const std::filesystem::path& path,
         const bool readOnly, const std::wstring_view name)
     {
         std::wstring id{};
@@ -970,13 +1047,15 @@ namespace ClaFi::Documents
             id.assign(k_storagePrefix).append(std::to_wstring(m_nextStorageId++));
         }
         while (storageEntry(id));
-        m_storages.push_back({ .id = id, .folder = makeStorage(path, readOnly, name) });
-        return id;
+        return m_storages.emplace_back(StorageEntry{
+            .id = std::move(id),
+            .folder = makeStorage(path, readOnly, name),
+            .userReadOnly = readOnly
+        });
     }
 
-    void DocumentsBrowserBase::storeStorages()
+    void DocumentsBrowserBase::storeStorages(Dom::Section& config) const
     {
-        Dom::Section& config = settings().appConfig();
         Dom::DomNodeBase* stored = config.child(k_storages);
         if (!stored)
         {
@@ -984,22 +1063,29 @@ namespace ClaFi::Documents
         }
         const DocumentsFolder& primary = *m_storages.front().folder;
         (config / k_primaryRemoved).set(!primary.available());
-        (config / k_primaryReadOnly).set(primary.readOnly());
+        (config / k_primaryReadOnly).set(m_storages.front().userReadOnly);
         (config / k_primaryName).set(primary.customName());
         (config / k_nextStorage).set(m_nextStorageId);
         StorageSettings& entries = stored->as<StorageSettings>();
         entries.clear();
         for (const StorageEntry& entry : m_storages)
         {
-            if (entry.id == k_primaryStorageId || !entry.folder->available())
+            const StorageDefault* preset = storageDefault(entry.folder->directory());
+            const bool fromDefaults = entry.fromDefaults || (preset && !entry.folder->available());
+            if (entry.id == k_primaryStorageId || (!fromDefaults && !entry.folder->available()))
             {
                 continue;
             }
             Dom::Section& storedEntry = entries.add();
             (storedEntry / ConfigNames::Id).set(entry.id);
-            (storedEntry / k_name).set(entry.folder->customName());
+            if (!preset || entry.folder->customName() != preset->name)
+            {
+                (storedEntry / k_name).set(entry.folder->customName());
+            }
             (storedEntry / k_location).set(entry.folder->directory().wstring());
-            (storedEntry / k_readOnly).set(entry.folder->readOnly());
+            (storedEntry / k_readOnly).set(entry.userReadOnly);
+            (storedEntry / k_fromDefaults).set(fromDefaults);
+            (storedEntry / k_removed).set(!entry.folder->available() && !entry.inactiveDefault);
         }
     }
 
@@ -1035,7 +1121,7 @@ namespace ClaFi::Documents
     void DocumentsBrowserBase::storageChanged(const std::wstring_view selection)
     {
         collectStorageTiles();
-        storeStorages();
+        storeStorages(settings().appConfig());
         m_storageToSelect = selection;
         m_storageRefresh.start(MilliSeconds{ 0u });
     }

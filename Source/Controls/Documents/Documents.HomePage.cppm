@@ -16,9 +16,9 @@ import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 
-import ClaFi.Icons.GearIcon;
 import ClaFi.Icons.OpenInExplorerIcon;
 import ClaFi.Icons.PlusMark;
+import ClaFi.Icons.PropertiesIcon;
 
 import ClaFi.StdActions;
 
@@ -129,7 +129,7 @@ namespace ClaFi::Documents
         Button& m_propertiesButton{ toolBar().add<ToolButton>(
             k_buttonIconSize,
             ButtonViewMode::LeftIcon,
-            Button::OnDrawIcon{ Icons::GearIcon::draw },
+            Button::OnDrawIcon{ Icons::PropertiesIcon::draw },
             MouseFocus::Keep,
             L"Properties"
         ) };

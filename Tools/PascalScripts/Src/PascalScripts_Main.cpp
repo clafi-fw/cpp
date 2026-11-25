@@ -3,6 +3,9 @@ module PascalScripts_App.Main;
 import ClaFiApps.StarterTheme;
 
 import PascalScripts_App.Consts;
+import PascalScripts_App.Language;
+
+import ClaFi.Documents.Folder;
 
 import ClaFi.App.WindowApplication;
 
@@ -37,12 +40,21 @@ namespace PascalScripts_App
         };
     }
 
-    std::filesystem::path scriptsDirectory()
+    std::filesystem::path scriptsDirectory(const Language& language)
     {
         const std::wstring documents = Platform::documentsPath();
         if (documents.empty())
             return {};
-        return std::filesystem::path{ documents } / k_appName;
+        const std::filesystem::path primary = std::filesystem::path{ documents } / k_appName;
+        // Existing scripts and restored tabs keep their original storage.
+        std::error_code error;
+        if (language.defaultStorages().empty() || std::filesystem::is_directory(primary, error)
+            || std::ranges::find(language.defaultStorages(), primary, &Documents::StorageDefault::location)
+                != language.defaultStorages().end())
+        {
+            return primary;
+        }
+        return {};
     }
 
     Dom::Dt::Section rootConfigBlueprint()

@@ -23,6 +23,7 @@ namespace PascalScripts_App
     public:
         // What a script is - the templates the folder offers and the names a page completes to.
         [[nodiscard]] const Language& language() const { return m_language; }
+        [[nodiscard]] std::span<const Documents::StorageDefault> defaultStorages() const override { return m_language.defaultStorages(); }
         [[nodiscard]] bool readDocument(const std::filesystem::path&,
             Dom::DomNodeBase& into) const override;
         [[nodiscard]] bool writeDocument(const Dom::DomNodeBase&,

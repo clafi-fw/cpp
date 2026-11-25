@@ -25,9 +25,7 @@ namespace PascalScripts_App
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
     export [[nodiscard]] ApplicationProperties scriptsParams();
-    // Where the scripts stand: a folder of the application's name in the user's documents. Empty
-    // where the platform names no documents folder.
-    export [[nodiscard]] std::filesystem::path scriptsDirectory();
+    export [[nodiscard]] std::filesystem::path scriptsDirectory(const Language&);
 
     // The scripts browser over the platform an entry point names, and the GPU backend it names if
     // that platform has one. The name and the config schemas are supplied here, so an entry point
@@ -47,7 +45,7 @@ namespace PascalScripts_App
         Language m_language{ std::filesystem::path{ this->configFolder() } };
         // Built after the platform, which its watch stands on, and outliving every window: the
         // browser and its pages hold it by reference.
-        ScriptsFolder m_scripts{ scriptsDirectory(), m_language };
+        ScriptsFolder m_scripts{ scriptsDirectory(m_language), m_language };
     };
 
     // Nothing the application reads as one answer for every page.

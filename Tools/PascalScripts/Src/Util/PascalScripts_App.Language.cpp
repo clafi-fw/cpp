@@ -1,3 +1,7 @@
+module;
+#ifdef _WIN32
+#include <stdlib.h>
+#endif
 module PascalScripts_App.Language;
 
 import PascalScripts_App.Consts;
@@ -27,6 +31,9 @@ namespace PascalScripts_App
         {
             constexpr std::wstring_view Extension = L"Extension";
             constexpr std::wstring_view Information = L"Information";
+            constexpr std::wstring_view Storages = L"Storages";
+            constexpr std::wstring_view Location = L"Location";
+            constexpr std::wstring_view ReadOnly = L"ReadOnly";
             constexpr std::wstring_view Templates = L"Templates";
             constexpr std::wstring_view Completion = L"Completion";
             constexpr std::wstring_view Name = L"Name";
@@ -46,11 +53,123 @@ namespace PascalScripts_App
         }
 
         using Sections = Dom::Sequence<Dom::Section>;
+        constexpr std::wstring_view k_version = L"{version}";
 
         [[nodiscard]] std::wstring stringOf(const Dom::DomNodeBase& item,
             const std::wstring_view key)
         {
             return (item / key).get<std::wstring>();
+        }
+
+        [[nodiscard]] std::filesystem::path programDataDirectory()
+        {
+#ifdef _WIN32
+            wchar_t* value{};
+            std::size_t length{};
+            if (::_wdupenv_s(&value, &length, L"ProgramData") == 0 && value)
+            {
+                const std::unique_ptr<wchar_t, decltype(&std::free)> directory{ value, &std::free };
+                return std::filesystem::path{ directory.get() };
+            }
+#endif
+            return {};
+        }
+
+        [[nodiscard]] std::filesystem::path storageLocation(std::wstring location)
+        {
+            std::ranges::replace(location, L'\\', L'/');
+            const std::filesystem::path path{ location };
+            if (path.is_absolute() || path.empty())
+            {
+                return path;
+            }
+            const std::filesystem::path token = *path.begin();
+            std::filesystem::path root;
+            if (token == L"%Documents%")
+            {
+                root = Platform::documentsPath();
+            }
+            else if (token == L"%ProgramData%")
+            {
+                root = programDataDirectory();
+            }
+            if (!root.is_absolute())
+            {
+                return {};
+            }
+            return root / path.lexically_relative(token);
+        }
+
+        [[nodiscard]] bool isVersion(const std::wstring_view name)
+        {
+            bool hasDigit = false;
+            for (const wchar_t ch : name)
+            {
+                if (ch >= L'0' && ch <= L'9')
+                {
+                    hasDigit = true;
+                }
+                else if ((ch == L'-' || ch == L'.') && hasDigit)
+                {
+                    hasDigit = false;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return hasDigit;
+        }
+
+        void readStorage(const Dom::Section& entry, std::vector<Documents::StorageDefault>& storages)
+        {
+            const std::filesystem::path location = storageLocation(stringOf(entry, Keys::Location));
+            if (location.empty())
+            {
+                return;
+            }
+            const std::wstring name = stringOf(entry, Keys::Name);
+            const bool readOnly = (entry / Keys::ReadOnly).get<bool>();
+            const auto version = std::find(location.begin(), location.end(), k_version);
+            if (version == location.end())
+            {
+                storages.push_back({ location.lexically_normal(), name, readOnly });
+                return;
+            }
+            std::filesystem::path parent;
+            for (auto part = location.begin(); part != version; ++part)
+            {
+                parent /= *part;
+            }
+            std::filesystem::path suffix;
+            for (auto part = std::next(version); part != location.end(); ++part)
+            {
+                suffix /= *part;
+            }
+            const std::size_t first = storages.size();
+            std::error_code error;
+            for (std::filesystem::directory_iterator dir{ parent, error }, end;
+                !error && dir != end; dir.increment(error))
+            {
+                const std::wstring number = dir->path().filename().wstring();
+                if (!isVersion(number))
+                {
+                    continue;
+                }
+                const std::filesystem::path folder = suffix.empty() ? dir->path() : dir->path() / suffix;
+                std::error_code statusError;
+                if (std::filesystem::is_directory(folder, statusError))
+                {
+                    std::wstring label = name;
+                    const std::size_t slot = label.find(k_version);
+                    if (slot != std::wstring::npos)
+                    {
+                        label.replace(slot, k_version.size(), number);
+                    }
+                    storages.push_back({ folder, std::move(label), readOnly });
+                }
+            }
+            std::ranges::sort(std::span{ storages }.subspan(first), {}, &Documents::StorageDefault::location);
         }
 
         // What every completion entry states, at either level.
@@ -163,6 +282,14 @@ namespace PascalScripts_App
         const Section layout = {
             Value{ Keys::Extension, std::wstring{} },
             Value{ Keys::Information, std::wstring{} },
+            Sequence{
+                Keys::Storages,
+                Section{
+                    Value{ Keys::Location, std::wstring{} },
+                    Value{ Keys::Name, std::wstring{} },
+                    Value{ Keys::ReadOnly, false }
+                }
+            },
             Sequence
             {
                 Keys::Templates,
@@ -223,6 +350,10 @@ namespace PascalScripts_App
             m_kind.extension = m_extension;
         }
         m_information = stringOf(document, Keys::Information);
+        for (const Dom::Section& item : (document / Keys::Storages).as<Sections>())
+        {
+            readStorage(item, m_storages);
+        }
 
         // A template with no name could not be listed, so it is left out.
         for (const Dom::Section& item : (document / Keys::Templates).as<Sections>())

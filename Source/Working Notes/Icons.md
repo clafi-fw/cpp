@@ -30,3 +30,37 @@ is why the shape carries the meaning rather than the color alone.
 
 Its corners are rounded: a fill carries its corners at full strength, and a sharp apex at
 sixteen pixels is one aliased spike.
+
+## PropertiesIcon
+
+The Documents home page's Properties button wore `GearIcon` while no icon stood for the command.
+The gear is the Settings mark, so the app menu's Settings page and a storage's Properties popup
+shared one face inside one application.
+
+The first answer was a sheet with two fields inside it. Oj dropped the frame on 2026-11-25: the
+outline spent the room a row could have stood in, and the page it made read as a document rather
+than as the fields. The icon is now three rows alone, each key and value a filled rounded
+rectangle, and they take the whole square the sheet was using.
+
+Four shapes were tried first, each at 16, 18, 24, 32 and 64 design units on light and dark: a page
+with a heading rule (read as a document), a page with a filled title bar (read as a window, which
+is `DialogIcon`'s meaning in this framework), a page of three rows (the frame closed them into a
+block of text at 18), and sliders (read as Settings, the mark the change exists to leave alone).
+The mocks are in `Agent/sessions/Properties Icon/`.
+
+What the small size decided: rows 0.14 of the square tall with 0.30 between their centers, so the
+gap between two of them stays wider than a row is tall at 18; and a key about half the length of
+its value, the two separated by two pixels at that size - below that they merge and the row reads
+as one thick line.
+
+## SlidersIcon
+
+The mark began as the Options row icon of SeeDocs, drawn on the RowIcons grid: three tracks, their
+knobs in the accent, each knob's halo clearing its track. Oj asked for it on Themes' Design tab on
+2026-11-25, and an application cannot import another application's icon, so the drawing moved into
+the framework and both now draw it from there.
+
+The shares are that grid's: tracks from 0.14 to 0.86 of the square, knobs at 0.66, 0.34 and 0.56,
+a knob of 0.11 and a halo of 0.16. **The square is not given a stroke back** - no part of the mark
+reaches its edge, so shrinking it the way the stroked icons do would have moved every part off the
+grid it was drawn on.

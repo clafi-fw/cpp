@@ -6,6 +6,7 @@ import SeeDocs_App.Surface;
 
 import ClaFi.Icons.FolderIcon;
 import ClaFi.Icons.RowIcons;
+import ClaFi.Icons.SlidersIcon;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -136,30 +137,6 @@ namespace SeeDocs_App::Ui
             PixelPath folder;
             Icons::FolderIcon::addOutline(folder, box);
             drawing.stroke(folder, drawing.inks.body);
-        }
-
-        // Three sliders, their knobs in the accent, each knob clearing the line it rides.
-        void drawOptions(const Drawing& drawing)
-        {
-            const std::array<FloatPoint, 3ull> knobs{
-                FloatPoint{ 9.2f, 3.5f },
-                FloatPoint{ 4.8f, 7.0f },
-                FloatPoint{ 7.8f, 10.5f }
-            };
-            PixelPath lines;
-            for (const FloatPoint& knob : knobs)
-                addLine(lines, { 2.0f, knob.y }, { 12.0f, knob.y });
-            drawing.stroke(lines, drawing.inks.body);
-
-            PixelPath halos;
-            PixelPath dots;
-            for (const FloatPoint& knob : knobs)
-            {
-                addCircle(halos, knob, 2.2f);
-                addCircle(dots, knob, 1.5f);
-            }
-            drawing.fill(halos, drawing.inks.surface);
-            drawing.fill(dots, drawing.inks.accent);
         }
 
         // A window, rows in the accent standing in its left pane.
@@ -399,7 +376,7 @@ namespace SeeDocs_App::Ui
                 drawProject(drawing);
                 break;
             case RowIcon::Options:
-                drawOptions(drawing);
+                Icons::SlidersIcon::draw(event);
                 break;
             case RowIcon::Sidebar:
                 drawSidebar(drawing);

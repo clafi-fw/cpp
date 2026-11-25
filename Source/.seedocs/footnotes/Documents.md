@@ -6,6 +6,11 @@ A documents application is a browser over folders of files of one kind. A storag
 folder as tiles, a document page edits one file, and the tab holds the document as it is on screen.
 The application states the kind, the editor control and what its tool bar adds.
 
+## StorageDefault
+
+Give each default storage an absolute folder location, an optional display name and its read-only
+setting. A read-only default also protects a registration the user already has for that folder.
+
 ## DocumentKind
 
 **Give the words as a sentence uses them** - "script", "scripts", "New Script". Titles and
@@ -25,6 +30,11 @@ after the platform and outlives the browser. The browser uses its format for eac
 
 **The list is read on demand.** A report from the directory watch tells every listener, and the
 next files() reads the disk. A missing directory reads as an empty list, and filesRead is told so.
+
+## DocumentsFolder defaultStorages
+
+Return the application's default folders. The entries must outlive the browser. The browser checks
+the list at startup and remembers disconnected defaults and the IDs used by restored tabs.
 
 ## DocumentsFolder saveDocument
 

@@ -334,6 +334,11 @@ selected.</p>
 icons, and what counts as an edited file. Keep it alive while the browser runs. Pass it to
 <code>DocumentsApplication::run</code> as the primary folder and format for all the browser's storages.
 The application constructor adds storage settings to the root schema.</p>
+<p>Override <code>DocumentsFolder::defaultStorages()</code> to supply additional folders at startup.
+Each <code>StorageDefault</code> has an absolute location, an optional display name, and a read-only
+flag. A read-only default locks that folder's access in Properties. The browser remembers when a user
+disconnects a default. If an application stops offering a default, its tile disappears and its saved
+tabs keep their original storage ID.</p>
 <p><code>DocumentsBrowser</code> takes the application's home-page and document-page types. Pages
 receive the format folder through <code>folder()</code> and the folder they show through
 <code>storageFolder()</code>. Custom lists can read the <code>DocumentStorageView</code> construction

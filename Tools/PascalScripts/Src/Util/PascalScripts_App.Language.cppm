@@ -32,6 +32,7 @@ namespace PascalScripts_App
         // How the file came about, for the Information page. Empty where the file states none.
         [[nodiscard]] const std::wstring& information() const { return m_information; }
         [[nodiscard]] const ScriptTemplates& templates() const { return m_templates; }
+        [[nodiscard]] std::span<const Documents::StorageDefault> defaultStorages() const { return m_storages; }
         // The names the host offers, for a CodeBox to complete. Empty without a file.
         [[nodiscard]] const Syntax::CompletionEntries& completion() const { return m_completion; }
         // The comment lines a script opens with, for a CodeBox to complete. Empty without a file.
@@ -46,6 +47,7 @@ namespace PascalScripts_App
         std::wstring m_extension;   // what the kind's extension views, so it stands ahead of it
         Documents::DocumentKind m_kind;
         std::wstring m_information{};
+        std::vector<Documents::StorageDefault> m_storages{};
         ScriptTemplates m_templates{};
         Syntax::CompletionEntries m_completion{};
         Syntax::TitleBlock m_titleBlock{};

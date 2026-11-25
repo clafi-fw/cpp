@@ -34,6 +34,14 @@ namespace ClaFi::Documents
     export using DocumentTemplates = std::vector<DocumentTemplate>;
     export using FilePaths = std::vector<std::filesystem::path>;
 
+    // A folder the application offers on the browser's home page. See Documents
+    export struct StorageDefault
+    {
+        std::filesystem::path location;
+        std::wstring name{};
+        bool readOnly{};
+    };
+
     // A folder of one kind of document, watched while the application is up. See Documents
     export class DocumentsFolder
     {
@@ -60,6 +68,8 @@ namespace ClaFi::Documents
         [[nodiscard]] const std::wstring& customName() const { return m_name; }
         void setName(std::wstring_view name);
         [[nodiscard]] const DocumentKind& kind() const { return m_kind; }
+        // The application's default folders, in display order. See Documents
+        [[nodiscard]] virtual std::span<const StorageDefault> defaultStorages() const { return {}; }
         [[nodiscard]] bool available() const { return m_available; }
         [[nodiscard]] bool readOnly() const { return m_readOnly; }
         void setReadOnly(bool readOnly);

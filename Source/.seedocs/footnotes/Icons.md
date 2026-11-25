@@ -56,3 +56,18 @@ with those of the rows around it.
 **The word stands at the row's far end** because a FlexSpace takes the room the line has over. In a
 row whose text is laid out across the row's width - a tree row, a list line - the word sits against
 the right edge. A text measured to fit its words keeps KindGap before it.
+
+## PropertiesIcon
+
+**Each row is one property: a key, and the value written against it.** An application's Properties
+command draws this icon rather than the gear: the gear is the framework's Settings mark, and a
+Properties command wearing it sends a reader to the wrong page.
+
+The keys take the accent and the values the text ink, which follows the ink rule in Color: the
+part that names the command is the accent.
+
+## SlidersIcon
+
+**Three sliders, a knob riding each, with the knobs in the accent.** A page of values draws this
+mark in its tab or its row: the track is the object and takes the text ink, and the knob is the
+part the reader moves, so it takes the accent and a halo in the surface clears the track under it.

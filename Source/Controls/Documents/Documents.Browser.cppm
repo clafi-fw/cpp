@@ -14,6 +14,7 @@ import ClaFi.Browser.Settings;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
@@ -82,16 +83,21 @@ namespace ClaFi::Documents
         {
             std::wstring id;
             std::unique_ptr<DocumentsFolder> folder;
+            bool userReadOnly{};
+            bool fromDefaults{};
+            bool inactiveDefault{};
         };
         using StorageEntries = std::vector<StorageEntry>;
     private:
         [[nodiscard]] static bool isStoragePage(const PageData&);
         [[nodiscard]] const StorageEntry* storageEntry(std::wstring_view id) const;
+        [[nodiscard]] const StorageDefault* storageDefault(const std::filesystem::path&) const;
+        [[nodiscard]] bool requiresReadOnly(const std::filesystem::path&) const;
         [[nodiscard]] std::unique_ptr<DocumentsFolder> makeStorage(
             const std::filesystem::path& path, bool readOnly, std::wstring_view name = {}) const;
-        [[nodiscard]] std::wstring addStorage(const std::filesystem::path& path, bool readOnly,
+        StorageEntry& addStorage(const std::filesystem::path& path, bool readOnly,
             std::wstring_view name);
-        void storeStorages();
+        void storeStorages(Dom::Section& config) const;
         void collectStorageTiles();
         void refreshStoragePages();
         void storageChanged(std::wstring_view selection);
