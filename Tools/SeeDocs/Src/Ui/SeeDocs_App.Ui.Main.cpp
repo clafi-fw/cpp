@@ -14,6 +14,7 @@ import ClaFi.App.ApplicationProperties;
 import ClaFi.App.Settings;
 
 import ClaFi.App.WindowApplication;
+import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -39,6 +40,12 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_openPageCaption = L"Open";
         constexpr std::wstring_view k_newProjectCaption = L"New project";
 
+        constexpr std::array k_articleElements{
+            uiElementOf(UiElement::Do).token,
+            uiElementOf(UiElement::Dont).token,
+            uiElementOf(UiElement::CodeBlock).token
+        };
+
         [[nodiscard]] MainForm* mainFormOf(FormBase& form)
         {
             FormBase& root = form.rootForm();
@@ -60,6 +67,7 @@ namespace SeeDocs_App::Ui
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"SeeDocs-v"
             },
+            .elements = k_articleElements,
             .defaultTheme = { L"Default", ClaFiApps::articleTheme() },
             .legacyThemeFileDefaults = &ClaFiApps::articleTheme(),
             .linkScheme = SurfaceBrowser::k_pageLinkScheme,

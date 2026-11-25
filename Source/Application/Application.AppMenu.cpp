@@ -10,6 +10,7 @@ import ClaFi.Diagnostic.Options;
 import ClaFi.Controls.TabbedBox;
 // PageSizing is named here, and TabbedBox does not export the module that declares it.
 import ClaFi.Controls.PageControl;
+import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Spacer;
@@ -262,7 +263,9 @@ namespace ClaFi
         // strip().add<Divider>(Thickness::Heavy, Padding{ 8.0f, 4.0f });
 
         // The strip takes a button beside its tabs the way a title bar's does.
-        addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::draw);
+        ScrollBox& information = pageControl().add<ScrollBox>(ScrollBars::Auto);
+        information.createBody<InformationPage>();
+        addPageTab(L"Information", information, Icons::InformationIcon::draw);
         addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(themes, settingsAnchor),
             Icons::GearIcon::draw);
 

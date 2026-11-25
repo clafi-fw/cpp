@@ -33,7 +33,6 @@ namespace ClaFi
         // What the check found.
         [[nodiscard]] Text statusText(const UpdateCheck&);
         [[nodiscard]] Text lastCheckText(const UpdateCheck&, std::chrono::sys_seconds now);
-        // The rest of the page - publisher, site, description, framework.
         [[nodiscard]] Text aboutText(const AppContext&);
         // Appends a plain paragraph, every web address in it made a link.
         void appendLinked(Text&, std::wstring_view paragraph);
@@ -234,6 +233,17 @@ namespace ClaFi
                 text << k_endLine;
                 text << k_endLine;
             }
+            text << StyledText{ TextStyles::SubHeading, L"Required theme elements" } << k_endLine;
+            const AppElementNames elements = context.appElements();
+            if (elements.empty())
+            {
+                text << L"Standard ClaFi elements only" << k_endLine;
+            }
+            for (const std::wstring_view name : elements)
+            {
+                text << name << k_endLine;
+            }
+            text << k_endLine;
             text << L"Built with " << LinkText{ L"https://github.com/clafi-fw/cpp", L"ClaFi Framework" };
             return text;
         }

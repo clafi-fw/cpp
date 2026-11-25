@@ -473,6 +473,9 @@ folder for each category on the way - the Content item Quick start under the cat
 `articles/Guides/Quick start.cfg`. The pages show no article yet, and nothing makes one;
 `SeeDocs_App.Articles` reads and writes the files.
 
+SeeDocs requires the `Do`, `Dont` and `CodeBlock` styles in publisher themes. A theme author
+chooses their base styles.
+
 An article is a list of blocks, each of one kind:
 
 - **Paragraph** - a paragraph of prose.
