@@ -95,8 +95,8 @@ namespace ClaFi::Documents
         [[nodiscard]] bool requiresReadOnly(const std::filesystem::path&) const;
         [[nodiscard]] std::unique_ptr<DocumentsFolder> makeStorage(
             const std::filesystem::path& path, bool readOnly, std::wstring_view name = {}) const;
-        StorageEntry& addStorage(const std::filesystem::path& path, bool readOnly,
-            std::wstring_view name);
+        StorageEntry& addStorage(BrowserSettings&, const std::filesystem::path& path,
+            bool readOnly, std::wstring_view name);
         void storeStorages(Dom::Section& config) const;
         void collectStorageTiles();
         void refreshStoragePages();
@@ -111,7 +111,6 @@ namespace ClaFi::Documents
         StorageTiles m_storageTiles{};
         std::wstring m_storageToSelect{};
         UiTimer m_storageRefresh{};
-        std::size_t m_nextStorageId{ 1 };
     };
 
     export template<IsDocumentsHomePage HomePageType, IsDocumentPage DocumentPageType>

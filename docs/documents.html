@@ -295,62 +295,66 @@
         header .manuals-link-line { margin: 0.2rem 0 0; }
     </style>
 </head>
-<
 <body>
     <nav class="sidebar">
         <div class="sidebar-header"><a href="index.html">ClaFi Manuals</a></div>
         <ul>
-            <li><div class="nav-item-wrapper"><a href="#storages">Document storages</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#application">Building a document browser</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#storages">Document storages</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#storage-ids">Storage IDs and document addresses</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#files">Working with files</a></div></li>
         </ul>
     </nav>
     <div class="page-content">
         <header><h1>Documents</h1></header>
         <main>
-<p>A document browser opens and edits one kind of file across a set of filesystem folders.</p>
-
-<h2 id="storages">Document storages</h2>
-<p>Home shows storage folders as tiles. <strong>Add storage</strong> opens a popup with editable
-<strong>Name</strong> and <strong>Location</strong> fields, a <strong>Browse</strong> button, and a
-<strong>Read-only</strong> checkbox. Name defaults to the folder name. Select a storage tile and
-press <strong>Properties</strong> to edit it. The popup opens under the button.</p>
-<p><strong>Delete</strong> asks whether to remove the storage from the application or also delete
-the folder and its contents from disk. The first option leaves the files on disk. Disk deletion is
-available for writable folders that contain no other registered storage.</p>
-<p>When application settings are enabled, the browser keeps storage names, locations, and access
-settings there.
-Each storage has its own path segment in the browser, so files with the same name open independently.
-Changing a storage's folder gives the replacement a new path segment. An open tab keeps the file it
-was opened on and can save a copy after its original storage is detached.</p>
-<p>A read-only storage supports opening documents. The browser blocks New, Rename, and Delete in
-that storage. Save falls back to Save As for read-only documents. In Save As, the destination picker
-shows each writable storage's name and location. The current storage is selected when it is writable,
-and a sole writable storage is selected automatically. OK becomes available once a storage is
-selected.</p>
-
 <h2 id="application">Building a document browser</h2>
-<p>Import <code>ClaFi.Documents</code>. Derive a <code>DocumentsFolder</code> to define the file format,
-icons, and what counts as an edited file. Keep it alive while the browser runs. Pass it to
+<p>A document browser uses one file format across a set of filesystem folders. Import
+<code>ClaFi.Documents</code> and derive a <code>DocumentsFolder</code> to define the format,
+icons, and what counts as an edited file. Keep the folder alive while the browser runs. Pass it to
 <code>DocumentsApplication::run</code> as the primary folder and format for all the browser's storages.
 The application constructor adds storage settings to the root schema.</p>
-<p>Override <code>DocumentsFolder::defaultStorages()</code> to supply additional folders at startup.
-Each <code>StorageDefault</code> has an absolute location, an optional display name, and a read-only
-flag. A read-only default locks that folder's access in Properties. The browser remembers when a user
-disconnects a default. If an application stops offering a default, its tile disappears and its saved
-tabs keep their original storage ID.</p>
 <p><code>DocumentsBrowser</code> takes the application's home-page and document-page types. Pages
 receive the format folder through <code>folder()</code> and the folder they show through
 <code>storageFolder()</code>. Custom lists can read the <code>DocumentStorageView</code> construction
 property for the folder and for the flag that identifies the main home view. On home,
 <code>StorageTilesView</code> supplies the current storage entries. Custom lists can render them with
 <code>addStorageTile</code> and implement <code>IDocumentTiles::rebuild</code> to refresh them after a
-change. A custom browser can use <code>documentPath</code> to get a browser path from a storage and a
-filename.</p>
+change.</p>
+
+<h2 id="storages">Document storages</h2>
+<p>Override <code>DocumentsFolder::defaultStorages()</code> to supply additional folders at startup.
+Each <code>StorageDefault</code> has an absolute location, an optional display name, and a
+<code>readOnly</code> flag. The folder name supplies the display name when none is specified.
+Setting <code>readOnly</code> enforces read-only access even if application settings request write
+access. The browser remembers disconnected defaults across runs.</p>
+<p>Disconnecting a storage leaves its files on disk. Read-only and disconnected storages are
+excluded from <code>DocumentsBrowserBase::writableStorages()</code>, which supplies the destinations
+for saving a copy. The browser also prevents deleting a storage directory that contains another
+registered, available storage.</p>
+
+<h3 id="storage-ids">Storage IDs and document addresses</h3>
+<p>The first segment of a document's browser address identifies its storage. The primary folder
+uses <code>Storage1</code>, and each added folder takes the first free numbered ID. If the Reports
+folder has ID <code>Storage2</code>, <code>browser.documentPath(reports, L"Report.gsps")</code>
+returns <code>/Storage2/Report.gsps</code> for navigation. Use <code>reports.fileOf(L"Report.gsps")</code>
+to obtain the filesystem path for I/O.</p>
+<p>With application settings enabled, the Reports entry in <code>DocumentStorages</code> stores
+<code>Id=Storage2</code> alongside its filesystem <code>Location</code>. In <code>OpenTabs</code>,
+a tab displaying the file has its own ID, for example <code>Id=Tab1</code>, and a
+<code>Path=/Storage2/Report.gsps</code>. To restore the tab, the browser resolves
+<code>Storage2</code> to the registered folder and looks up <code>Report.gsps</code> there.
+Back and Forward history keep the same address in each visit's <code>Url</code> field.</p>
+<p>Changing a storage's display name preserves its ID. Replacing its location assigns a new ID.
+A tab or history entry that refers to the disconnected storage reserves the old ID, so its address
+continues to identify the original storage.</p>
 
 <h2 id="files">Working with files</h2>
-<p><strong>New</strong> opens a menu when the folder offers several templates. Choosing a template
-creates the file. With one template, New uses it directly. With none, New creates an empty file.</p>
+<p>Populate <code>DocumentsFolder::templates()</code> with a <code>DocumentTemplate</code> for each
+kind of starting document the application supplies. The browser uses a sole template directly and
+offers a choice when several are registered. To create a file programmatically, call
+<code>storage.createFile(&amp;documentTemplate)</code> for that template or <code>storage.createFile()</code>
+for an empty file. Both calls return the new filename on success and an empty string on failure.</p>
 <p>Use <code>DocumentsFolder::saveDocument</code>, <code>createFile</code>, <code>renameFile</code>,
 and <code>deleteFile</code> for browser commands. These functions enforce a storage's access setting.
 <code>canWriteFile</code> also checks the file's location and rejects symbolic links. The virtual

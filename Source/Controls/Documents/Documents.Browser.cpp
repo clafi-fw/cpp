@@ -57,13 +57,12 @@ namespace ClaFi::Documents
 
     namespace
     {
-        constexpr std::wstring_view k_storagePrefix = L"storage-";
-        constexpr std::wstring_view k_primaryStorageId = L"storage-primary";
+        constexpr std::wstring_view k_storagePrefix = L"Storage";
+        constexpr std::wstring_view k_primaryStorageId = L"Storage1";
         constexpr std::wstring_view k_storages = L"DocumentStorages";
         constexpr std::wstring_view k_primaryRemoved = L"PrimaryStorageRemoved";
         constexpr std::wstring_view k_primaryReadOnly = L"PrimaryStorageReadOnly";
         constexpr std::wstring_view k_primaryName = L"PrimaryStorageName";
-        constexpr std::wstring_view k_nextStorage = L"NextDocumentStorageId";
         constexpr std::wstring_view k_name = L"Name";
         constexpr std::wstring_view k_location = L"Location";
         constexpr std::wstring_view k_readOnly = L"ReadOnly";
@@ -459,19 +458,58 @@ namespace ClaFi::Documents
             return left == right || std::filesystem::equivalent(left, right, error);
         }
 
-        [[nodiscard]] bool isStorageId(const std::wstring_view id)
+        [[nodiscard]] bool isStorageId(std::wstring_view id)
         {
-            if (id == k_primaryStorageId)
+            constexpr std::wstring_view legacyPrefix = L"storage-";
+            if (id.starts_with(k_storagePrefix))
             {
-                return true;
+                id.remove_prefix(k_storagePrefix.size());
             }
-            if (!id.starts_with(k_storagePrefix) || id.size() == k_storagePrefix.size())
+            else if (id.starts_with(legacyPrefix))
+            {
+                id.remove_prefix(legacyPrefix.size());
+            }
+            else
             {
                 return false;
             }
-            return std::ranges::all_of(id.substr(k_storagePrefix.size()), [](const wchar_t digit) {
+            return !id.empty() && std::ranges::all_of(id, [](const wchar_t digit) {
                 return digit >= L'0' && digit <= L'9';
             });
+        }
+
+        [[nodiscard]] bool savedTabsUseStorage(BrowserSettings& settings, const std::wstring_view id)
+        {
+            const std::wstring storagePath = pagePathOfDocument(id);
+            const auto usesStorage = [&storagePath](const std::wstring& spelling) {
+                const std::optional<Url> url = Url::Parse(spelling);
+                if (!url)
+                {
+                    return false;
+                }
+                const std::wstring_view path = url->path();
+                return path.substr(0, path.find(L'/', 1)) == storagePath;
+            };
+            for (const Dom::Section& tab : settings.openTabs())
+            {
+                if (usesStorage((tab / ConfigNames::Path).get<std::wstring>()))
+                {
+                    return true;
+                }
+                const Dom::Section& config =
+                    settings.tabConfig((tab / ConfigNames::Id).get<std::wstring>());
+                for (const std::wstring_view history : { ConfigNames::BackVisits, ConfigNames::ForwardVisits })
+                {
+                    for (const Dom::Section& visit : (config / history).as<VisitEntries>())
+                    {
+                        if (usesStorage((visit / ConfigNames::Url).get<std::wstring>()))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
         }
     }
 
@@ -504,7 +542,6 @@ namespace ClaFi::Documents
             {
                 m_storages.front().folder->detach();
             }
-            m_nextStorageId = (config / k_nextStorage).get<std::size_t>();
             for (const Dom::Section& entry : stored->as<StorageSettings>())
             {
                 std::wstring id = (entry / ConfigNames::Id).get<std::wstring>();
@@ -552,7 +589,7 @@ namespace ClaFi::Documents
             {
                 continue;
             }
-            addStorage(storage.location, false, {}).fromDefaults = true;
+            addStorage(settings, storage.location, false, {}).fromDefaults = true;
             addedDefaults = true;
         }
         if (addedDefaults)
@@ -573,7 +610,6 @@ namespace ClaFi::Documents
             Value{ k_primaryRemoved, false },
             Value{ k_primaryReadOnly, false },
             Value{ k_primaryName, L"" },
-            Value{ k_nextStorage, std::size_t{ 1 } },
             Sequence{
                 k_storages,
                 Section{
@@ -668,7 +704,8 @@ namespace ClaFi::Documents
             storageChanged({});
             return;
         }
-        const std::wstring id = addStorage(dialog.location(), dialog.userReadOnly(), dialog.customName()).id;
+        const std::wstring id = addStorage(settings(), dialog.location(),
+            dialog.userReadOnly(), dialog.customName()).id;
         if (storage)
         {
             storage->detach();
@@ -714,6 +751,11 @@ namespace ClaFi::Documents
         if (path == ConfigNames::HomePath)
         {
             return std::wstring{};
+        }
+        constexpr std::wstring_view legacyPrimaryPath = L"/storage-primary";
+        if (path.substr(0, path.find(L'/', 1)) == legacyPrimaryPath)
+        {
+            return pagePathOfDocument(k_primaryStorageId).append(path.substr(legacyPrimaryPath.size()));
         }
         if (path.starts_with(ConfigNames::HomePath)
             && path.find(L'/', ConfigNames::HomePath.size()) == std::wstring_view::npos
@@ -1038,15 +1080,16 @@ namespace ClaFi::Documents
         return storage;
     }
 
-    DocumentsBrowserBase::StorageEntry& DocumentsBrowserBase::addStorage(const std::filesystem::path& path,
-        const bool readOnly, const std::wstring_view name)
+    DocumentsBrowserBase::StorageEntry& DocumentsBrowserBase::addStorage(BrowserSettings& settings,
+        const std::filesystem::path& path, const bool readOnly, const std::wstring_view name)
     {
+        std::size_t number = 0;
         std::wstring id{};
         do
         {
-            id.assign(k_storagePrefix).append(std::to_wstring(m_nextStorageId++));
+            id.assign(k_storagePrefix).append(std::to_wstring(++number));
         }
-        while (storageEntry(id));
+        while (storageEntry(id) || homePageData().findSubItem(id) || savedTabsUseStorage(settings, id));
         return m_storages.emplace_back(StorageEntry{
             .id = std::move(id),
             .folder = makeStorage(path, readOnly, name),
@@ -1065,7 +1108,6 @@ namespace ClaFi::Documents
         (config / k_primaryRemoved).set(!primary.available());
         (config / k_primaryReadOnly).set(m_storages.front().userReadOnly);
         (config / k_primaryName).set(primary.customName());
-        (config / k_nextStorage).set(m_nextStorageId);
         StorageSettings& entries = stored->as<StorageSettings>();
         entries.clear();
         for (const StorageEntry& entry : m_storages)
