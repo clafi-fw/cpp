@@ -297,12 +297,12 @@ namespace SeeDocs_App::Ui
         // The row's hint cell opens on the comment's words and writes them back.
         void connectHintCell(Grids::Row&, const TableRow&, TagValue hintColumn);
         // The row's menu edits its footnote, or adds one where it has none.
-        void connectRowMenu(Grids::Row&, const TableRow&, StackPanel& notes);
+        void connectRowMenu(Grids::Row&, const TableRow&, const TableGroup&, StackPanel& notes);
         // The box takes edits where the page has a writer and the hint a comment to write into.
         void connectHintBox(HintBox&, const std::optional<CommentSite>&);
         FootnoteSlot& addFootnoteSlot(StackPanel& holder, PageFootnote, Padding);
         void editFootnote(const PageFootnote&) const;
-        void addFootnote(const TableRow&, StackPanel& notes);
+        void addFootnote(const TableRow&, const TableGroup&, StackPanel& notes);
         [[nodiscard]] const PageFootnote* footnoteOf(const TableRow&) const;
         // The anchor of the footnote showing the section in full; empty where none has one.
         [[nodiscard]] std::wstring shownAnchorOf(const Reference&) const;

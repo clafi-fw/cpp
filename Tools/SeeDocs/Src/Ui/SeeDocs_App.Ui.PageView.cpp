@@ -199,6 +199,7 @@ namespace SeeDocs_App::Ui
         {
             to.label = std::move(from.label);
             to.tooltip = std::move(from.tooltip);
+            to.footnoteHome = std::move(from.footnoteHome);
             for (std::size_t i = 0; i != to.rows.size(); ++i)
                 to.rows[i] = std::move(from.rows[i]);
             for (std::size_t i = 0; i != to.groups.size(); ++i)
@@ -1260,7 +1261,9 @@ namespace SeeDocs_App::Ui
                     connectHintCell(gridRow, row, editedColumn);
                 }
                 if (table.takesFootnotes)
-                    connectRowMenu(gridRow, row, notes);
+                {
+                    connectRowMenu(gridRow, row, group, notes);
+                }
             }
         }
         for (const TableGroup& nested : group.groups)
@@ -1471,16 +1474,19 @@ namespace SeeDocs_App::Ui
 
     // The row is the subject of its menu, so the commands are claimed and answered here; each
     // edit waits for the menu to close over the row.
-    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row, StackPanel& notes)
+    void PageView::connectRowMenu(Grids::Row& gridRow, const TableRow& row,
+        const TableGroup& group, StackPanel& notes)
     {
         gridRow.onGetActionState([this, &row](GetActionStateEvent& event) {
             const bool written = footnoteOf(row) != nullptr;
             if (&event.action == &Actions::editFootnote && written)
                 event.claim({});
             else if (&event.action == &Actions::addFootnote && !written)
+            {
                 event.claim({ .enabled = canAddFootnote(row) });
+            }
         });
-        gridRow.onActionClick([this, &row, &notes](ActionClickEvent& event) {
+        gridRow.onActionClick([this, &row, &group, &notes](ActionClickEvent& event) {
             if (&event.action == &Actions::editFootnote)
             {
                 const PageFootnote* footnote = footnoteOf(row);
@@ -1493,8 +1499,8 @@ namespace SeeDocs_App::Ui
             }
             else if (&event.action == &Actions::addFootnote)
             {
-                later([this, &row, &notes]() {
-                    addFootnote(row, notes);
+                later([this, &row, &group, &notes]() {
+                    addFootnote(row, group, notes);
                 });
             }
         });
@@ -1576,10 +1582,12 @@ namespace SeeDocs_App::Ui
 
     // **A footnote not written yet stands under the table** only while its editor does: written,
     // the page is built again with it; left, its slot goes.
-    void PageView::addFootnote(const TableRow& row, StackPanel& notes)
+    void PageView::addFootnote(const TableRow& row, const TableGroup& group, StackPanel& notes)
     {
         if (!canAddFootnote(row))
+        {
             return;
+        }
         FootnoteSlot* slot;
         if (const auto found = m_newFootnotes.find(&row); found != m_newFootnotes.end())
         {
@@ -1594,7 +1602,8 @@ namespace SeeDocs_App::Ui
         if (slot->editing())
             return;
         slot->setVisible(true);
-        slot->edit(*m_writer, m_writer->draftFootnote(*row.site, *m_page.footnoteHome));
+        const FootnoteHome& home = group.footnoteHome ? *group.footnoteHome : *m_page.footnoteHome;
+        slot->edit(*m_writer, m_writer->draftFootnote(*row.site, home));
     }
 
     auto PageView::footnoteOf(const TableRow& row) const -> const PageFootnote*

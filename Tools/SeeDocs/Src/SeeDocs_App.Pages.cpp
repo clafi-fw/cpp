@@ -2256,28 +2256,40 @@ namespace SeeDocs_App
             }
         }
 
-        void addFields(Page& page, const Surface& surface, Notes& notes, const Type& type)
+        [[nodiscard]] TableGroup fieldGroup(const Surface& surface, Notes& notes,
+            const Type& owner, const bool inherited)
         {
-            if (type.fields.empty())
-                return;
             TableGroup group;
-            for (const Field& field : type.fields)
+            for (const Field& field : owner.fields)
             {
+                if (inherited && field.access == Access::Private)
+                {
+                    continue;
+                }
                 group.rows.push_back({
                     .cells = { { code(field.name) },
-                        { typeRun(surface, field.type, type.qualifiedName) },
+                        { typeRun(surface, field.type, owner.qualifiedName) },
                         valueCell(field.value),
-                        hintRuns(surface, field.comment, type.qualifiedName) },
-                    .excerpt = memberExcerpt(surface, notes, field.comment, field.name, type),
+                        hintRuns(surface, field.comment, owner.qualifiedName) },
+                    .excerpt = memberExcerpt(surface, notes, field.comment, field.name, owner),
                     .site = siteOf(field.comment, field.place, field.name),
                     .anchor = field.name
                 });
             }
-            TableGroups groups;
-            groups.push_back(std::move(group));
-            Section& section = addTableSection(page, L"Fields", Columns::Fields,
-                std::move(groups));
-            section.table.takesFootnotes = true;
+            if (inherited && !group.rows.empty())
+            {
+                group.footnoteHome = typeFootnoteHome(surface, notes, owner);
+            }
+            return group;
+        }
+
+        void addFields(Page& page, const Surface& surface, Notes& notes, const Type& type,
+            const ReachedBases& bases)
+        {
+            addMemberSection(page, L"Fields", Columns::Fields, type, bases,
+                [&](const Type& owner, const ReachedBase* reached) {
+                    return fieldGroup(surface, notes, owner, reached != nullptr);
+                }, true);
         }
 
         void addMembers(Page& page, const Surface& surface, Notes& notes, const Type& type)
@@ -3932,13 +3944,13 @@ namespace SeeDocs_App
         addEvents(page, surface, notes, type, bases);
         if (leadsWithFields(type))
         {
-            addFields(page, surface, notes, type);
+            addFields(page, surface, notes, type, bases);
             addMethods(page, surface, type, bases);
         }
         else
         {
             addMethods(page, surface, type, bases);
-            addFields(page, surface, notes, type);
+            addFields(page, surface, notes, type, bases);
         }
         addMembers(page, surface, notes, type);
         addPropertyOf(page, surface, derived, type);

@@ -159,6 +159,13 @@ namespace SeeDocs_App
 
     export using TableRows = std::vector<TableRow>;
 
+    export struct FootnoteHome
+    {
+        std::wstring note;
+        std::wstring after;   // an anchor; empty for the note's end
+        std::wstring owner;   // the declaring type; empty on a folder's or a module's page
+    };
+
     // Where a group's label stands: over its rows, or beside them in the table's group column.
     export enum class LabelPlacement
     {
@@ -175,6 +182,7 @@ namespace SeeDocs_App
         std::optional<PageKind> pageKind;   // the kind of page the label opens, which marks it
         // The type whose members the rows are, as the label spells it; empty for the page's own.
         std::wstring owner;
+        std::optional<FootnoteHome> footnoteHome;   // where new notes for inherited rows belong
         LabelPlacement placement{ LabelPlacement::Above };
         bool folded{ false };   // the rows start folded away under the label
         TableRows rows;
@@ -259,15 +267,6 @@ namespace SeeDocs_App
     };
 
     export using BaseNodes = std::vector<BaseNode>;
-
-    // Where a footnote written new for a declaration on a page goes: a note, the section it
-    // follows, and the name a heading that would repeat another's takes in front.
-    export struct FootnoteHome
-    {
-        std::wstring note;
-        std::wstring after;   // an anchor; empty for the note's end
-        std::wstring owner;   // the type the page is about; empty on a folder's or a module's
-    };
 
     export struct Page
     {

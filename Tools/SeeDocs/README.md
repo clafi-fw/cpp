@@ -968,10 +968,11 @@ after a colon.
 A type's page holds, in this order:
 
 - **Derived types**, a tree. A row of it opens the type it names.
-- **A grid per member kind** - properties, events, public methods and protected methods. The type's
-  own stand under an Own expander, and each base's under a From expander of its own, up the whole
-  chain of bases.
-- **Fields or members.** A struct's or a union's fields stand ahead of its methods.
+- **A grid per member kind** - properties, events, public methods, protected methods and fields.
+  Each base that contributes declarations has a From group. When a grid also has declarations
+  from the type itself, they appear first under Own.
+- A struct's or a union's fields stand ahead of its methods. An enum lists its members in
+  declaration order.
 - Each row of these grids carries its hint.
 - **The types using it** - the types with a property of this type and the types with an event of it,
   two trees. Each type has the types derived from it under it, closed.
@@ -1086,8 +1087,9 @@ writes them into the sources, in either hints format, in C++ and in Delphi alike
   keeps its lines, and any other is broken at 100 columns again. Escape or Cancel leaves it.
 - **Add footnote.** The row of a property, an event, a field or a member with no footnote offers Add
   footnote on its menu. The footnote goes after the type's own section in its note, or at the end of
-  the folder's note, headed by the type's name and the member's. It is found by that heading, and
-  the source is left as it is.
+  the folder's note, headed by the type's name and the member's. An inherited field uses the note
+  and heading of the type that declares it. SeeDocs finds the footnote by that heading without
+  editing the source.
 - **A folder's note** is the one its declarations cite the most, through the `See` of their
   comments. Where they cite none, it is the one named after the folder's own name - `Y-Base` for
   `Controls/Y-Base` - and the root's is `Home`. The folder of footnotes and the note are made with
