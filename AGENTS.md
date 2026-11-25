@@ -18,6 +18,10 @@ that footnote. Author notes belong in the file of the same name
 under `Source/Working Notes`. Build `SeeDocsCli` from `Tools/SeeDocs` and run `SeeDocsCli check`
 from the SeeDocs project folder to check the declarations and their footnote references.
 
+## Making UI
+
+Read the [making-ui skill](.agents/skills/making-ui/SKILL.md) when building or reviewing a ClaFi UI.
+
 ## Tooltip copy
 
 A tooltip on a control the user acts on, in the framework's own interfaces and its first-party apps,

@@ -9,13 +9,18 @@ namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
 
-    // A file could not be written, and stands as it was. The writer has an Event of its own.
+    export struct WriteFailure
+    {
+        std::filesystem::path file;
+        std::wstring reason;
+    };
+
     export class WriteFailedEvent : public ::ClaFi::Event
     {
     public:
-        explicit WriteFailedEvent(std::filesystem::path);
+        explicit WriteFailedEvent(WriteFailure);
     public:
-        const std::filesystem::path file;
+        const WriteFailure failure;
     };
 
     // Writes a file's content to the path it is handed; false where it could not.
@@ -45,10 +50,10 @@ namespace SeeDocs_App::Ui
             FileContent content;
         };
         using Jobs = std::deque<Job>;
-        using Files = std::vector<std::filesystem::path>;
+        using Failures = std::vector<WriteFailure>;
     private:
         void run();
-        [[nodiscard]] static bool writeWhole(const Job&);
+        [[nodiscard]] static std::wstring writeWhole(const Job&);
         void deliver();   // the failures the thread left, told on the UI thread
     private:
         static constexpr std::wstring_view k_writingSuffix = L".writing";
@@ -57,7 +62,7 @@ namespace SeeDocs_App::Ui
         Jobs m_jobs{};
         bool m_writing{ false };
         bool m_ending{ false };
-        Files m_failed{};
+        Failures m_failed{};
         UiTimer m_failedTimer{};
         std::thread m_thread{};   // started once every member it reaches stands
     };

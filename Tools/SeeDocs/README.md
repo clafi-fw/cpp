@@ -458,9 +458,10 @@ follow it to disk:
   once whole, so a write cut short leaves the file as it was.
 - **Reads wait for the writes**: opening a project, and the scan that reads the cache. Closing
   SeeDocs waits for them too, once the window is down.
-- **A database that could not be written** puts up a notice naming the file, with Try again. The
-  pages keep the last scan, and the file holds the one before it until a write succeeds. A scan
-  cache that could not be written costs the next scan its speed, and says nothing.
+- **A database that could not be written** puts up a notice with the target path and the error.
+  The path opens the file, or links its existing folder if the file is missing. A system error
+  includes its message and code. Try again saves the scan shown on screen.
+  If the scan cache cannot be written, the next scan reads the sources again.
 
 A hint edited on a page is saved the same way. SeeDocsCli writes the database itself, before it
 ends.

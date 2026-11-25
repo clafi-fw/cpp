@@ -126,7 +126,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] Surface scan(const Project&);
         void saveDatabase(OpenProject&);   // as its surface stands, on the writer's thread
         // Puts up a notice where the file is an open project's database, Try again its answer.
-        void noteUnwritten(const std::filesystem::path& file);
+        void noteUnwritten(const WriteFailure&);
         void remember(const Project&);   // first among the recent, and among those open
         void forget(const std::filesystem::path& folder);
         [[nodiscard]] Names storedRecent() const;

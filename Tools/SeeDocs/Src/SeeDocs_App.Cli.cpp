@@ -157,9 +157,13 @@ namespace SeeDocs_App
             const Surface surface = scanSources(project.sourceFolders(), project.mode,
                 project.hints, timedSteps);
             const Database database{ surface, timedSteps };
-            if (!database.save(output))
+            try
             {
-                print(L"The database could not be written to " + output.wstring() + L"\n");
+                database.saveOrThrow(output);
+            }
+            catch (const std::exception& error)
+            {
+                print(output.wstring() + L" - " + fromUtf8(error.what()) + L"\n");
                 return k_failed;
             }
             print(std::to_wstring(classCount(surface)) + L" classes, "

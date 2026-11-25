@@ -24,9 +24,9 @@ namespace SeeDocs_App
         // Builds the document; the steps, where a list is handed in, time it, a save and a read.
         explicit Database(const Surface&, ScanSteps* steps = nullptr);
         ~Database();
-        // Writes the document to the file, whole, replacing whatever stood there; false where
-        // the file could not be written.
+        // Writes the document and checks that the file closes successfully.
         [[nodiscard]] bool save(const std::filesystem::path&) const;
+        void saveOrThrow(const std::filesystem::path&) const;
         [[nodiscard]] Surface surface() const;   // what a reader of the saved file is given
     private:
         ScanSteps* m_steps;

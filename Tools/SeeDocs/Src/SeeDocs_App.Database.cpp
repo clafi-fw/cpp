@@ -1068,11 +1068,23 @@ namespace SeeDocs_App
 
     bool Database::save(const std::filesystem::path& path) const
     {
+        try
+        {
+            saveOrThrow(path);
+            return true;
+        }
+        catch (const std::ios_base::failure&)
+        {
+            return false;
+        }
+    }
+
+    void Database::saveOrThrow(const std::filesystem::path& path) const
+    {
         StepClock clock{ m_steps };
         const Dom::FileFormat::ClaFi format{};
-        const bool written = format.saveSectionToFile(*m_root, path);
+        format.saveSectionToFileOrThrow(*m_root, path);
         clock.lap(Steps::SaveDatabase);
-        return written;
     }
 
     Surface Database::surface() const

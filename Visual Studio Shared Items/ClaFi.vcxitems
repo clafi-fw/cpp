@@ -256,6 +256,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-MultiTypeSequence.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Section.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Document.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Document.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Control.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Control.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Foundation\Action.cpp" />

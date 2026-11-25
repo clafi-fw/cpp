@@ -26,6 +26,13 @@ namespace ClaFi::Controls
         invalidateFormAlign();
     }
 
+    // The icon and answers take their share before the message wraps.
+    ScaledSize MessageBar::measureText(AlignEvent& event, const ScaledSize maxDimensions,
+        const Text& text)
+    {
+        return SplitButtonBase::measureText(event, maxDimensions, text);
+    }
+
     // **The answers are laid out in the box the band placed them in.** SplitButtonBase places its
     // part without aligning it, and this part is a stack holding a button per answer.
     void MessageBar::alignContent(AlignEvent& event, const ScaledPosition position,

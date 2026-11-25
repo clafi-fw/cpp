@@ -1393,6 +1393,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Document.cppm">
       <Filter>Y_Core\Dom</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Document.cpp">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine_Dt.cppm">
       <Filter>Y_Core\Dom</Filter>
     </ClCompile>

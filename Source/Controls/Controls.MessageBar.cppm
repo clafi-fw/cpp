@@ -17,7 +17,7 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls
 {
     // A question about what a page shows, standing in the page as a band. See Controls#messagebar
-    export class MessageBar : public SplitButtonBase
+    export class MessageBar : public WithTextLayout<SplitButtonBase>
     {
     public:
         template<typename... Args>
@@ -30,6 +30,7 @@ namespace ClaFi::Controls
         template<typename Handler, typename... Args>
         Button& addAnswer(std::wstring_view caption, Handler&& onClick, Args&&... args);
     protected:
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void drawIcon(DrawIconEvent&) override;
@@ -50,7 +51,7 @@ namespace ClaFi::Controls
     template<typename... Args>
     MessageBar::MessageBar(const CreateParams& params, Args&&... args)
         :
-        SplitButtonBase{
+        WithTextLayout<SplitButtonBase>{
             params,
             UiElement::InfoCallout,
             WordWrap::Yes,

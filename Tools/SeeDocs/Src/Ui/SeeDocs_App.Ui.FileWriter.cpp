@@ -3,6 +3,7 @@ module SeeDocs_App.Ui.FileWriter;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -10,10 +11,10 @@ namespace SeeDocs_App::Ui
 {
     // WriteFailedEvent
 
-    WriteFailedEvent::WriteFailedEvent(std::filesystem::path failed)
+    WriteFailedEvent::WriteFailedEvent(WriteFailure failed)
         :
         ::ClaFi::Event{},
-        file{ std::move(failed) }
+        failure{ std::move(failed) }
     {
     }
 
@@ -73,53 +74,68 @@ namespace SeeDocs_App::Ui
             m_jobs.pop_front();
             m_writing = true;
             lock.unlock();
-            const bool written = writeWhole(job);
+            std::wstring reason = writeWhole(job);
+            const bool failed = !reason.empty();
             job.content = nullptr;
             lock.lock();
             m_writing = false;
-            if (!written)
-                m_failed.push_back(std::move(job.file));
+            if (failed)
+                m_failed.push_back({ std::move(job.file), std::move(reason) });
             lock.unlock();
             m_changed.notify_all();
-            if (!written)
+            if (failed)
                 m_failedTimer.start(MilliSeconds{ 0u });
         }
     }
 
     // **Written beside the file and renamed over it**, so that a write cut short leaves the file
     // as it was.
-    bool FileWriter::writeWhole(const Job& job)
+    std::wstring FileWriter::writeWhole(const Job& job)
     {
         std::filesystem::path beside = job.file;
         beside += k_writingSuffix;
-        bool written = false;
+        std::wstring reason;
         try
         {
-            written = job.content(beside);
+            if (job.content(beside))
+            {
+                std::filesystem::rename(beside, job.file);
+                return {};
+            }
+            reason = L"Could not write " + beside.filename().wstring() + L".";
+        }
+        catch (const std::system_error& error)
+        {
+            const std::error_code code = error.code();
+            reason = std::format(L"{} ({} {})", fromUtf8(code.message()),
+                fromUtf8(code.category().name()), code.value());
+        }
+        catch (const std::exception& error)
+        {
+            reason = std::format(L"Saving {}: {}", beside.filename().wstring(),
+                fromUtf8(error.what()));
         }
         catch (...)
         {
-            written = false;
+            reason = L"An unknown error occurred while writing " + beside.filename().wstring()
+                + L".";
         }
-        std::error_code error;
-        if (written)
-            std::filesystem::rename(beside, job.file, error);
-        if (written && !error)
-            return true;
-        std::filesystem::remove(beside, error);
-        return false;
+        std::error_code cleanup;
+        if (std::filesystem::is_regular_file(std::filesystem::symlink_status(beside, cleanup)))
+            std::filesystem::remove(beside, cleanup);
+        return reason;
     }
 
     void FileWriter::deliver()
     {
-        Files failed;
+        Failures failed;
         {
             std::lock_guard<std::mutex> lock{ m_mutex };
             failed.swap(m_failed);
         }
-        for (std::filesystem::path& file : failed)
+        for (WriteFailure& failure : failed)
         {
-            WriteFailedEvent event{ std::move(file) };
+            WriteFailedEvent event{ std::move(failure) };
             emitEvent(event);
         }
     }

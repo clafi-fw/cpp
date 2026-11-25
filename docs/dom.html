@@ -1083,6 +1083,7 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
             </div>
 
             <h2 id="custom-format">Implementing a Custom File Format</h2>
+            <p><code>FileFormatBase::saveSectionToFileOrThrow(section, path)</code> writes the section as UTF-8 and checks that the file closes successfully. An open, write or close failure throws <code>std::ios_base::failure</code>. Its <code>what()</code> names the operation and its <code>code()</code> carries the file error. <code>saveSectionToFile(section, path)</code> returns <code>false</code> for these failures.</p>
             <p>To integrate another parser, define a class that derives from <code>FileFormatBase</code>. The example below uses C++20 modules and the <code>nlohmann/json</code> library to read and write configurations.</p>
 
             <h3 id="json-implementation">Implementation (ThisApp.DomFormats.JsonNlohmann)</h3>

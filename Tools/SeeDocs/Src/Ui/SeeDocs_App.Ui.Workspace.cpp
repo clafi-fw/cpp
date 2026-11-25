@@ -18,6 +18,7 @@ import ClaFi.App.WindowApplication;
 import ClaFi.App.Notices;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
@@ -28,7 +29,6 @@ import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
-import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
@@ -70,7 +70,8 @@ namespace SeeDocs_App::Ui
         void writeDatabaseLater(FileWriter& writer, const Project& project, DatabasePtr database)
         {
             writer.write(project.databasePath(), [database](const std::filesystem::path& file) {
-                return database->save(file);
+                database->saveOrThrow(file);
+                return true;
             });
         }
 
@@ -112,12 +113,28 @@ namespace SeeDocs_App::Ui
             return {};
         }
 
-        // A path as a paragraph of its own, indented and in spot ink, the way a question names a
-        // folder. The indent is in effect after it until the words after it state another.
-        void writeFolder(Text& text, const std::filesystem::path& folder)
+        // A missing target leaves its existing parent clickable.
+        [[nodiscard]] Text linkedPath(AppContext& context, const std::filesystem::path& path)
+        {
+            const std::wstring caption = path.wstring();
+            std::filesystem::path existing = path;
+            std::error_code error;
+            while (!std::filesystem::exists(existing, error))
+            {
+                const std::filesystem::path parent = existing.parent_path();
+                if (parent.empty() || parent == existing)
+                    return Text{ caption };
+                existing = parent;
+            }
+            Text result = context.fileLink(existing);
+            result << std::wstring_view{ caption }.substr(existing.wstring().size());
+            return result;
+        }
+
+        void writeFolder(Text& text, AppContext& context, const std::filesystem::path& folder)
         {
             text << VSpace{ 8.0f } << k_endLine;
-            text << TextIndent{ 12.0f } << ColoredText{ InkWell::spotInk(), folder.wstring() };
+            text << TextIndent{ 12.0f } << linkedPath(context, folder);
         }
     }
 
@@ -179,7 +196,7 @@ namespace SeeDocs_App::Ui
             setSidebar(event.project, std::move(event.items), event.renamedItem);
         });
         m_writeFailed = m_writer.onWriteFailed([this](WriteFailedEvent& event) {
-            noteUnwritten(event.file);
+            noteUnwritten(event.failure);
         });
     }
 
@@ -242,7 +259,7 @@ namespace SeeDocs_App::Ui
             forget(folder);
             Text message;
             message << L"There is no such folder any more:";
-            writeFolder(message, folder);
+            writeFolder(message, m_form.appContext(), folder);
             refuse(L"Folder not found", message);
             return false;
         }
@@ -581,7 +598,7 @@ namespace SeeDocs_App::Ui
     {
         Text message;
         message << L"No project is stored in this folder:";
-        writeFolder(message, folder);
+        writeFolder(message, m_form.appContext(), folder);
         message << k_endLine << TextIndent{ 0.0f } << k_endLine;
         message << L"Make a new project that reads it? The project is "
             L"stored in a folder of its own, wherever you choose, and the sources are left as "
@@ -653,8 +670,9 @@ namespace SeeDocs_App::Ui
     }
 
     // A cache that could not be written costs the next scan its speed, and says nothing.
-    void Workspace::noteUnwritten(const std::filesystem::path& file)
+    void Workspace::noteUnwritten(const WriteFailure& failure)
     {
+        const std::filesystem::path& file = failure.file;
         const Projects::iterator found = std::ranges::find_if(m_projects,
             [&file](const std::unique_ptr<OpenProject>& open) {
                 return open->project.databasePath() == file;
@@ -663,12 +681,13 @@ namespace SeeDocs_App::Ui
             return;
         OpenProject& open = **found;
         Text message;
-        message << L"The database could not be written to ";
-        message << ColoredText{ InkWell::spotInk(), file.wstring() };
-        message << L". The pages show the last scan, and the file holds the one before it.";
+        message << L"Target: " << StyledText{ TextStyles::Code, linkedPath(m_form.appContext(), file) }
+            << L'\n';
+        message << L"Error: " << StyledText{ TextStyles::Code, failure.reason } << L'\n';
+        message << ItalicText{ L"Your latest scan is still open in memory." };
         open.unwritten = notices().post(Notice{
             .icon = MessageIcon::Error,
-            .title = L"Save database: " + open.project.name,
+            .title = L"Couldn't save " + open.project.name,
             .message = std::move(message),
             .answers = {
                 NoticeAnswer{

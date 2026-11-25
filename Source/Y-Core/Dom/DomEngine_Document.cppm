@@ -20,6 +20,8 @@ namespace ClaFi::Dom
         virtual void saveSectionToStream(const Section&, std::wostream&) const = 0;
         // Answers whether the file was written whole.
         bool saveSectionToFile(const Section&, const std::filesystem::path&) const;
+        // Throws on failure with the operation and its error code.
+        void saveSectionToFileOrThrow(const Section&, const std::filesystem::path&) const;
         // Answers whether there was a file to read.
         bool loadSectionFromFile(Section&, const std::filesystem::path&) const;
     };
@@ -100,29 +102,6 @@ namespace ClaFi::Dom
 namespace ClaFi::Dom
 {
     // --- DocumentBase ---
-
-    bool FileFormatBase::saveSectionToFile(const Section& section, const std::filesystem::path& filePath) const
-    {
-        auto directory = filePath.parent_path();
-        if (!std::filesystem::exists(directory))
-        {
-            std::filesystem::create_directories(directory);
-        }
-        // The document is built as text and encoded once, at the edge. A wide file stream would
-        // narrow through the stream's locale instead, and the default locale answers the first
-        // character above 0x7F by failing - which stops the write and leaves the file short of
-        // the theme it was asked to save.
-        std::wstringstream text;
-        writeHeader(text);
-        saveSectionToStream(section, text);
-
-        // Text mode, so a line ends the way the platform ends one. No byte of a multi-byte
-        // UTF-8 sequence is 0x0A, so that translation cannot reach inside a character.
-        const std::string utf8 = toUtf8(text.str());
-        std::ofstream file{ filePath };
-        file.write(utf8.data(), static_cast<std::streamsize>(utf8.size()));
-        return file.good();
-    }
 
     bool FileFormatBase::loadSectionFromFile(Section& section, const std::filesystem::path& path) const
     {
