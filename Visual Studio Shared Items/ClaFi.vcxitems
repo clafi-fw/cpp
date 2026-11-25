@@ -371,6 +371,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.CommandRun.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.CommandRun.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.CommandRun.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.TextFile.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Url.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Url.cppm" />

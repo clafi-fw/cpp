@@ -5,6 +5,10 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Documents
 {
+#ifdef _WIN32
+    [[nodiscard]] std::optional<std::wstring> fromWindowsAnsi(std::string_view bytes);
+#endif
+
     namespace
     {
         constexpr std::string_view k_utf8Bom = "\xEF\xBB\xBF";
@@ -82,8 +86,19 @@ namespace ClaFi::Documents
             return withoutCarriageReturns(fromUtf8(body.substr(k_utf8Bom.size())));
         }
         std::wstring text = fromUtf8(body);
-        if (fallback == TextFileFallback::Windows1251 && toUtf8(text) != body)
+        if (fallback != TextFileFallback::None && toUtf8(text) != body)
         {
+#ifdef _WIN32
+            if (fallback == TextFileFallback::WindowsAnsi)
+            {
+                const std::optional<std::wstring> decoded = fromWindowsAnsi(body);
+                if (!decoded)
+                {
+                    return std::nullopt;
+                }
+                return withoutCarriageReturns(*decoded);
+            }
+#endif
             text = fromWindows1251(body);
         }
         return withoutCarriageReturns(text);

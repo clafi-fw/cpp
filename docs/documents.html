@@ -354,8 +354,10 @@ and <code>deleteFile</code> for browser commands. These functions enforce a stor
 <code>canWriteFile</code> also checks the file's location and rejects symbolic links. The virtual
 <code>writeDocument</code> is the application's format implementation.</p>
 <p><code>readTextFile</code> reads UTF-8 with or without a byte order mark and folds CRLF line endings
-to LF. Pass <code>TextFileFallback::Windows1251</code> to read older Cyrillic files when an unmarked
-file contains invalid UTF-8. <code>writeTextFile</code> writes UTF-8 with CRLF line endings.
+to LF. On Windows, pass <code>TextFileFallback::WindowsAnsi</code> to use the active ANSI code page
+when an unmarked file contains invalid UTF-8. For files known to use code page 1251, pass
+<code>TextFileFallback::Windows1251</code> on either platform.
+<code>writeTextFile</code> writes UTF-8 with CRLF line endings.
 Pass <code>Utf8Bom::Write</code> to include the UTF-8 signature required by some readers.</p>
         </main>
     </div>

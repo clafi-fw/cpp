@@ -20,6 +20,13 @@ namespace PascalScripts_App
 
     namespace
     {
+#ifdef _WIN32
+        constexpr auto k_legacyMacroEncoding = Documents::TextFileFallback::WindowsAnsi;
+#else
+        // GrandSmeta ships legacy Cyrillic macros alongside its UTF-8 files.
+        constexpr auto k_legacyMacroEncoding = Documents::TextFileFallback::Windows1251;
+#endif
+
         [[nodiscard]] bool isGrandSmetaMacro(const std::filesystem::path& path)
         {
             std::wstring extension = path.extension().wstring();
@@ -48,7 +55,7 @@ namespace PascalScripts_App
         Dom::DomNodeBase& into) const
     {
         const Documents::TextFileFallback fallback = isGrandSmetaMacro(path)
-            ? Documents::TextFileFallback::Windows1251 : Documents::TextFileFallback::None;
+            ? k_legacyMacroEncoding : Documents::TextFileFallback::None;
         std::optional<std::wstring> text = Documents::readTextFile(path, fallback);
         const bool read = text.has_value();
         // A file that could not be read leaves the empty script, as the contract says.

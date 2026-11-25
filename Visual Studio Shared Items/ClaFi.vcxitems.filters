@@ -1273,6 +1273,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.CommandRun.cpp">
       <Filter>Platform\Windows</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.TextFile.cpp">
+      <Filter>Platform\Windows</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.DWrite.cppm">
       <Filter>Platform\Windows</Filter>
     </ClCompile>

@@ -8,7 +8,10 @@ namespace ClaFi::Documents
     export enum class TextFileFallback
     {
         None,
-        Windows1251
+        Windows1251,
+#ifdef _WIN32
+        WindowsAnsi,   // The active Windows ANSI code page.
+#endif
     };
 
     // Whether a UTF-8 file starts with the three-byte encoding signature.
