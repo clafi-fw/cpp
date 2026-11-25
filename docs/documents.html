@@ -349,6 +349,8 @@ change. A custom browser can use <code>documentPath</code> to get a browser path
 filename.</p>
 
 <h2 id="files">Working with files</h2>
+<p><strong>New</strong> opens a menu when the folder offers several templates. Choosing a template
+creates the file. With one template, New uses it directly. With none, New creates an empty file.</p>
 <p>Use <code>DocumentsFolder::saveDocument</code>, <code>createFile</code>, <code>renameFile</code>,
 and <code>deleteFile</code> for browser commands. These functions enforce a storage's access setting.
 <code>canWriteFile</code> also checks the file's location and rejects symbolic links. The virtual

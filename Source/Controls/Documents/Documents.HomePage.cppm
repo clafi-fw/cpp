@@ -61,6 +61,14 @@ namespace ClaFi::Documents
         // waiting to be named on. A derived page adds what it owes, after this.
         virtual void documentsRebuilt();
     private:
+        class NewButton : public SplitButton
+        {
+        public:
+            using SplitButton::SplitButton;
+        protected:
+            [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
+        };
+    private:
         [[nodiscard]] std::wstring tilePagePath(std::wstring_view fileName) const;
         [[nodiscard]] DocumentsFolder* selectedStorage() const;
         [[nodiscard]] DocumentsFolder* folderToExplore() const;
@@ -79,7 +87,6 @@ namespace ClaFi::Documents
         void openTileInNewTab(const DocumentTile&);
         // Makes a file from the template, or an empty one, and puts an editor over its tile.
         void createNewFile(const DocumentTemplate*);
-        // Lists the folder's templates under the strip, each making a file.
         void showTemplates(DropdownEvent&);
         // Under `initiator`, which is what asked for the deletion - the question it may raise
         // stands there.
@@ -101,9 +108,7 @@ namespace ClaFi::Documents
         std::wstring m_fileNameToRename{};
         UiTimer m_renameTimer{};
 
-        // The face makes the first template; the strip lists them all, and stands only where
-        // there is more than one to list.
-        SplitButton& m_newButton{ toolBar().add<SplitButton>(
+        NewButton& m_newButton{ toolBar().add<NewButton>(
             k_buttonIconSize,
             ButtonViewMode::LeftIcon,
             Button::OnDrawIcon{ Icons::PlusMark::draw },
@@ -165,23 +170,25 @@ namespace ClaFi::Documents
         // The application home is the listing over the browser's registered folders.
         m_storageTiles{ READ_PROPERTY(StorageTilesView, StorageTilesView{}).tiles }
     {
-        m_newButton.onClick([this](ClickEvent&) {
-            if (m_storageTiles)
-            {
-                editStorage(nullptr);
-                return;
-            }
-            const DocumentTemplates& templates = folder().templates();
-            createNewFile(templates.empty() ? nullptr : &templates.front());
-        });
-        m_newButton.onDropdown([this](DropdownEvent& event) {
-            if (!m_storageTiles)
-            {
+        if (!m_storageTiles && folder().templates().size() > 1)
+        {
+            m_newButton.onDropdown([this](DropdownEvent& event) {
                 showTemplates(event);
-            }
-        });
-        if (m_storageTiles || folder().templates().size() < 2ull)
+            });
+        }
+        else
+        {
             m_newButton.secondaryPart()->setVisible(false);
+            m_newButton.onClick([this](ClickEvent&) {
+                if (m_storageTiles)
+                {
+                    editStorage(nullptr);
+                    return;
+                }
+                const DocumentTemplates& templates = folder().templates();
+                createNewFile(templates.empty() ? nullptr : &templates.front());
+            });
+        }
         // A folder the platform could not name is nowhere to make a file.
         m_newButton.onGetState([this](GetStateEvent& event) {
             event.state.enabled = m_storageTiles || storageFolder().canWrite();

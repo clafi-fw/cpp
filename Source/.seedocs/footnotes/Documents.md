@@ -18,8 +18,8 @@ messages are built from them: "New script", "Script saved".
 
 ## DocumentTemplate
 
-**New lists the templates in the folder's order.** With more than one, New's face makes the first
-and its strip lists them all. With none, New makes an empty file.
+**New opens a menu when the folder offers several templates.** The menu lists them in folder order.
+With one template, New uses it directly. With none, New creates an empty file.
 
 ## DocumentsFolder
 
@@ -108,7 +108,8 @@ of the page's own then stands over the browser's.
 **The derived page connects its tiles once**, from its constructor, through connectTiles. It builds
 them with editHandler and menuHandler. Every command waits for that connection.
 
-- New makes a file from the first template, or an empty one, and opens an editor over its tile.
+- New creates the file and opens its tile for renaming. When several templates are available,
+  choose one from the New menu first.
 - Add storage opens the properties dialog from the browser home. Properties opens it for the
   current storage tile. Name defaults to the folder name. Location can be typed or browsed, and
   Read-only states the storage's access.
