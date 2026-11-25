@@ -12,6 +12,8 @@ import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.SideBar;
 
+import ClaFi.Core.AppTheme_Baked;
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -32,18 +34,26 @@ namespace Themes_App
         template<typename... Args>
         explicit PreviewPanel(const CreateParams&, Args&&...);
     public:
-        void showPage(PreviewPage);
+        void showPage(const NodePreview&);
+        void setTheme(const AppTheme*, ColorMode);
         // Shows or hides the note that this preview leaves sizes out.
         void setSizesNoteVisible(bool);
+    protected:
+        void adjustPaint(AdjustPaintEvent&) override;
     private:
         using Pages = std::array<PreviewPageBase*, k_previewPageCount>;
     private:
-        // The panel's name, set as a page's title is, and under it what the page shows.
+        void updatePreviewTheme();
         [[nodiscard]] static Text titleOf(std::wstring_view whatPageShows);
     private:
         // A stated width: a page switch leaves the page beside the panel where it is.
         static constexpr float k_width = 240.0f;
 
+        // The previewed theme can lag behind the selected tile until its preview delay elapses.
+        const AppTheme* m_theme{ nullptr };
+        ColorMode m_mode{ ColorMode::Dark };
+        BakedColors m_colors{};
+        std::wstring m_styleName{};
         Pages m_pages{}; // a page is kept once built, and serves every node that names it
 
         StackPanel& m_head{ createTopBar<StackPanel>(

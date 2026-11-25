@@ -280,6 +280,15 @@ namespace ClaFi
     // application's.
     export [[nodiscard]] std::vector<std::wstring_view> elementNamesOf(AppElementNames);
 
+    // The surface and ink a child inherits, including whether the ink already has its own hue.
+    export struct RestingColors
+    {
+        Hsl surface{};
+        Hsl ink{};
+        bool inkHueNamed{};
+    };
+
+    export [[nodiscard]] RestingColors restingColors(const AppTheme&, std::wstring_view style, ColorMode);
     // A style's surface at rest, walked down from the bare color of the mode along standsOn.
     export [[nodiscard]] Hsl restingSurface(const AppTheme&, std::wstring_view style, ColorMode);
     // The ink a style's text starts from, walked down the same nesting through text rules.
@@ -298,11 +307,11 @@ namespace ClaFi
     namespace
     {
         // A style's resolved rules at rest on one channel. True where one of them names a hue.
-        bool applyRestingRules(Hsl& color, const AppTheme& theme, const std::wstring_view style,
+        bool applyRestingRules(Hsl& color, const AppTheme& theme, const ColorRules& rules,
             const PaintChannel channel, const ColorMode mode)
         {
             bool namesHue = false;
-            for (const ColorRule& rule : theme.styles.resolvedRules(style))
+            for (const ColorRule& rule : rules)
             {
                 if (!rule.atRest() or rule.output != channel)
                     continue;
@@ -322,28 +331,6 @@ namespace ClaFi
                 0.0f,
                 mode == ColorMode::Dark ? 1.0f : 0.0f
             };
-        }
-
-        // Only text rules are applied on the way: what a style is painted on is a separate chain
-        // and does not reach the ink. No style is the bare ink of the color mode, with nothing
-        // applied - a window root's own text rule is the first thing on the chain, exactly as its
-        // surface rule is the first thing on the other one. The one thing the surface lends the
-        // ink is its hue, until a text rule on the way names one - the seed PaintEvent takes.
-        [[nodiscard]] Hsl walkInk(const AppTheme& theme, const std::wstring_view style,
-            const ColorMode mode, bool& hueNamed)
-        {
-            const ControlStyle* stated = theme.styles.of(style);
-            if (!stated)
-                return bareInk(theme, mode);
-
-            bool named = false;
-            Hsl result = walkInk(theme, stated->standsOn, mode, named);
-            if (!named)
-                result.hue = restingSurface(theme, style, mode).hue;
-            if (applyRestingRules(result, theme, style, PaintChannel::Text, mode))
-                named = true;
-            hueNamed = named;
-            return result;
         }
 
         // The effect an element names, where its token names one - the accent and the spot.
@@ -423,32 +410,46 @@ namespace ClaFi
         return result;
     }
 
-    // Only resting rules are applied: nothing below the style is in a state. A style stated
-    // nowhere stands on the bare color of the mode, as a window root does.
+    RestingColors restingColors(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
+    {
+        StyleChain backgrounds{};
+        for (const ControlStyle* layer = theme.styles.of(style); layer; layer = theme.styles.of(layer->standsOn))
+        {
+            if (std::ranges::find(backgrounds, layer) != backgrounds.end())
+                break;
+            backgrounds.push_back(layer);
+        }
+
+        RestingColors result{ theme.colors.rootSurface(mode), bareInk(theme, mode) };
+        for (const ControlStyle* layer : backgrounds | std::views::reverse)
+        {
+            if (layer->seed)
+                result.surface.hue = theme.colors.harmony().pigmentColor(*layer->seed).hsl().hue;
+            const ColorRules rules = theme.styles.resolvedRules(layer->name);
+            applyRestingRules(result.surface, theme, rules, PaintChannel::Surface, mode);
+            // Each surface lends the ink its hue until a text rule names one.
+            if (!result.inkHueNamed)
+                result.ink.hue = result.surface.hue;
+            if (applyRestingRules(result.ink, theme, rules, PaintChannel::Text, mode))
+                result.inkHueNamed = true;
+        }
+        return result;
+    }
+
     Hsl restingSurface(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
-        const ControlStyle* stated = theme.styles.of(style);
-        if (!stated)
-            return theme.colors.rootSurface(mode);
-
-        Hsl result = restingSurface(theme, stated->standsOn, mode);
-        // The hue ControlPaintContext::foundTextRgb starts the band from.
-        if (stated->seed)
-            result.hue = theme.colors.harmony().pigmentColor(*stated->seed).hsl().hue;
-        applyRestingRules(result, theme, style, PaintChannel::Surface, mode);
-        return result;
+        return restingColors(theme, style, mode).surface;
     }
 
     Hsl restingInk(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
-        bool hueNamed = false;
-        return walkInk(theme, style, mode, hueNamed);
+        return restingColors(theme, style, mode).ink;
     }
 
     Hsl restingStroke(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
         Hsl result = restingSurface(theme, style, mode);
-        applyRestingRules(result, theme, style, PaintChannel::Stroke, mode);
+        applyRestingRules(result, theme, theme.styles.resolvedRules(style), PaintChannel::Stroke, mode);
         return result;
     }
 

@@ -1,6 +1,6 @@
 module SeeDocs_App.Ui.Main;
 
-import ClaFiApps.StarterTheme;
+import ClaFiApps.ArticleTheme;
 
 import SeeDocs_App.Ui.Browser;
 import SeeDocs_App.Ui.ExternalEditors;
@@ -60,8 +60,8 @@ namespace SeeDocs_App::Ui
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"SeeDocs-v"
             },
-            .defaultTheme = { L"Default", ClaFiApps::starterTheme() },
-            .legacyThemeFileDefaults = &ClaFiApps::starterTheme(),
+            .defaultTheme = { L"Default", ClaFiApps::articleTheme() },
+            .legacyThemeFileDefaults = &ClaFiApps::articleTheme(),
             .linkScheme = SurfaceBrowser::k_pageLinkScheme,
             .linkHandler = [](const Url& url, IForm* source, InputStamp) {
                 MainForm* mainForm = source ? mainFormOf(static_cast<FormBase&>(*source)) : nullptr;

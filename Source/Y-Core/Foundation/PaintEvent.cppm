@@ -342,6 +342,8 @@ namespace ClaFi
         // by the same factor its surface takes the page's color.
         [[nodiscard]] Hsl textHsl() const { return m_target.inheritedTextHsl(); }
         void setTextHsl(Hsl value);
+        // Restores inherited ink whose hue may still follow the surface.
+        void setTextHsl(Hsl value, bool hueNamed);
         // The lightness inherited from the control above, before this control has said anything
         // about it. Read by a control that has to state its rules in the direction they will be
         // applied in - see Tab::adjustPaint, which spells an exact color into a rule of its own.

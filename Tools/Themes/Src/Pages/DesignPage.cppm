@@ -1,6 +1,6 @@
 export module Themes_App.DesignPage;
 
-import ClaFiApps.StarterTheme;
+import ClaFiApps.ArticleTheme;
 
 import Themes_App.ElementPage;
 import Themes_App.PreviewPage;
@@ -112,7 +112,7 @@ namespace Themes_App
         OnGetElementRuleBase m_ruleBase{};
         OnRulesChanged m_onRulesChanged{};
         OnFollowElementLink m_onFollowElementLink{};
-        const ThemeStyles& m_defaultStyles{ ClaFiApps::starterTheme().styles };
+        const ThemeStyles& m_defaultStyles{ ClaFiApps::articleTheme().styles };
 
         std::wstring m_newStyleBase{};
         std::wstring m_styleToRename{};

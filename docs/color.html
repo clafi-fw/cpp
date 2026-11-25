@@ -767,7 +767,9 @@ final row also accepts an insertion after it. <code>AnyElement</code> stays at t
 <code>AnyElement</code>, dropping inside Elements makes the dragged element a root. Deleting an element
 promotes its children to its parent. Undo and Redo cover these edits. The element page shows
 its inheritance parent under <strong>Base</strong>. The <strong>Preview surface</strong> picker
-sets <code>standsOn</code>, the background used to preview the element.</p>
+sets <code>standsOn</code>, the background used to preview the element. For a style without a
+dedicated preview, the sidebar shows labeled controls in several states. Each uses the selected
+style's colors and sizes, including those inherited from its base.</p>
 
 <table>
 <tr><th>Field</th><th>Holds</th></tr>
@@ -787,12 +789,13 @@ steps, not an override. A rule a style dropped is left out of the chain above it
 instead: <code>resolvedMetrics</code> walks the same chain root first, and each size a style
 states replaces the one below it.</p>
 
-<p>The framework's own theme defines shared bases that its styles build on, and a theme may add
-bases of its own. A base is a style a control may use like any other.</p>
+<p>The starter theme defines shared base styles. The SeeDocs article theme extends it with
+<code>DoDont</code>, its two sides (<code>Do</code> and <code>Dont</code>), and
+<code>CodeBlock</code>. A control can use a base style directly.</p>
 
 <table>
 <tr><th>Base</th><th>Reaches</th></tr>
-<tr><td><code>AnyElement</code></td><td>The root of the framework's default style tree.</td></tr>
+<tr><td><code>AnyElement</code></td><td>The root of the starter theme's style tree.</td></tr>
 <tr><td><code>AnyWindow</code></td><td>A window's root: <code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code> and <code>Dropdown</code> are based on it, and take its frame, its shadow rules and its shadow's sizes. A form's root that uses no style takes none of it.</td></tr>
 <tr><td><code>AnyNonWindow</code></td><td>Every other framework style. The focus ring's rules live here - see <a href="#focus-ring">The focus ring</a>.</td></tr>
 <tr><td><code>AnyButton</code>, <code>AnyIndicator</code>, <code>AnyCallout</code>, <code>DoDont</code></td><td>The two buttons, the two indicators, the five callouts, and the two sides of a Do and Don't block, each group with the sizes it shares.</td></tr>

@@ -26,6 +26,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
@@ -103,6 +104,9 @@ namespace ClaFi::Documents
         // The tiles the page works over, and nullptr until the page that built them connects
         // them - which every command here runs after.
         IDocumentTiles* m_tiles{ nullptr };
+        // Removing tiles during teardown can change the selection after the toolbar is gone.
+        ScopedEventConnection m_selectionChanged{};
+        ScopedEventConnection m_currentItemChanged{};
         // The document a rename is waiting on, named by its file rather than held as a tile: the
         // tiles may be rebuilt between the request and the tick that answers it.
         std::wstring m_fileNameToRename{};

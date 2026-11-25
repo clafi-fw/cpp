@@ -23,6 +23,8 @@
     <ClCompile Include="Src\Themes_Icon.cpp">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Showcase\Shared\ArticleTheme.cppm" />
+    <ClCompile Include="..\..\Showcase\Shared\ArticleTheme.cpp" />
     <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cppm" />
     <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\Themes_Icon.cppm">
@@ -148,7 +150,13 @@
     <ClCompile Include="Src\Previews\SelectionPreview.cppm">
       <Filter>Src\Previews</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Previews\StyleStatesPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Previews\SurfacesPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\StyleStatesPreview.cppm">
       <Filter>Src\Previews</Filter>
     </ClCompile>
     <ClCompile Include="Src\Previews\SurfacesPreview.cppm">

@@ -5,7 +5,6 @@ import Themes_App.PreviewPage;
 import Themes_App.PreviewPanel;
 
 import ClaFi.Application.ThemesManager;
-import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Documents.BasePage;
 
@@ -23,7 +22,6 @@ import ClaFi.Icons.SunIcon;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
@@ -82,16 +80,7 @@ namespace Themes_App
             MouseFocus::Self
         ) };
 
-        // **What the preview is showing** - taken by invalidatePreview, and read by both halves of
-        // it so that the panel and the application show one theme. Not asked of the list per paint:
-        // a list answers with the tile it is **on**, and between a tile being reached and the
-        // preview delay elapsing that is a tile ahead of the one the preview has been asked for.
-        // See Stack::previewItem
-        const AppTheme* m_previewTheme{ nullptr };
-        // What that theme is painted from, kept beside it because the panel paints from a
-        // reference the adjustment hands on.
-        BakedColors m_previewColors{};
-        NodePreview m_nodePreview{}; // what the panel shows, the Overview until a node names one
+        bool m_showSizesNote{};
 
         ToolButton& m_previewDarkButton{ m_rightToolBar.add<ToolButton>(
             ShowSelectionOnSurface::Yes,
@@ -185,27 +174,7 @@ namespace Themes_App
             });
         }
 
-        // The panel stands in for the application's window: what it shows is painted on a
-        // dialog's resting surface, as the application paints its own pages. A mockup of a
-        // window inside states the bare color for itself - see standOnBareColor. The ink is
-        // stated only where the dialog's chain has a text rule at rest to move it: a stated ink
-        // names its hue, and one left alone follows the surfaces under it, as in the application.
-        m_previewPanel.onAdjustPaint([this](AdjustPaintEvent& event) {
-            if (!m_previewTheme)
-                return;
-            event.resetTheme(*m_previewTheme, m_previewColors);
-            const AppTheme& theme = *m_previewTheme;
-            const ColorMode mode = PreviewState::s_colorMode;
-            event.setSurfaceHsl(restingSurface(theme, UiElement::Dialog, mode));
-            const std::wstring_view dialog = uiElementOf(UiElement::Dialog).token;
-            const bool inksAtRest = std::ranges::any_of(theme.styles.resolvedRules(dialog),
-                [](const ColorRule& rule) {
-                    return rule.atRest() && rule.output == PaintChannel::Text;
-                });
-            if (inksAtRest)
-                event.setTextHsl(restingInk(theme, UiElement::Dialog, mode));
-        });
-        showPreview(m_nodePreview);
+        showPreview({});
     }
 
     template<IsDocumentsPage PageBase>
@@ -227,22 +196,18 @@ namespace Themes_App
     template<IsDocumentsPage PageBase>
     void WithPreview<PageBase>::invalidatePreview()
     {
-        m_previewTheme = selectedTheme();
-        // Held rather than baked where it is read: the panel paints from a reference, and a theme
-        // baked into the call would be gone before the paint reached it.
-        if (m_previewTheme)
-        {
-            m_previewColors = bake(*m_previewTheme, PreviewState::s_colorMode,
-                this->appContext().appElements());
-        }
+        const AppTheme* theme = selectedTheme();
+        m_previewPanel.setTheme(theme, previewColorMode());
 
         // The tab carries the same theme in its icon.
         this->tab().invalidate();
 
         if (PreviewState::s_inApp)
         {
-            if (m_previewTheme)
-                themesManager().applyTheme(*m_previewTheme, PreviewState::s_colorMode);
+            if (theme)
+            {
+                themesManager().applyTheme(*theme, previewColorMode());
+            }
             this->form().invalidate();
         }
         else if (m_previewPanel.visible())
@@ -252,8 +217,8 @@ namespace Themes_App
     template<IsDocumentsPage PageBase>
     void WithPreview<PageBase>::showPreview(const NodePreview& preview)
     {
-        m_nodePreview = preview;
-        m_previewPanel.showPage(preview.page);
+        m_showSizesNote = preview.showSizesNote;
+        m_previewPanel.showPage(preview);
         refreshSizesNote();
     }
 
@@ -286,6 +251,6 @@ namespace Themes_App
     template<IsDocumentsPage PageBase>
     void WithPreview<PageBase>::refreshSizesNote()
     {
-        m_previewPanel.setSizesNoteVisible(m_nodePreview.editsSizes && !PreviewState::s_inApp);
+        m_previewPanel.setSizesNoteVisible(m_showSizesNote && !PreviewState::s_inApp);
     }
 }

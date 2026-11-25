@@ -525,6 +525,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # and scans a tree itself where its project has no database yet.
     set(seedocs_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
     add_executable(SeeDocs
+        "${starter_theme_dir}/ArticleTheme.cpp"
         "${starter_theme_dir}/StarterTheme.cpp"
         "${seedocs_dir}/Ui/SeeDocs_Wayland.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.AppIcon.cpp"
@@ -560,6 +561,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Search.cpp"
         "${seedocs_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/ArticleTheme.cppm"
         "${starter_theme_dir}/StarterTheme.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.AppIcon.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.BasesTree.cppm"
@@ -603,6 +605,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     # library and is no part of it. Dom Benchmark is a console program built by Visual Studio only.
     set(themes_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/Themes/Src")
     add_executable(Themes
+        "${starter_theme_dir}/ArticleTheme.cpp"
         "${starter_theme_dir}/StarterTheme.cpp"
         "${themes_dir}/Themes_Main.cpp"
         "${themes_dir}/Themes_Icon.cpp"
@@ -623,6 +626,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Previews/InputsPreview.cpp"
         "${themes_dir}/Previews/Previews.cpp"
         "${themes_dir}/Previews/SelectionPreview.cpp"
+        "${themes_dir}/Previews/StyleStatesPreview.cpp"
         "${themes_dir}/Previews/SurfacesPreview.cpp"
         "${themes_dir}/Previews/WaterChoice.cpp"
         "${themes_dir}/Previews/WindowsPreview.cpp"
@@ -634,6 +638,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Util/Themes_App.ThemeToCppCode.cpp"
         "${themes_dir}/Util/Themes_App.ValueRuleControl.cpp")
     target_sources(Themes PRIVATE FILE_SET CXX_MODULES FILES
+        "${starter_theme_dir}/ArticleTheme.cppm"
         "${starter_theme_dir}/StarterTheme.cppm"
         "${themes_dir}/Themes_Main.cppm"
         "${themes_dir}/Themes_Icon.cppm"
@@ -658,6 +663,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${themes_dir}/Previews/Previews.cppm"
         "${themes_dir}/Previews/ScrollingPreview.cppm"
         "${themes_dir}/Previews/SelectionPreview.cppm"
+        "${themes_dir}/Previews/StyleStatesPreview.cppm"
         "${themes_dir}/Previews/SurfacesPreview.cppm"
         "${themes_dir}/Previews/TabsPreview.cppm"
         "${themes_dir}/Previews/TestSubjectsPreview.cppm"

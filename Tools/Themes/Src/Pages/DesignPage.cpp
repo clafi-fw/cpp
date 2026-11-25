@@ -151,10 +151,11 @@ namespace Themes_App
             return {};
 
         const auto preview = std::ranges::find(k_stylePreviews, entry->name, &StylePreview::name);
-        return {
-            .page = preview == std::end(k_stylePreviews) ? PreviewPage::Overview : preview->page,
-            .editsSizes = true
-        };
+        if (preview == std::end(k_stylePreviews))
+        {
+            return { .page = PreviewPage::StyleStates, .styleName = entry->name };
+        }
+        return { .page = preview->page, .showSizesNote = true };
     }
 
     void DesignPage::pickPage(const std::wstring_view anchor)

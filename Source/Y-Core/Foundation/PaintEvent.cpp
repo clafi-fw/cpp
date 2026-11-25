@@ -1017,9 +1017,14 @@ namespace ClaFi
 
     void AdjustPaintEvent::setTextHsl(Hsl value)
     {
+        setTextHsl(value, true);
+    }
+
+    void AdjustPaintEvent::setTextHsl(Hsl value, const bool hueNamed)
+    {
         m_target.m_controlContext.textHsl = value;
         m_target.m_textHslStated = true;
-        m_target.m_textHueStated = 1.0f;
+        m_target.m_textHueStated = hueNamed ? 1.0f : 0.0f;
     }
 
     void AdjustPaintEvent::setLightness(Lightness value)

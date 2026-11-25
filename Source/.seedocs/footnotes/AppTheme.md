@@ -153,7 +153,7 @@ defaults.
 - AnyIndicator - what the selection and hover indicators share, their on color and the mark's
   sizes included.
 - AnyCallout - the five callouts' surface, band and sizes; each callout states its seed alone.
-- DoDont - the two sides of a Do and Don't block.
+- DoDont - the base for Do and Dont in the SeeDocs article theme.
 
 **The ring's weight is the control's current**, whatever color the rules gave the stroke. That
 factor thickens the border toward ThemeMetrics::FocusedBorder, in paint only, and holds the frame

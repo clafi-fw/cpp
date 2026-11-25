@@ -24,6 +24,7 @@ import ClaFi.StdActions;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -80,10 +81,10 @@ namespace ClaFi::Documents
                 deleteSelectedFiles(event.presenter ? *event.presenter : m_deleteButton);
         });
 
-        view.onSelectionChange([](SelectionChangeEvent&) {
+        m_selectionChanged = view.onSelectionChange([](SelectionChangeEvent&) {
             StdActions::del.invalidateState();
         });
-        view.onCurrentItemChange([this](CurrentItemChangeEvent&) {
+        m_currentItemChanged = view.onCurrentItemChange([this](CurrentItemChangeEvent&) {
             m_propertiesButton.invalidateState();
             m_exploreButton.invalidateState();
             StdActions::del.invalidateState();

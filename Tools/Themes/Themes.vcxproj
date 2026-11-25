@@ -223,6 +223,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Pages\DesignPage.cpp" />
+    <ClCompile Include="..\..\Showcase\Shared\ArticleTheme.cppm" />
+    <ClCompile Include="..\..\Showcase\Shared\ArticleTheme.cpp" />
     <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cppm" />
     <ClCompile Include="..\..\Showcase\Shared\StarterTheme.cpp" />
     <ClCompile Include="Src\Pages\DesignPage.cppm" />
@@ -259,7 +261,9 @@
     <ClCompile Include="Src\Previews\ScrollingPreview.cppm" />
     <ClCompile Include="Src\Previews\SelectionPreview.cpp" />
     <ClCompile Include="Src\Previews\SelectionPreview.cppm" />
+    <ClCompile Include="Src\Previews\StyleStatesPreview.cpp" />
     <ClCompile Include="Src\Previews\SurfacesPreview.cpp" />
+    <ClCompile Include="Src\Previews\StyleStatesPreview.cppm" />
     <ClCompile Include="Src\Previews\SurfacesPreview.cppm" />
     <ClCompile Include="Src\Previews\TabsPreview.cppm" />
     <ClCompile Include="Src\Previews\TestSubjectsPreview.cppm" />

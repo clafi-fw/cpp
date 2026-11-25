@@ -10,6 +10,7 @@ import Themes_App.PreviewPage;
 import Themes_App.PreviewPageBase;
 import Themes_App.ScrollingPreview;
 import Themes_App.SelectionPreview;
+import Themes_App.StyleStatesPreview;
 import Themes_App.SurfacesPreview;
 import Themes_App.TabsPreview;
 import Themes_App.TestSubjectsPreview;
@@ -46,6 +47,8 @@ namespace Themes_App
                 return pages.add<DoDontPreview>();
             case PreviewPage::CodeBlock:
                 return pages.add<CodeBlockPreview>();
+            case PreviewPage::StyleStates:
+                return pages.add<StyleStatesPreview>();
             case PreviewPage::TestSubjects:
                 return pages.add<TestSubjectsPreview>();
             case PreviewPage::Overview:

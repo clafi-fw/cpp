@@ -18,6 +18,7 @@ namespace Themes_App
         Callouts,       // a callout of each kind
         DoDont,         // a Do and Don't block
         CodeBlock,      // a block of code
+        StyleStates,
         TestSubjects,   // Testee and Bestee
         Count
     };
@@ -28,6 +29,7 @@ namespace Themes_App
     export struct NodePreview
     {
         PreviewPage page{ PreviewPage::Overview };
-        bool editsSizes{ false }; // a style's page, or a folder holding nothing else
+        std::wstring styleName{};
+        bool showSizesNote{ false };
     };
 }
