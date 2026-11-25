@@ -10,12 +10,23 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 // The std::wstring serializer: without it the node's set and get read a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
 namespace PascalScripts_App
 {
     using namespace ::ClaFi;
+
+    namespace
+    {
+        [[nodiscard]] bool isGrandSmetaMacro(const std::filesystem::path& path)
+        {
+            std::wstring extension = path.extension().wstring();
+            foldCase(extension);
+            return extension == L".gsps";
+        }
+    }
 
     ScriptsFolder::ScriptsFolder(const std::filesystem::path& directory, const Language& language)
         :
@@ -36,7 +47,9 @@ namespace PascalScripts_App
     bool ScriptsFolder::readDocument(const std::filesystem::path& path,
         Dom::DomNodeBase& into) const
     {
-        std::optional<std::wstring> text = Documents::readTextFile(path);
+        const Documents::TextFileFallback fallback = isGrandSmetaMacro(path)
+            ? Documents::TextFileFallback::Windows1251 : Documents::TextFileFallback::None;
+        std::optional<std::wstring> text = Documents::readTextFile(path, fallback);
         const bool read = text.has_value();
         // A file that could not be read leaves the empty script, as the contract says.
         into.set(std::move(text).value_or(std::wstring{}));
@@ -46,7 +59,9 @@ namespace PascalScripts_App
     bool ScriptsFolder::writeDocument(const Dom::DomNodeBase& node,
         const std::filesystem::path& path) const
     {
-        return Documents::writeTextFile(path, node.get<std::wstring>());
+        const Documents::Utf8Bom bom = isGrandSmetaMacro(path)
+            ? Documents::Utf8Bom::Write : Documents::Utf8Bom::Omit;
+        return Documents::writeTextFile(path, node.get<std::wstring>(), bom);
     }
 
     // A script holds work when it holds anything a template did not put there.
