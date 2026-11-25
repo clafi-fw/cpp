@@ -198,7 +198,7 @@ namespace Themes_App
         m_ruleBase = ruleBase;
         m_onRulesChanged = onRulesChanged;
         m_onFollowElementLink = onFollowElementLink;
-        rebuildTree();
+        rebuildTree(std::wstring{ pickedPage() });
     }
 
     void DesignPage::rebuildRules()
@@ -209,7 +209,7 @@ namespace Themes_App
             });
         if (!sameTree)
         {
-            rebuildTree();
+            rebuildTree(std::wstring{ pickedPage() });
             return;
         }
         for (const TreeEntry& entry : m_entries)
@@ -268,12 +268,14 @@ namespace Themes_App
         pickPage(k_paletteToken);
     }
 
-    void DesignPage::rebuildTree()
+    void DesignPage::rebuildTree(std::wstring anchor, const TakeFocus takeFocus)
     {
-        const std::wstring anchor{ pickedPage() };
         m_rebuildingTree = true;
         if (const TreeEntry* entry = pickedEntry(); entry && entry->elementPage)
-            pickPage(k_elementsAnchor);
+        {
+            m_tree.setCurrentItem(nullptr);
+            m_pages.setCurrentItem(m_elementsPage);
+        }
 
         std::set<std::wstring> collapsed{};
         for (const TreeEntry& entry : m_entries | std::views::drop(k_rootIndex + 1ull))
@@ -318,6 +320,10 @@ namespace Themes_App
             bindPage(entry);
         m_rebuildingTree = false;
         pickPage(anchor);
+        if (takeFocus == TakeFocus::Yes)
+        {
+            m_tree.currentItem()->setFocus();
+        }
         form().invalidateAlign();
     }
 
@@ -466,13 +472,6 @@ namespace Themes_App
             m_pages.setCurrentItem(entry->page);
     }
 
-    void DesignPage::focusElement(const std::wstring_view name)
-    {
-        pickPage(name.empty() ? k_elementsAnchor : styleAnchor(name));
-        if (const TreeEntry* entry = pickedEntry())
-            entry->row->setFocus();
-    }
-
     void DesignPage::addStyle(const std::wstring_view base)
     {
         m_newStyleBase = base;
@@ -489,8 +488,7 @@ namespace Themes_App
         for (std::size_t count = 2ull; m_styles->of(name); ++count)
             name = std::format(L"{} {}", k_newStyleName, count);
         m_styles->add(ControlStyle{ .name = name, .base = std::move(base) });
-        rebuildTree();
-        focusElement(name);
+        rebuildTree(styleAnchor(name), TakeFocus::Yes);
         setsChanged(Text{ L"Add element ", ColoredText{ InkWell::accentInk(), name } });
         if (const TreeEntry* entry = pickedEntry())
         {
@@ -543,8 +541,7 @@ namespace Themes_App
             if (style.standsOn == before)
                 style.standsOn = after;
         }
-        rebuildTree();
-        focusElement(after);
+        rebuildTree(styleAnchor(after), TakeFocus::Yes);
         setsChanged(Text{
             L"Rename element ", ColoredText{ InkWell::accentInk(), before },
             L" to ", ColoredText{ InkWell::accentInk(), after }
@@ -573,8 +570,7 @@ namespace Themes_App
                 style.standsOn.clear();
         }
         m_styles->remove(name);
-        rebuildTree();
-        focusElement(parent);
+        rebuildTree(parent.empty() ? std::wstring{ k_elementsAnchor } : styleAnchor(parent), TakeFocus::Yes);
         setsChanged(Text{ L"Delete element ", ColoredText{ InkWell::accentInk(), name } });
     }
 
@@ -690,8 +686,7 @@ namespace Themes_App
                 : m_dropZone == DropZone::Before ? L" before " : L" after ";
             what << relation << ColoredText{ InkWell::accentInk(), target->name };
         }
-        rebuildTree();
-        focusElement(name);
+        rebuildTree(styleAnchor(name), TakeFocus::Yes);
         setsChanged(what);
     }
 

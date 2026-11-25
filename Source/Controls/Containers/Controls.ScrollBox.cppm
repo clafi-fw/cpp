@@ -697,11 +697,8 @@ namespace ClaFi::Controls
                 bar.setPosition(newPosition);
         };
 
-        FloatRect clRect = bodyRect();
-        // we won't get here if there's no client, right?
-        // IntPoint margin = client()->scaledPadding();
-        FloatPoint margin{ form().scaler().scaled8 };
-        clRect.inflate(-margin);
+        const FloatRect viewport = bodyRect();
+        const FloatRect revealBounds{ viewport, -form().scaler().scaled8 };
 
         // The client rect is fixed to the box, and the content is what travels: the item is
         // carried by what is left of the glide, so this is where it comes to rest.
@@ -716,9 +713,9 @@ namespace ClaFi::Controls
                 L"  lrtb {:.0f} {:.0f} {:.0f} {:.0f}  travel {:.0f} {:.0f}"
                 L"  h {:.0f} -> {:.0f}  v {:.0f} -> {:.0f}",
                 itemRect.left, itemRect.top, itemRect.right, itemRect.bottom,
-                clRect.left, clRect.top, clRect.right, clRect.bottom,
-                clRect.left - itemRect.left, itemRect.right - clRect.right,
-                clRect.top - itemRect.top, itemRect.bottom - clRect.bottom,
+                revealBounds.left, revealBounds.top, revealBounds.right, revealBounds.bottom,
+                revealBounds.left - itemRect.left, itemRect.right - revealBounds.right,
+                revealBounds.top - itemRect.top, itemRect.bottom - revealBounds.bottom,
                 travel.x, travel.y,
                 m_hScrollBar.position(), m_hScrollBar.positionTarget(),
                 m_vScrollBar.position(), m_vScrollBar.positionTarget()),
@@ -727,21 +724,29 @@ namespace ClaFi::Controls
 
         if (m_vScrollBar.visible())
         {
-            float topOverlap = clRect.top - itemRect.top;
-            float bottomOverlap = itemRect.bottom - clRect.bottom;
-            if (bottomOverlap < 0.0f and topOverlap > 0.0f)
+            const float topOverlap = revealBounds.top - itemRect.top;
+            const float bottomOverlap = itemRect.bottom - revealBounds.bottom;
+            if (itemRect.top < viewport.top && bottomOverlap < 0.0f)
+            {
                 sendTo(m_vScrollBar, m_vScrollBar.positionTarget() - topOverlap);
-            else if (topOverlap < 0.0f and bottomOverlap > 0.0f)
+            }
+            else if (itemRect.bottom > viewport.bottom && topOverlap < 0.0f)
+            {
                 sendTo(m_vScrollBar, m_vScrollBar.positionTarget() + std::min(-topOverlap, bottomOverlap));
+            }
         }
         if (m_hScrollBar.visible())
         {
-            float leftOverlap = clRect.left - itemRect.left;
-            float rigthOverlap = itemRect.right - clRect.right;
-            if (rigthOverlap < 0.0f and leftOverlap > 0.0f)
+            const float leftOverlap = revealBounds.left - itemRect.left;
+            const float rightOverlap = itemRect.right - revealBounds.right;
+            if (itemRect.left < viewport.left && rightOverlap < 0.0f)
+            {
                 sendTo(m_hScrollBar, m_hScrollBar.positionTarget() - leftOverlap);
-            else if (leftOverlap < 0.0f and rigthOverlap > 0.0f)
-                sendTo(m_hScrollBar, m_hScrollBar.positionTarget() + std::min(-leftOverlap, rigthOverlap));
+            }
+            else if (itemRect.right > viewport.right && leftOverlap < 0.0f)
+            {
+                sendTo(m_hScrollBar, m_hScrollBar.positionTarget() + std::min(-leftOverlap, rightOverlap));
+            }
         }
         // alternatively, we may correct the itemRect here and pass it to the inherited scrollControlIntoView()
         scrollIntoView();

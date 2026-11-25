@@ -79,7 +79,7 @@ namespace Themes_App
         using ShownElements = std::set<std::wstring_view>;
     private:
         void buildTree();
-        void rebuildTree();
+        void rebuildTree(std::wstring anchor, TakeFocus takeFocus = TakeFocus::No);
         void addElementRow(const ControlStyle&, TreeNode& parent, const Children&,
             ShownElements&, const std::set<std::wstring>& collapsed);
         void addEntry(TreeEntry);
@@ -89,7 +89,6 @@ namespace Themes_App
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         [[nodiscard]] const TreeEntry* entryAt(const Control*) const;
         void showPickedPage();
-        void focusElement(std::wstring_view name);
         void addStyle(std::wstring_view base);
         void nameAddedStyle();
         void renameStyle(std::wstring_view name, AcceptEditEvent&);
