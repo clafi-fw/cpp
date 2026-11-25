@@ -30,6 +30,7 @@ namespace PascalScripts_App
         namespace Keys
         {
             constexpr std::wstring_view Extension = L"Extension";
+            constexpr std::wstring_view WindowTitle = L"WindowTitle";
             constexpr std::wstring_view Information = L"Information";
             constexpr std::wstring_view Storages = L"Storages";
             constexpr std::wstring_view Location = L"Location";
@@ -281,6 +282,7 @@ namespace PascalScripts_App
         using namespace Dom::Dt;
         const Section layout = {
             Value{ Keys::Extension, std::wstring{} },
+            Value{ Keys::WindowTitle, std::wstring{} },
             Value{ Keys::Information, std::wstring{} },
             Sequence{
                 Keys::Storages,
@@ -349,6 +351,7 @@ namespace PascalScripts_App
             m_extension = extension;
             m_kind.extension = m_extension;
         }
+        m_windowTitle = stringOf(document, Keys::WindowTitle);
         m_information = stringOf(document, Keys::Information);
         for (const Dom::Section& item : (document / Keys::Storages).as<Sections>())
         {

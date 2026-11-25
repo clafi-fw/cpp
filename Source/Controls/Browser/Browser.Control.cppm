@@ -28,6 +28,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.Foundation;
 
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.Props;
@@ -449,12 +450,21 @@ namespace ClaFi::Browser
             MinSize{ 0.0f, 36.0f },
             Spacing{ 4.0f, 0.0f },
             OnEvent{ [](AdjustTextEvent& event) {
-                // checking the calcOnly, because all the space should be available for tabs,
-                // so the
+                // Tabs get the available width. The caption fills the space left at paint time.
                 if (event.phase() == EventPhase::Paint)
-                    event.text
-                        << TextAlign::Center
-                        << event.control().appContext().appName();
+                {
+                    const std::wstring_view caption = event.control().form().windowTitle();
+                    const Text& appName = event.control().appContext().appName();
+                    event.text << TextAlign::Center;
+                    if (caption == appName.plainText())
+                    {
+                        event.text << appName;
+                    }
+                    else
+                    {
+                        event.text << caption;
+                    }
+                }
             } }
         ) };
         StackPanel& m_titleBox{ m_title.createLeftBar<StackPanel>(

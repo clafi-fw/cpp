@@ -89,7 +89,6 @@ namespace ClaFi::Browser
 
         form->content().initialize(m_settings);
         form->setConfigName(AppContext::k_mainFormName);
-        form->window().setTitle(name().plainText());
         return form;
     }
 

@@ -2,6 +2,8 @@ export module PascalScripts_App.ScriptsBrowser;
 
 import PascalScripts_App.AppIcon;
 import PascalScripts_App.ScriptPage;
+import PascalScripts_App.Scripts;
+import PascalScripts_App.Language;
 
 import ClaFi.Documents.Browser;
 import ClaFi.Documents.HomePage;
@@ -46,5 +48,11 @@ namespace PascalScripts_App
         // The mark itself is in AppIcon, so the same drawing answers the button and the icon
         // file. The button states its own view mode and icon size; nothing here restates them.
         appButton().onDrawIcon(AppIcon::drawIcon);
+        const ScriptsFolder& scripts = static_cast<const ScriptsFolder&>(folder());
+        const std::wstring_view caption = scripts.language().windowTitle();
+        if (!caption.empty())
+        {
+            form().setWindowTitle(caption);
+        }
     }
 }

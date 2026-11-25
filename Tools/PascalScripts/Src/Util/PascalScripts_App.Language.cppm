@@ -29,6 +29,7 @@ namespace PascalScripts_App
         Language& operator=(const Language&) = delete;
     public:
         [[nodiscard]] const Documents::DocumentKind& kind() const { return m_kind; }
+        [[nodiscard]] std::wstring_view windowTitle() const { return m_windowTitle; }
         // How the file came about, for the Information page. Empty where the file states none.
         [[nodiscard]] const std::wstring& information() const { return m_information; }
         [[nodiscard]] const ScriptTemplates& templates() const { return m_templates; }
@@ -46,6 +47,7 @@ namespace PascalScripts_App
         std::filesystem::path m_file;   // the config folder's, else the executable's, else empty
         std::wstring m_extension;   // what the kind's extension views, so it stands ahead of it
         Documents::DocumentKind m_kind;
+        std::wstring m_windowTitle{};
         std::wstring m_information{};
         std::vector<Documents::StorageDefault> m_storages{};
         ScriptTemplates m_templates{};
